@@ -6,26 +6,176 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>1200</width>
+    <height>800</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>mrscan2</string>
   </property>
-  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <item>
+     <widget class="QWidget" name="widget" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QTabWidget" name="tabWidget">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>200</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>300</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="currentIndex">
+          <number>0</number>
+         </property>
+         <widget class="ExamTab" name="tab">
+          <attribute name="title">
+           <string>Exam</string>
+          </attribute>
+         </widget>
+         <widget class="HistoryTab" name="tab_2">
+          <attribute name="title">
+           <string>History</string>
+          </attribute>
+         </widget>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="widget_2" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>1200</width>
      <height>20</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionActive_Noise_Cancellation"/>
+    <addaction name="actionAuto_Tuning"/>
+    <addaction name="actionReconnect"/>
+    <addaction name="separator"/>
+    <addaction name="actionPreferences"/>
+    <addaction name="separator"/>
+   </widget>
+   <widget class="QMenu" name="menuTuning">
+    <property name="title">
+     <string>Tuning</string>
+    </property>
+    <addaction name="actionCentral_Frequency"/>
+    <addaction name="actionRF_Power"/>
+    <addaction name="actionShimming"/>
+   </widget>
+   <addaction name="menuSettings"/>
+   <addaction name="menuTuning"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionActive_Noise_Cancellation">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Active Noise Cancellation</string>
+   </property>
+  </action>
+  <action name="actionImage_Settings">
+   <property name="text">
+    <string>Image Settings</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Preferences</string>
+   </property>
+  </action>
+  <action name="actionReconnect">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Reconnect</string>
+   </property>
+  </action>
+  <action name="actionCentral_Frequency">
+   <property name="text">
+    <string>Central Frequency</string>
+   </property>
+  </action>
+  <action name="actionRF_Power">
+   <property name="text">
+    <string>RF Power</string>
+   </property>
+  </action>
+  <action name="actionShimming">
+   <property name="text">
+    <string>Shimming</string>
+   </property>
+  </action>
+  <action name="actionAuto_Tuning">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Auto Tuning</string>
+   </property>
+  </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>HistoryTab</class>
+   <extends>QWidget</extends>
+   <header>historytab.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ExamTab</class>
+   <extends>QWidget</extends>
+   <header>examtab.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

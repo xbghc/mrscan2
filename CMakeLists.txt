@@ -26,6 +26,14 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(mrscan2
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        examtab.h examtab.cpp examtab.ui
+        historytab.h historytab.cpp historytab.ui
+        preferencesdialog.h preferencesdialog.cpp preferencesdialog.ui
+        preferencestyle.h preferencestyle.cpp preferencestyle.ui
+        preferenceimage.h preferenceimage.cpp preferenceimage.ui
+        tuningcentralfrequency.h tuningcentralfrequency.cpp tuningcentralfrequency.ui
+        tuningradiofrequencypower.h tuningradiofrequencypower.cpp tuningradiofrequencypower.ui
+        tuningshimming.h tuningshimming.cpp tuningshimming.ui
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET mrscan2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
