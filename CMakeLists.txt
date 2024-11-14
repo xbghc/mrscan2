@@ -34,6 +34,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         tuningcentralfrequency.h tuningcentralfrequency.cpp tuningcentralfrequency.ui
         tuningradiofrequencypower.h tuningradiofrequencypower.cpp tuningradiofrequencypower.ui
         tuningshimming.h tuningshimming.cpp tuningshimming.ui
+        patient.h patient.cpp
+        resources.qrc
+        patientinfodialog.h patientinfodialog.cpp patientinfodialog.ui
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET mrscan2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

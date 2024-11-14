@@ -15,6 +15,16 @@ public:
     explicit ExamTab(QWidget *parent = nullptr);
     ~ExamTab();
 
+public slots:
+    void loadPatients();
+
+private slots:
+    void on_toolButton_3_clicked();
+
+    void on_toolButton_clicked();
+
+    void on_toolButton_2_clicked();
+
 private:
     Ui::studytab *ui;
 };
