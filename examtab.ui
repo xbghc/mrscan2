@@ -68,7 +68,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <widget class="QTableWidget" name="tableWidget">
+      <widget class="QTableView" name="tableView">
        <property name="lineWidth">
         <number>0</number>
        </property>
@@ -81,21 +81,6 @@
        <property name="showGrid">
         <bool>false</bool>
        </property>
-       <column>
-        <property name="text">
-         <string>Sequence</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Time</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Status</string>
-        </property>
-       </column>
       </widget>
      </item>
      <item>

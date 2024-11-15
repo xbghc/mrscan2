@@ -33,94 +33,68 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>254</width>
-           <height>482</height>
+           <width>240</width>
+           <height>494</height>
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout">
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_3">
-            <property name="text">
-             <string>FOV</string>
+          <item row="3" column="1">
+           <widget class="QSpinBox" name="editNoSamples">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="maximum">
+             <number>9999</number>
             </property>
            </widget>
           </item>
-          <item row="4" column="1">
-           <widget class="QLineEdit" name="lineEdit_5">
-            <property name="text">
-             <string/>
+          <item row="5" column="1">
+           <widget class="QSpinBox" name="editNoViews">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="maximum">
+             <number>9999</number>
             </property>
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QLineEdit" name="lineEdit_2"/>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_2">
-            <property name="text">
-             <string>Slice Thickness</string>
+           <widget class="QDoubleSpinBox" name="editSliceThickness">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
             </property>
-           </widget>
-          </item>
-          <item row="6" column="0">
-           <widget class="QLabel" name="label_7">
-            <property name="text">
-             <string>Number of Slices</string>
+            <property name="maximum">
+             <double>9999.000000000000000</double>
             </property>
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QLineEdit" name="lineEdit"/>
-          </item>
-          <item row="3" column="1">
-           <widget class="QLineEdit" name="lineEdit_4">
-            <property name="text">
-             <string/>
+           <widget class="QDoubleSpinBox" name="editObserveFrequency">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="maximum">
+             <double>9999.000000000000000</double>
             </property>
            </widget>
           </item>
-          <item row="7" column="0">
-           <widget class="QCheckBox" name="checkBox">
+          <item row="4" column="1">
+           <widget class="QSpinBox" name="editNoAverages">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="maximum">
+             <number>9999</number>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0" colspan="2">
+           <widget class="QCheckBox" name="checkGroupMode">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Group Mode</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="0">
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>Number of Averages</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QLineEdit" name="lineEdit_3">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="1">
-           <widget class="QLineEdit" name="lineEdit_7"/>
-          </item>
-          <item row="5" column="1">
-           <widget class="QLineEdit" name="lineEdit_6">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Observe Frequency</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="0">
-           <widget class="QLabel" name="label_6">
-            <property name="text">
-             <string>Number of Views</string>
             </property>
            </widget>
           </item>
@@ -131,7 +105,41 @@
             </property>
            </widget>
           </item>
-          <item row="8" column="0" colspan="2">
+          <item row="6" column="1">
+           <widget class="QSpinBox" name="editNoSlices">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="maximum">
+             <number>9999</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QDoubleSpinBox" name="editFOV">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="maximum">
+             <double>9999.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>Number of Averages</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>Number of Views</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="0" colspan="2">
            <widget class="QStackedWidget" name="stackedWidget">
             <property name="lineWidth">
              <number>1</number>
@@ -155,11 +163,8 @@
                 </property>
                </widget>
               </item>
-              <item row="8" column="1">
-               <widget class="QLineEdit" name="lineEdit_11"/>
-              </item>
               <item row="0" column="1">
-               <widget class="QComboBox" name="comboBox"/>
+               <widget class="QComboBox" name="comboSlice"/>
               </item>
               <item row="3" column="0">
                <widget class="QLabel" name="label_9">
@@ -175,12 +180,6 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="1">
-               <widget class="QLineEdit" name="lineEdit_8"/>
-              </item>
-              <item row="4" column="1">
-               <widget class="QLineEdit" name="lineEdit_10"/>
-              </item>
               <item row="0" column="0">
                <widget class="QLabel" name="label_8">
                 <property name="text">
@@ -188,21 +187,12 @@
                 </property>
                </widget>
               </item>
-              <item row="5" column="1">
-               <widget class="QLineEdit" name="lineEdit_13"/>
-              </item>
               <item row="2" column="0">
                <widget class="QLabel" name="label_11">
                 <property name="text">
                  <string>X Angle</string>
                 </property>
                </widget>
-              </item>
-              <item row="3" column="1">
-               <widget class="QLineEdit" name="lineEdit_9"/>
-              </item>
-              <item row="9" column="1">
-               <widget class="QLineEdit" name="lineEdit_12"/>
               </item>
               <item row="8" column="0">
                <widget class="QLabel" name="label_12">
@@ -218,6 +208,84 @@
                 </property>
                </widget>
               </item>
+              <item row="2" column="1">
+               <widget class="QDoubleSpinBox" name="editXAngle">
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+                </property>
+                <property name="minimum">
+                 <double>-360.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>360.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QDoubleSpinBox" name="editYAngle">
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+                </property>
+                <property name="minimum">
+                 <double>-360.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>360.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QDoubleSpinBox" name="editZAngle">
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+                </property>
+                <property name="minimum">
+                 <double>-360.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>360.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QDoubleSpinBox" name="editXOffset">
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+                </property>
+                <property name="minimum">
+                 <double>-999.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>999.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="8" column="1">
+               <widget class="QDoubleSpinBox" name="editYOffset">
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+                </property>
+                <property name="minimum">
+                 <double>-999.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>999.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="1">
+               <widget class="QDoubleSpinBox" name="editZOffset">
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+                </property>
+                <property name="minimum">
+                 <double>-999.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>999.000000000000000</double>
+                </property>
+               </widget>
+              </item>
              </layout>
             </widget>
             <widget class="QWidget" name="page_2">
@@ -228,9 +296,6 @@
                  <string>Slice Separation</string>
                 </property>
                </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QLineEdit" name="lineEdit_14"/>
               </item>
               <item row="1" column="0" colspan="2">
                <spacer name="verticalSpacer">
@@ -245,8 +310,53 @@
                 </property>
                </spacer>
               </item>
+              <item row="0" column="1">
+               <widget class="QDoubleSpinBox" name="editSliceSeparation">
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+                </property>
+                <property name="maximum">
+                 <double>9999.000000000000000</double>
+                </property>
+               </widget>
+              </item>
              </layout>
             </widget>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Slice Thickness</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Observe Frequency</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>FOV</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>Number of Slices</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="0" colspan="2">
+           <widget class="Line" name="line_2">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
            </widget>
           </item>
          </layout>

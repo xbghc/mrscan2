@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+#include "examtablemodel.h"
+
 namespace Ui {
 class studytab;
 }
@@ -37,6 +39,7 @@ private slots:
 
 private:
     Ui::studytab *ui;
+    ExamTableModel* exams;
 };
 
 #endif // EXAMTAB_H
