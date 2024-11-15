@@ -41,6 +41,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         configs/sequences.json
         configs/exams.json
         examinfodialog.h examinfodialog.cpp examinfodialog.ui
+        scanneradapter.h scanneradapter.cpp
+        fakescanner.h fakescanner.cpp
+        sequenceencoder.h sequenceencoder.cpp
 
 
 
