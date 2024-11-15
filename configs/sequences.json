@@ -1,0 +1,27 @@
+[
+    {
+        "name": "tune",
+        "type": 2,
+        "implement": 1
+    },
+    {
+        "name": "rfopt",
+        "type": 3,
+        "implement": 1
+    },
+    {
+        "name": "shim",
+        "type": 3,
+        "implement": 1
+    },
+    {
+        "name": "t1",
+        "type": 4,
+        "implement": 1
+    },
+    {
+        "name": "t2",
+        "type": 5,
+        "implement": 1
+    }
+]
