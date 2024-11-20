@@ -3,7 +3,9 @@
 
 #include <QWidget>
 
+#include "examhistory.h"
 #include "examtablemodel.h"
+#include "scanneradapter.h"
 
 namespace Ui {
 class studytab;
@@ -16,7 +18,10 @@ class ExamTab : public QWidget
 public:
     explicit ExamTab(QWidget *parent = nullptr);
     ~ExamTab();
-
+    int currentExamIndex();
+signals:
+    void currentExamChanged(QJsonObject patient, QJsonObject exam);
+    void displayExam(ExamHistory history);
 public slots:
     void loadPatients();
 
@@ -37,9 +42,13 @@ private slots:
 
     void on_pushButton_2_clicked();
 
+    void on_scanButton_clicked();
+
 private:
     Ui::studytab *ui;
-    ExamTableModel* exams;
+    ExamTableModel* examModel;
+    ScannerAdapter* adapter;
+    QString getStatus(int row);
 };
 
 #endif // EXAMTAB_H

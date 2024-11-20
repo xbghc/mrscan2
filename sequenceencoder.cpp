@@ -6,23 +6,72 @@ namespace {
 static_assert(sizeof(int32_t) == 4, "uint32_t must be 4 bytes");
 static_assert(sizeof(float) == 4, "float must be 4 bytes");
 
-const unsigned char *encodeT1(QJsonObject &sequence, int &size) {
-    float observeFrequency = sequence["observeFrequency"].toDouble();
-    int32_t noSamples = sequence["noSamples"].toInt();
-    int32_t noViews = sequence["noViews"].toInt();
-    int32_t noViews2 = sequence["noViews2"].toInt();
-    int32_t sliceThickness = sequence["sliceThickness"].toInt();
-    int32_t sliceSeparation = sequence["sliceSeparation"].toInt();
-    int32_t noSlices = sequence["noSlices"].toInt();
-    int32_t fov(sequence["fov"].toInt());
-    float xAngle = sequence["xAngle"].toDouble();
-    float yAngle = sequence["yAngle"].toDouble();
-    float zAngle = sequence["zAngle"].toDouble();
-    float xOffset = sequence["xOffset"].toDouble();
-    float yOffset = sequence["yOffset"].toDouble();
-    float zOffset = sequence["zOffset"].toDouble();
+void setHeader(unsigned char* buf, char type, char implement, int size){
+    buf[0] = 'N';
+    buf[1] = 'M';
+    buf[2] = 'R';
+    buf[3] = 1;
 
-    unsigned char *out = new unsigned char[56];
+    // id will be initialized before write to scanner
+
+    // sequence identify
+    buf[8] = 0;
+    buf[9] = 0;
+    buf[10] = type;
+    buf[11] = implement;
+
+    // size
+    memcpy(buf+12, &size, 4);
+}
+
+unsigned char *encodeTune(QJsonObject &sequence, int&size, char implement=1){
+    size = 16;
+    unsigned char *out = new unsigned char[size];
+    setHeader(out, 2, 1, size-16);
+    return out;
+}
+
+unsigned char *encodeRfopt(QJsonObject &sequence, int&size, char implement=1){
+    size = 24;
+    unsigned char *out = new unsigned char[size];
+    int observeFrequency = sequence["observeFrequency"].toInt();
+    float power = sequence["power"].toDouble();
+    memcpy(out + 16, &observeFrequency, 4);
+    memcpy(out + 20, &power, 4);
+
+    setHeader(out, 3, 1, size-16);
+    return out;
+}
+
+unsigned char *encodeShim(QJsonObject &sequence, int&size, char implement=1){
+    size = 20;
+    unsigned char *out = new unsigned char[size];
+    int observeFrequency = sequence["observeFrequency"].toInt();
+    memcpy(out + 16, &observeFrequency, 4);
+
+    setHeader(out, 4, 1, size-16);
+    return out;
+}
+
+unsigned char *encodeT1(QJsonObject &sequence, int &size, char implement=1) {
+    QJsonObject parameters = sequence["parameters"].toObject();
+    int observeFrequency = parameters["observeFrequency"].toInt();
+    int32_t noSamples = parameters["noSamples"].toInt();
+    int32_t noViews = parameters["noViews"].toInt();
+    int32_t noViews2 = parameters["noViews2"].toInt();
+    int32_t sliceThickness = parameters["sliceThickness"].toInt();
+    int32_t sliceSeparation = parameters["sliceSeparation"].toInt();
+    int32_t noSlices = parameters["noSlices"].toInt();
+    int32_t fov(parameters["fov"].toInt());
+    float xAngle = parameters["xAngle"].toDouble();
+    float yAngle = parameters["yAngle"].toDouble();
+    float zAngle = parameters["zAngle"].toDouble();
+    float xOffset = parameters["xOffset"].toDouble();
+    float yOffset = parameters["yOffset"].toDouble();
+    float zOffset = parameters["zOffset"].toDouble();
+
+    size = 56 + 16;
+    unsigned char *out = new unsigned char[size];
     int i = 0;
     for (const void *const v :
          {static_cast<const void *>(&observeFrequency),
@@ -39,28 +88,29 @@ const unsigned char *encodeT1(QJsonObject &sequence, int &size) {
           static_cast<const void *>(&xOffset),
           static_cast<const void *>(&yOffset),
           static_cast<const void *>(&zOffset)}) {
-        memcpy(out + 4 * i++, v, 4);
+        memcpy(out + 16 + 4 * i++, v, 4);
     }
     size = 56;
+    setHeader(out, 5, 1, size - 16);
     return out;
 }
 
-const unsigned char *encodeT2(QJsonObject &sequence, int &size) {
-    float observeFrequency = sequence["observeFrequency"].toDouble();
-    int32_t noSamples = sequence["noSamples"].toInt();
-    int32_t noViews = sequence["noViews"].toInt();
-    int32_t viewsPerSegment = sequence["viewsPerSegment"].toInt();
-    int32_t noAverages = sequence["noAverages"].toInt();
-    int32_t sliceThickness = sequence["sliceThickness"].toInt();
-    int32_t fov = sequence["fov"].toInt();
-    int32_t noSlices = sequence["noSlices"].toInt();
-    QJsonArray slices = sequence["slices"].toArray();
+unsigned char *encodeT2(QJsonObject &sequence, int &size, char implement=1) {
+    QJsonObject parameters = sequence["parameters"].toObject();
+    int observeFrequency = parameters["observeFrequency"].toInt();
+    int32_t noSamples = parameters["noSamples"].toInt();
+    int32_t noViews = parameters["noViews"].toInt();
+    int32_t viewsPerSegment = parameters["viewsPerSegment"].toInt();
+    int32_t noAverages = parameters["noAverages"].toInt();
+    int32_t sliceThickness = parameters["sliceThickness"].toInt();
+    int32_t fov = parameters["fov"].toInt();
 
-    // 计算总大小：基础参数(32字节) + 每个切片的参数(24字节 * 切片数)
-    size = 32 + 24 * noSlices;
+    int32_t noSlices = parameters["noSlices"].toInt();
+    QJsonArray slices = parameters["slices"].toArray();
+
+    size = 16 + 32 + 24 * noSlices;
     unsigned char* out = new unsigned char[size];
 
-    // 写入基础参数
     int i = 0;
     for (const void* const v : {
              static_cast<const void*>(&observeFrequency),
@@ -72,12 +122,12 @@ const unsigned char *encodeT2(QJsonObject &sequence, int &size) {
              static_cast<const void*>(&fov),
              static_cast<const void*>(&noSlices)
          }) {
-        memcpy(out + 4 * i++, v, 4);
+        memcpy(out + 16 + 4 * i++, v, 4);
     }
 
-    // 获取并写入每个切片的参数
+    // parameters of each slice
     for(i=0;i<slices.size();i++){
-        int j = 32 + 24*i;
+        int j = 16 + 32 + 24*i;
         QJsonObject slice = slices[i].toObject();
 
         float xAngle = slice["xAngle"].toDouble();
@@ -96,20 +146,45 @@ const unsigned char *encodeT2(QJsonObject &sequence, int &size) {
         memcpy(out + j + 20, &zOffset, 4);
     }
 
+    setHeader(out, 6, 1, size - 16);
     return out;
 }
 } // namespace
 
 SequenceEncoder::SequenceEncoder() {}
 
-const unsigned char *SequenceEncoder::encode(QJsonObject &sequence, int &size) {
+unsigned char *SequenceEncoder::encode(QJsonObject &sequence, int &size) {
     QString seq = sequence["sequence"].toString();
+
     if(seq == "t1"){
         return encodeT1(sequence, size);
-    }else if(seq == "t2"){
+    }
+
+    if(seq == "t2"){
         return encodeT2(sequence, size);
+    }
+
+    if(seq == "tune"){
+        return encodeTune(sequence, size);
+    }
+
+    if(seq == "rfopt"){
+        return encodeRfopt(sequence, size);
+    }
+
+    if(seq == "shim"){
+        return encodeShim(sequence, size);
     }
 
     qDebug() << "unkown sequence";
     return nullptr;
+}
+
+unsigned char *SequenceEncoder::encodeStop(int id, int &size)
+{
+    size = 16;
+    unsigned char *out = new unsigned char[size];
+    setHeader(out, 1, 1, size-16);
+    memcpy(out+4, &id, 4);
+    return out;
 }

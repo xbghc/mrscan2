@@ -11,6 +11,13 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    // display images
+    connect(ui->examTab, &ExamTab::displayExam, this, [this](ExamHistory history){
+        for(auto& image:history.images()){
+            ui->imagesWidget->addImage(image);
+        }
+    });
+
     // preference
     connect(ui->actionPreferences, &QAction::triggered, this, [this]() {
         PreferencesDialog dialog(this);

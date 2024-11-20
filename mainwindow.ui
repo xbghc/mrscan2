@@ -47,7 +47,7 @@
          <property name="currentIndex">
           <number>0</number>
          </property>
-         <widget class="ExamTab" name="tab">
+         <widget class="ExamTab" name="examTab">
           <attribute name="title">
            <string>Exam</string>
           </attribute>
@@ -60,7 +60,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QWidget" name="widget_2" native="true">
+        <widget class="ImageGridWidget" name="imagesWidget" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -173,6 +173,12 @@
    <class>ExamTab</class>
    <extends>QWidget</extends>
    <header>examtab.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ImageGridWidget</class>
+   <extends>QWidget</extends>
+   <header>imagegridwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

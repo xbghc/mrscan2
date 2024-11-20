@@ -7,7 +7,8 @@ class SequenceEncoder
 {
 public:
     SequenceEncoder();
-    static const unsigned char *encode(QJsonObject& sequence, int& size);
+    static unsigned char *encode(QJsonObject& sequence, int& size);
+    static unsigned char *encodeStop(int id, int &size);
 };
 
 #endif // SEQUENCEENCODER_H

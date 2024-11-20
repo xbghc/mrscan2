@@ -1,0 +1,23 @@
+[
+    {
+        "name": "tune",
+        "sequence": "tune",
+        "parameters": {
+        }
+    },
+    {
+        "name": "Radio Frequency Optmize",
+        "sequence": "rfopt",
+        "parameters": {
+            "observeFrequency": 0,
+            "power": 10
+        }
+    },
+    {
+        "name": "Shimming",
+        "sequence": "shim",
+        "parameters": {
+            "observeFrequency": 0
+        }
+    }
+]

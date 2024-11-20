@@ -37,7 +37,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         patient.h patient.cpp
         resources.qrc
         patientinfodialog.h patientinfodialog.cpp patientinfodialog.ui
-        sequence.h sequence.cpp
+
         configs/sequences.json
         configs/exams.json
         examinfodialog.h examinfodialog.cpp examinfodialog.ui
@@ -45,6 +45,14 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         fakescanner.h fakescanner.cpp
         sequenceencoder.h sequenceencoder.cpp
         examtablemodel.h examtablemodel.cpp
+        sequencevalidator.h sequencevalidator.cpp
+        configs/tunings.json
+        imagegridwidget.h imagegridwidget.cpp imagegridwidget.ui
+        historytablemodel.h historytablemodel.cpp
+        scannerresponse.h scannerresponse.cpp
+        examhistory.h examhistory.cpp
+
+
 
 
 
