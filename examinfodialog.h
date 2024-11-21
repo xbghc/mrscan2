@@ -32,10 +32,24 @@ private:
     QMap<QAbstractSpinBox*, QString> paramEditKeyMap;
 
     Ui::ExamInfoDialog *ui;
-    QVector<QVector<double>> m_slices;
+    struct SliceData{
+        double m_data[6];
+
+        double& operator[](int index) {
+            assert(index >= 0 && index < 6);
+            return m_data[index];
+        }
+        const double& operator[](int index)const {
+            assert(index >= 0 && index < 6);
+            return m_data[index];
+        }
+    };
+
+    QVector<SliceData> m_slices;
 
     void setSlices(QJsonArray _slices);
     QJsonArray getSlices();
+    void setSliceComboNumbers(int num);
 };
 
 #endif // EXAMINFODIALOG_H

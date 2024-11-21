@@ -44,6 +44,15 @@ ExamInfoDialog::ExamInfoDialog(QWidget *parent)
         {ui->editObserveFrequency, "observeFrequency"},
         {ui->editSliceThickness, "sliceThickness"},
     };
+
+    connect(ui->editNoSlices, &QSpinBox::valueChanged, this, [this](int num){
+        if(m_slices.count() == num){
+            return;
+        }
+
+        m_slices.resize(num);
+        setSliceComboNumbers(num);
+    });
 }
 
 ExamInfoDialog::~ExamInfoDialog()
@@ -100,23 +109,22 @@ void ExamInfoDialog::setSlices(QJsonArray slicesArray)
     if(ui->checkGroupMode->isChecked()){
         qDebug() << "unexpected status: set slices at group mode";
     }
-    ui->comboSlice->clear();
 
-    // trun json to m_slices(QVector<QVector<double>>)
-    for(int i=0;i<slicesArray.count();i++){
-        QVector<double> slice(sliceSpinBoxIndexMap.count());
-        auto _slice = slicesArray[i].toObject();
+    size_t sliceCount = slicesArray.count();
+    if(m_slices.count() != sliceCount){
+        m_slices.resize(slicesArray.count());
+    }
+
+    for(int sliceIndex=0;sliceIndex<slicesArray.count();sliceIndex++){
+        auto slice = slicesArray[sliceIndex].toObject();
+
         for(const auto& [spinbox, jsonKey]:sliceSpinBoxKeyMap.asKeyValueRange()){
             int index = sliceSpinBoxIndexMap[spinbox];
-            slice[index] = _slice[jsonKey].toDouble();
+            m_slices[sliceIndex][index] = slice[jsonKey].toDouble();
         }
-        m_slices.append(slice);
     }
-    // set slice choices in combox
-    for(int i=0;i<m_slices.count();i++){
-        ui->comboSlice->addItem(QString::number(i));
-    }
-    ui->comboSlice->setCurrentIndex(0);
+
+    setSliceComboNumbers(slicesArray.count());
 }
 
 QJsonArray ExamInfoDialog::getSlices()
@@ -131,6 +139,28 @@ QJsonArray ExamInfoDialog::getSlices()
         out.append(item);
     }
     return out;
+}
+
+void ExamInfoDialog::setSliceComboNumbers(int n)
+{
+    if (n < 0) return;
+
+
+    const QSignalBlocker blocker(ui->comboSlice);
+    ui->comboSlice->clear();
+
+    QStringList numbers;
+    numbers.reserve(n);
+
+    for(int i = 0; i < n; i++) {
+        numbers << QString::number(i);
+    }
+
+    ui->comboSlice->addItems(numbers);
+
+    if (n > 0) {
+        ui->comboSlice->setCurrentIndex(0);
+    }
 }
 
 void ExamInfoDialog::on_comboSlice_currentIndexChanged(int index)
