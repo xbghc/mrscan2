@@ -18,7 +18,7 @@ public:
     static ScannerResponse fromBytes(const QByteArray& byteArray);
     static ScannerResponse fromFile(QString path);
 
-    QList<QImage> getImages();
+    const QList<QImage> getImages() const;
 
     ScannerResponse() = default;
     ScannerResponse(int _id, char _version, DataType _dataType, const QByteArray _data);

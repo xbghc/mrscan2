@@ -85,7 +85,7 @@ const QByteArray ScannerResponse::getRawData()
     return m_data;
 }
 
-QList<QImage> ScannerResponse::getImages()
+const QList<QImage> ScannerResponse::getImages() const
 {
     if(dataType == DataType::DebugImages){
         QList<QImage> images;

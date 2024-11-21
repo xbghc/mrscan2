@@ -11,11 +11,11 @@
 class ExamHistory
 {
 public:
-    ExamHistory();
-    ExamHistory(QJsonObject request, const QByteArray& responseData);
-    ExamHistory(QJsonObject request, ScannerResponse response);
+    explicit ExamHistory();
+    explicit ExamHistory(QJsonObject request, const QByteArray& responseData);
+    explicit ExamHistory(QJsonObject request, ScannerResponse response);
 
-    QList<QImage> images();
+    const QList<QImage> images() const;
 
     void setPatient(const int patientId);
     void setRequest(QJsonObject request);

@@ -3,11 +3,6 @@
 #include "examinfodialog.h"
 #include "ui_examinfodialog.h"
 
-namespace{
-void setNumber(QLabel* label, QJsonObject& exam, QString key){
-    label->setText(QString::number(exam[key].toInt()));
-}
-}
 
 ExamInfoDialog::ExamInfoDialog(QWidget *parent)
     : QDialog(parent)
@@ -15,8 +10,40 @@ ExamInfoDialog::ExamInfoDialog(QWidget *parent)
 {
     ui->setupUi(this);
 
-    disconnect(ui->buttonBox, &QDialogButtonBox::accepted,
-               this, &QDialog::accept);
+    sliceSpinBoxKeyMap = {
+        {ui->editXAngle, "xAngle"},
+        {ui->editYAngle, "yAngle"},
+        {ui->editZAngle, "zAngle"},
+        {ui->editXOffset, "xOffset"},
+        {ui->editYOffset, "yOffset"},
+        {ui->editZOffset, "zOffset"}
+    };
+
+    sliceSpinBoxIndexMap = {
+        {ui->editXAngle, 0},
+        {ui->editYAngle, 1},
+        {ui->editZAngle, 2},
+        {ui->editXOffset, 3},
+        {ui->editYOffset, 4},
+        {ui->editZOffset, 5},
+    };
+
+    for(const auto&[spinbox, keyIndex]:sliceSpinBoxIndexMap.asKeyValueRange()){
+        connect(spinbox, &QDoubleSpinBox::valueChanged, this, [this, spinbox, keyIndex](){
+            int index = ui->comboSlice->currentIndex();
+            m_slices[index][keyIndex] = spinbox->value();
+        });
+    }
+
+    paramEditKeyMap = {
+        {ui->editFOV, "fov"},
+        {ui->editNoAverages, "noAverages"},
+        {ui->editNoSlices, "noSlices"},
+        {ui->editNoSamples, "noSamples"},
+        {ui->editNoViews, "noViews"},
+        {ui->editObserveFrequency, "observeFrequency"},
+        {ui->editSliceThickness, "sliceThickness"},
+    };
 }
 
 ExamInfoDialog::~ExamInfoDialog()
@@ -24,16 +51,18 @@ ExamInfoDialog::~ExamInfoDialog()
     delete ui;
 }
 
-void ExamInfoDialog::setData(QJsonObject &exam)
+void ExamInfoDialog::setData(const QJsonObject &exam)
 {
     QJsonObject parameters = exam["parameters"].toObject();
-    ui->editFOV->setValue(parameters["fov"].toDouble());
-    ui->editNoAverages->setValue(parameters["noAverages"].toInt());
-    ui->editNoSlices->setValue(parameters["noSlices"].toInt());
-    ui->editNoSamples->setValue(parameters["noSamples"].toInt());
-    ui->editNoViews->setValue(parameters["noViews"].toInt());
-    ui->editObserveFrequency->setValue(parameters["observeFrequency"].toDouble());
-    ui->editSliceThickness->setValue(parameters["sliceThickness"].toDouble());
+    for(const auto&[abstractSpinBox, jsonKey]:paramEditKeyMap.asKeyValueRange()){
+        if(QSpinBox* spinBox = qobject_cast<QSpinBox*>(abstractSpinBox)){
+            spinBox->setValue(parameters[jsonKey].toInt());
+        }else if(QDoubleSpinBox* doubleSpinBox = qobject_cast<QDoubleSpinBox*>(abstractSpinBox)){
+            doubleSpinBox->setValue(parameters[jsonKey].toDouble());
+        }else{
+            qDebug() << "set data error";
+        }
+    }
 
     if(parameters.contains("slices")){
         ui->checkGroupMode->setChecked(false);
@@ -47,40 +76,61 @@ void ExamInfoDialog::setData(QJsonObject &exam)
 QJsonObject ExamInfoDialog::getParameters()
 {
     QJsonObject out;
+    for(const auto&[abstractSpinBox, jsonKey]:paramEditKeyMap.asKeyValueRange()){
+        if(QSpinBox* spinBox = qobject_cast<QSpinBox*>(abstractSpinBox)){
+            out.insert(jsonKey, spinBox->value());
+        }else if(QDoubleSpinBox* doubleSpinBox = qobject_cast<QDoubleSpinBox*>(abstractSpinBox)){
+            out.insert(jsonKey, doubleSpinBox->value());
+        }else{
+            qDebug() << "get data error";
+        }
+    }
 
-    out.insert("observeFrequency", ui->editObserveFrequency->value());
-    out.insert("sliceThickness", ui->editSliceThickness->value());
-    out.insert("fov", ui->editFOV->value());
-    out.insert("noSamples", ui->editNoSamples->value());
-    out.insert("noAverages", ui->editNoAverages->value());
-    out.insert("noSlices", ui->editNoSlices->value());
-
-    if(slices.empty()){
+    if(m_slices.empty()){
         out.insert("sliceSeparation", ui->editSliceSeparation->value());
     }else{
-        out.insert("slices", slices);
+        out.insert("slices", getSlices());
     }
 
     return out;
 }
 
-void ExamInfoDialog::setSlices(QJsonArray _slices)
+void ExamInfoDialog::setSlices(QJsonArray slicesArray)
 {
     if(ui->checkGroupMode->isChecked()){
         qDebug() << "unexpected status: set slices at group mode";
     }
-
-    slices = _slices;
     ui->comboSlice->clear();
-    for(int i=0;i<slices.count();i++){
+
+    // trun json to m_slices(QVector<QVector<double>>)
+    for(int i=0;i<slicesArray.count();i++){
+        QVector<double> slice(sliceSpinBoxIndexMap.count());
+        auto _slice = slicesArray[i].toObject();
+        for(const auto& [spinbox, jsonKey]:sliceSpinBoxKeyMap.asKeyValueRange()){
+            int index = sliceSpinBoxIndexMap[spinbox];
+            slice[index] = _slice[jsonKey].toDouble();
+        }
+        m_slices.append(slice);
+    }
+    // set slice choices in combox
+    for(int i=0;i<m_slices.count();i++){
         ui->comboSlice->addItem(QString::number(i));
     }
     ui->comboSlice->setCurrentIndex(0);
 }
 
-bool ExamInfoDialog::validate()
+QJsonArray ExamInfoDialog::getSlices()
 {
-    return true;
+    QJsonArray out;
+    for(const auto& slice:m_slices){
+        QJsonObject item;
+        for(const auto&[spinbox, jsonKey]:sliceSpinBoxKeyMap.asKeyValueRange()){
+            int index = sliceSpinBoxIndexMap[spinbox];
+            item[jsonKey] = slice[index];
+        }
+        out.append(item);
+    }
+    return out;
 }
 
 void ExamInfoDialog::on_comboSlice_currentIndexChanged(int index)
@@ -89,13 +139,10 @@ void ExamInfoDialog::on_comboSlice_currentIndexChanged(int index)
         qDebug() << "unexpected status: comboBox changed at group mode";
     }
 
-    QJsonObject curSlice = slices[index].toObject();
-    ui->editXOffset->setValue(curSlice["xOffset"].toDouble());
-    ui->editXAngle->setValue(curSlice["xAngle"].toDouble());
-    ui->editYOffset->setValue(curSlice["yOffset"].toDouble());
-    ui->editYAngle->setValue(curSlice["yAngle"].toDouble());
-    ui->editZOffset->setValue(curSlice["zOffset"].toDouble());
-    ui->editZAngle->setValue(curSlice["zAngle"].toDouble());
+    const auto& curSlice = m_slices[index];
+    for(const auto& [spinbox, i]:sliceSpinBoxIndexMap.asKeyValueRange()){
+        spinbox->setValue(curSlice[i]);
+    }
 }
 
 void ExamInfoDialog::on_checkGroupMode_stateChanged(int arg1)
@@ -112,68 +159,3 @@ void ExamInfoDialog::on_checkGroupMode_stateChanged(int arg1)
 
     qDebug() << "unexpected group mode checkbox status: " << arg1;
 }
-
-
-void ExamInfoDialog::on_buttonBox_accepted()
-{
-    if(!validate()){
-        QMessageBox::warning(this, "invalid", "invalid parameters!");
-    }
-
-    accept();
-}
-
-
-void ExamInfoDialog::on_editXAngle_valueChanged(double arg1)
-{
-    int curIndex = ui->comboSlice->currentIndex();
-    QJsonObject _slice = slices[curIndex].toObject();
-    _slice["xAngle"] = arg1;
-    slices.replace(curIndex, _slice);
-}
-
-
-void ExamInfoDialog::on_editYAngle_valueChanged(double arg1)
-{
-    int curIndex = ui->comboSlice->currentIndex();
-    QJsonObject _slice = slices[curIndex].toObject();
-    _slice["yAngle"] = arg1;
-    slices.replace(curIndex, _slice);
-}
-
-
-void ExamInfoDialog::on_editZAngle_valueChanged(double arg1)
-{
-    int curIndex = ui->comboSlice->currentIndex();
-    QJsonObject _slice = slices[curIndex].toObject();
-    _slice["zAngle"] = arg1;
-    slices.replace(curIndex, _slice);
-}
-
-
-void ExamInfoDialog::on_editXOffset_valueChanged(double arg1)
-{
-    int curIndex = ui->comboSlice->currentIndex();
-    QJsonObject _slice = slices[curIndex].toObject();
-    _slice["xOffset"] = arg1;
-    slices.replace(curIndex, _slice);
-}
-
-
-void ExamInfoDialog::on_editYOffset_valueChanged(double arg1)
-{
-    int curIndex = ui->comboSlice->currentIndex();
-    QJsonObject _slice = slices[curIndex].toObject();
-    _slice["yOffset"] = arg1;
-    slices.replace(curIndex, _slice);
-}
-
-
-void ExamInfoDialog::on_editZOffset_valueChanged(double arg1)
-{
-    int curIndex = ui->comboSlice->currentIndex();
-    QJsonObject _slice = slices[curIndex].toObject();
-    _slice["zOffset"] = arg1;
-    slices.replace(curIndex, _slice);
-}
-

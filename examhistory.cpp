@@ -14,7 +14,7 @@ ExamHistory::ExamHistory(QJsonObject request, const QByteArray& response)
 m_response = ScannerResponse::fromBytes(response);
 }
 
-QList<QImage> ExamHistory::images()
+const QList<QImage> ExamHistory::images() const
 {
     return m_response.getImages();
 }
