@@ -52,6 +52,7 @@ ScannerAdapter::ScannerAdapter(QObject *parent)
 ScannerAdapter::~ScannerAdapter() {
     shouldStop = true;
     if(listenThread != nullptr){
+        qDebug() << "wait";
         listenThread->wait();
     }
 }
@@ -62,6 +63,9 @@ int ScannerAdapter::open() {
         listenThread = QThread::create([this]() { this->listen(); });
         connect(listenThread, &QThread::finished, listenThread,
                 &QThread::deleteLater);
+        connect(listenThread, &QThread::destroyed, this, [this]() {
+            listenThread = nullptr;
+        });
         listenThread->start();
     }
     return status;
@@ -117,7 +121,7 @@ void ScannerAdapter::listen() {
         QThread::msleep(200);
 
         int dataSize;
-        while(!listenerReadHeader(headerBuf, dataSize)){
+        if(!listenerReadHeader(headerBuf, dataSize)){
             continue;
         }
 
