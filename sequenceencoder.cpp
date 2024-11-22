@@ -90,7 +90,6 @@ unsigned char *encodeT1(QJsonObject &sequence, int &size, char implement=1) {
           static_cast<const void *>(&zOffset)}) {
         memcpy(out + 16 + 4 * i++, v, 4);
     }
-    size = 56;
     setHeader(out, 5, 1, size - 16);
     return out;
 }

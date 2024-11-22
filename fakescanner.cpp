@@ -130,7 +130,7 @@ int FakeScanner::t1(int id, int implement, int dataSize, const unsigned char* da
     }
 
     if(dataSize != 56){
-        qDebug() << "dataSize should be 56";
+        qDebug() << "dataSize should be 56, get: " << dataSize;
         return -1;
     }
 
