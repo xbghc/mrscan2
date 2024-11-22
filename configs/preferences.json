@@ -1,0 +1,11 @@
+{
+    "style": {
+        "fontFamily": "Microsoft YaHei",
+        "fontSize": 12,
+        "theme": "System"
+    },
+    "image": {
+        "column": 3,
+        "size": 200
+    }
+}

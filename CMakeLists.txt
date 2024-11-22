@@ -52,6 +52,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         scannerresponse.h scannerresponse.cpp
         examhistory.h examhistory.cpp
         qcustomplot.cpp qcustomplot.h
+        configs/preferences.json
+        custompreferences.h custompreferences.cpp
 
 
 

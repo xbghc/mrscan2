@@ -56,8 +56,8 @@
        <property name="frameShadow">
         <enum>QFrame::Shadow::Raised</enum>
        </property>
-       <widget class="PreferenceStyle" name="stackedWidgetPage1"/>
-       <widget class="PreferenceImage" name="page"/>
+       <widget class="PreferenceStyle" name="styleTab"/>
+       <widget class="PreferenceImage" name="imageTab"/>
       </widget>
      </item>
     </layout>
@@ -76,6 +76,13 @@
         </size>
        </property>
       </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>Save As Default</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QDialogButtonBox" name="buttonBox">

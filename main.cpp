@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "custompreferences.h"
 
 #include <QApplication>
 #include <QLocale>
@@ -17,6 +18,9 @@ int main(int argc, char *argv[])
             break;
         }
     }
+
+    CustomPreferences::setupApp();
+
     MainWindow w;
     w.show();
     return a.exec();

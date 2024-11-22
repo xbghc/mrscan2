@@ -1,6 +1,7 @@
 #ifndef PREFERENCESTYLE_H
 #define PREFERENCESTYLE_H
 
+#include <QJsonObject>
 #include <QWidget>
 
 namespace Ui {
@@ -15,8 +16,15 @@ public:
     explicit PreferenceStyle(QWidget *parent = nullptr);
     ~PreferenceStyle();
 
+    void set(QJsonObject style);
+    QJsonObject get();
+
 private:
     Ui::PreferenceStyle *ui;
+
+    void setFontSize(int size);
+    void setFontFamily(QString family);
+    void setTheme(QString theme);
 };
 
 #endif // PREFERENCESTYLE_H

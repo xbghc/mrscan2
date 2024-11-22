@@ -12,3 +12,16 @@ PreferenceImage::~PreferenceImage()
 {
     delete ui;
 }
+
+void PreferenceImage::set(QJsonObject imagePreferences)
+{
+
+}
+
+QJsonObject PreferenceImage::get()
+{
+    QJsonObject imagePreferences;
+
+
+    return imagePreferences;
+}
