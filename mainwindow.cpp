@@ -17,6 +17,11 @@ MainWindow::MainWindow(QWidget *parent)
             ui->imagesWidget->addImage(image);
         }
     });
+    connect(ui->historyTab, &HistoryTab::currentHistoryChanged, this, [this](ExamHistory history){
+        for(auto& image:history.images()){
+            ui->imagesWidget->addImage(image);
+        }
+    });
 
     // scanned
     connect(ui->examTab, &ExamTab::scanned, this, [this](){

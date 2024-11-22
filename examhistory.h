@@ -4,6 +4,7 @@
 #include "scannerresponse.h"
 
 #include <QByteArray>
+#include <QDir>
 #include <QImage>
 #include <QJsonObject>
 #include <QList>
@@ -12,6 +13,7 @@ class ExamHistory
 {
 public:
     explicit ExamHistory();
+    explicit ExamHistory(int patientId, int examId);
     explicit ExamHistory(QJsonObject request, const QByteArray& responseData);
     explicit ExamHistory(QJsonObject request, ScannerResponse response);
 

@@ -1,12 +1,36 @@
-#include <QDir>
 #include <QJsonDocument>
 
 #include "examhistory.h"
 
 namespace{
+QDir getExamDir(int patientId, int examId){
+    return QDir(QString("./patients/%1/%2").arg(patientId).arg(examId));
+}
 }
 
 ExamHistory::ExamHistory() {}
+
+ExamHistory::ExamHistory(int patientId, int examId)
+{
+    QDir dir = getExamDir(patientId, examId);
+    if(!dir.exists()){
+        qDebug() << "exam dir not exists";
+        return;
+    }
+
+    QFile requestFile(dir.filePath("request.json"));
+    if(!requestFile.open(QIODevice::ReadOnly)){
+        qDebug() << "open " << requestFile.fileName() << " failed";
+    }
+    m_request = QJsonDocument::fromJson(requestFile.readAll()).object();
+
+    QFile responseFile(dir.filePath("response.dat"));
+    if(!responseFile.open(QIODevice::ReadOnly)){
+        qDebug() << "open " << responseFile.fileName() << " failed";
+    }
+
+    m_response = ScannerResponse::fromBytes(responseFile.readAll());
+}
 
 ExamHistory::ExamHistory(QJsonObject request, const QByteArray& response)
     : m_request(request)
@@ -41,8 +65,7 @@ bool ExamHistory::save()
         return false;
     }
     int requestId = m_request["id"].toInt();
-    QString dirpath = QString("./patients/%1/%2").arg(m_patientId).arg(requestId);
-    QDir dir(dirpath);
+    QDir dir = getExamDir(m_patientId, requestId);
     if(!dir.exists() && !dir.mkpath(".")){
         return false;
     }

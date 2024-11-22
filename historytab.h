@@ -3,6 +3,7 @@
 
 #include <QWidget>
 
+#include "examhistory.h"
 #include "historytablemodel.h"
 
 namespace Ui {
@@ -18,6 +19,8 @@ public:
     ~HistoryTab();
 
     void loadHistoryList();
+signals:
+    void currentHistoryChanged(ExamHistory history);
 private:
     Ui::HistoryTab *ui;
 

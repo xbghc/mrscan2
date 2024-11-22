@@ -10,11 +10,18 @@ HistoryTab::HistoryTab(QWidget *parent)
     m_model = new HistoryTableModel;
     ui->tableView->setModel(m_model);
     ui->tableView->resizeColumnsToContents();
+
+    connect(ui->tableView->selectionModel(), &QItemSelectionModel::currentRowChanged,
+            this, [this](const QModelIndex &current, const QModelIndex &previous){
+        int curRow = current.row();
+        emit currentHistoryChanged(m_model->getHistoryObj(curRow));
+    });
 }
 
 HistoryTab::~HistoryTab()
 {
     delete ui;
+    delete m_model;
 }
 
 void HistoryTab::loadHistoryList()

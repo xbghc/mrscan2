@@ -69,7 +69,7 @@ void HistoryTableModel::loadHistoryList()
     m_historyList.clear();
 
     QDir rootDir("./patients");
-    rootDir.setFilter(QDir::Dirs);
+    rootDir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
     for(const auto& patientId:rootDir.entryList()){
         QDir patientDir(rootDir.filePath(patientId));
         if(!patientDir.exists()){
@@ -77,7 +77,7 @@ void HistoryTableModel::loadHistoryList()
             continue;
         }
 
-        patientDir.setFilter(QDir::Dirs);
+        patientDir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
         for(const auto &examId:patientDir.entryList()){
             QString examDirPath = patientDir.filePath(examId);
             QFileInfo dirInfo(examDirPath);
@@ -86,4 +86,16 @@ void HistoryTableModel::loadHistoryList()
         }
     }
     endResetModel();
+}
+
+ExamHistory HistoryTableModel::getHistoryObj(int row)
+{
+    if(row < 0 || row > m_historyList.count()){
+        qDebug() << "index out of history list";
+        return ExamHistory();
+    }
+
+    int patientId = m_historyList[row].patientId;
+    int examId = m_historyList[row].examId;
+    return ExamHistory(patientId, examId);
 }
