@@ -65,6 +65,7 @@ QVariant HistoryTableModel::data(const QModelIndex &index, int role) const
 
 void HistoryTableModel::loadHistoryList()
 {
+    beginResetModel();
     m_historyList.clear();
 
     QDir rootDir("./patients");
@@ -84,4 +85,5 @@ void HistoryTableModel::loadHistoryList()
             m_historyList.append(HistoryItem(examId.toInt(), patientId.toInt(), createTime));
         }
     }
+    endResetModel();
 }

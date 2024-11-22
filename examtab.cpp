@@ -68,6 +68,9 @@ ExamTab::ExamTab(QWidget *parent) : QWidget(parent), ui(new Ui::studytab) {
 
         // 3. invoke the function to visualize the result
         emit displayExam(history);
+
+        // 4. update history list
+        emit scanned();
     });
 }
 

@@ -22,6 +22,7 @@ public:
 signals:
     void currentExamChanged(QJsonObject patient, QJsonObject exam);
     void displayExam(ExamHistory history);
+    void scanned();
 public slots:
     void loadPatients();
 

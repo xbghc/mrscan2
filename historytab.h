@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+#include "historytablemodel.h"
+
 namespace Ui {
 class HistoryTab;
 }
@@ -15,8 +17,11 @@ public:
     explicit HistoryTab(QWidget *parent = nullptr);
     ~HistoryTab();
 
+    void loadHistoryList();
 private:
     Ui::HistoryTab *ui;
+
+    HistoryTableModel* m_model;
 };
 
 #endif // HISTORYTAB_H

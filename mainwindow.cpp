@@ -18,6 +18,11 @@ MainWindow::MainWindow(QWidget *parent)
         }
     });
 
+    // scanned
+    connect(ui->examTab, &ExamTab::scanned, this, [this](){
+        ui->historyTab->loadHistoryList();
+    });
+
     // preference
     connect(ui->actionPreferences, &QAction::triggered, this, [this]() {
         PreferencesDialog dialog(this);

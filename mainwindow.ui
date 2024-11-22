@@ -52,7 +52,7 @@
            <string>Exam</string>
           </attribute>
          </widget>
-         <widget class="HistoryTab" name="tab_2">
+         <widget class="HistoryTab" name="historyTab">
           <attribute name="title">
            <string>History</string>
           </attribute>

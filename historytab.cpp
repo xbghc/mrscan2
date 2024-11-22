@@ -1,6 +1,5 @@
 #include "historytab.h"
 #include "ui_historytab.h"
-#include "historytablemodel.h"
 
 HistoryTab::HistoryTab(QWidget *parent)
     : QWidget(parent)
@@ -8,11 +7,17 @@ HistoryTab::HistoryTab(QWidget *parent)
 {
     ui->setupUi(this);
 
-    ui->tableView->setModel(new HistoryTableModel);
+    m_model = new HistoryTableModel;
+    ui->tableView->setModel(m_model);
     ui->tableView->resizeColumnsToContents();
 }
 
 HistoryTab::~HistoryTab()
 {
     delete ui;
+}
+
+void HistoryTab::loadHistoryList()
+{
+    m_model->loadHistoryList();
 }
