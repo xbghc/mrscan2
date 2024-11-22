@@ -24,9 +24,21 @@ public:
     void clear();
     void setImageSize(const QSize& size);
 
+private slots:
+    void on_pushButton_clicked();
+
+    void on_pushButton_2_clicked();
+
+    void on_sizeBox_valueChanged(int arg1);
+
+    void on_spinBox_2_valueChanged(int arg1);
+
+    void on_pushButton_7_clicked();
+
 private:
     void updateLayout();
     void loadImagesFromFile(QJsonObject patient, QJsonObject exam);
+    void rotate(int angle);
 
     Ui::ImageGridWidget *ui;
     std::vector<QLabel*> imageLabels;

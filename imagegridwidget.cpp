@@ -75,3 +75,53 @@ void ImageGridWidget::updateLayout() {
     }
 }
 
+void ImageGridWidget::rotate(int angle)
+{
+    if(angle<0 || angle>360){
+        qDebug() << "invalid angle: " << angle;
+        return;
+    }
+
+    for(size_t i=0;i<imageLabels.size();i++){
+        QPixmap originalPixmap = imageLabels[i]->pixmap();
+        QImage image = originalPixmap.toImage();
+
+        QImage rotatedImage = image.transformed(QTransform().rotate(90));
+
+        imageLabels[i]->setPixmap(QPixmap::fromImage(rotatedImage));
+    }
+}
+
+
+void ImageGridWidget::on_pushButton_clicked()
+{
+    rotate(90);
+}
+
+
+void ImageGridWidget::on_pushButton_2_clicked()
+{
+    rotate(270);
+}
+
+
+void ImageGridWidget::on_sizeBox_valueChanged(int num)
+{
+    setImageSize(QSize(num,num));
+}
+
+
+void ImageGridWidget::on_spinBox_2_valueChanged(int num)
+{
+    setImagesPerRow(num);
+}
+
+
+void ImageGridWidget::on_pushButton_7_clicked()
+{
+    auto container = ui->scrollArea;
+    int totalWidth = container->width();
+    int width = totalWidth / imagesPerRow - 15;
+    ui->sizeBox->setValue(width);
+}
+
