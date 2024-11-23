@@ -5,11 +5,13 @@
 #include <QStyleHints>
 #include <QWidget>
 
+#include "abstractpreferencestab.h"
+
 namespace Ui {
 class PreferenceStyle;
 }
 
-class PreferenceStyle : public QWidget
+class PreferenceStyle : public AbstractPreferencesTab
 {
     Q_OBJECT
 
@@ -17,8 +19,8 @@ public:
     explicit PreferenceStyle(QWidget *parent = nullptr);
     ~PreferenceStyle();
 
-    void set(QJsonObject style);
-    QJsonObject get();
+    void set(QJsonObject style) override;
+    QJsonObject get() override;
 
 private:
     Ui::PreferenceStyle *ui;

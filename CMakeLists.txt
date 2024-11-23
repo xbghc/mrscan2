@@ -54,6 +54,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         qcustomplot.cpp qcustomplot.h
         configs/preferences.json
         custompreferences.h custompreferences.cpp
+        abstractpreferencestab.h abstractpreferencestab.cpp
 
 
 

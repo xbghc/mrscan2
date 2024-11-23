@@ -26,18 +26,21 @@ void PreferencesDialog::on_listWidget_currentRowChanged(int currentRow)
 
 void PreferencesDialog::set(QJsonObject preferences)
 {
-    auto style = preferences["style"].toObject();
-    ui->styleTab->set(style);
-
-    auto imagePreferences = preferences["image"].toObject();
-    ui->imageTab->set(imagePreferences);
+    for(int i=0;i<ui->stackedWidget->count();i++){
+        auto tab = qobject_cast<AbstractPreferencesTab*>(ui->stackedWidget->widget(i));
+        auto jsonKey = ui->listWidget->item(i)->text().toLower();
+        tab->set(preferences[jsonKey].toObject());
+    }
 }
 
 QJsonObject PreferencesDialog::get()
 {
     QJsonObject preferences;
-    preferences["style"] = ui->styleTab->get();
-    preferences["image"] = ui->imageTab->get();
+    for(int i=0;i<ui->stackedWidget->count();i++){
+        auto tab = qobject_cast<AbstractPreferencesTab*>(ui->stackedWidget->widget(i));
+        auto jsonKey = ui->listWidget->item(i)->text().toLower();
+        preferences[jsonKey] = tab->get();
+    }
     return preferences;
 }
 

@@ -2,7 +2,7 @@
 #include "ui_preferenceimage.h"
 
 PreferenceImage::PreferenceImage(QWidget *parent)
-    : QWidget(parent)
+    : AbstractPreferencesTab(parent)
     , ui(new Ui::PreferenceImage)
 {
     ui->setupUi(this);

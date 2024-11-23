@@ -7,7 +7,7 @@
 
 
 PreferenceStyle::PreferenceStyle(QWidget *parent)
-    : QWidget(parent)
+    : AbstractPreferencesTab(parent)
     , ui(new Ui::PreferenceStyle)
 {
     ui->setupUi(this);
