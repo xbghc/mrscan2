@@ -5,6 +5,7 @@
 #include <QStringListModel>
 #include <QStyleFactory>
 
+
 PreferenceStyle::PreferenceStyle(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::PreferenceStyle)
@@ -17,6 +18,7 @@ PreferenceStyle::PreferenceStyle(QWidget *parent)
 
     QStringList themes = QStyleFactory::keys();
     ui->inputTheme->setModel(new QStringListModel(themes));
+
 }
 
 PreferenceStyle::~PreferenceStyle()
@@ -33,6 +35,8 @@ void PreferenceStyle::set(QJsonObject style)
     setFontSize(font.pointSize());
 
     setTheme(QApplication::style()->name());
+
+    setColorScheme(QGuiApplication::styleHints()->colorScheme());
 }
 
 QJsonObject PreferenceStyle::get()
@@ -41,6 +45,7 @@ QJsonObject PreferenceStyle::get()
     style["fontSize"] = ui->inputFontSize->value();
     style["fontFamily"] = ui->inputFontFamily->currentText();
     style["theme"] = ui->inputTheme->currentText();
+    style["colorScheme"] = ui->inputColorScheme->currentText();
 
     return style;
 }
@@ -67,5 +72,23 @@ void PreferenceStyle::setTheme(QString theme)
         ui->inputTheme->setCurrentIndex(index);
     }else{
         qDebug() << "unknown theme: " << theme;
+    }
+}
+
+void PreferenceStyle::setColorScheme(Qt::ColorScheme color)
+{
+    if(color == Qt::ColorScheme::Unknown){
+        ui->inputColorScheme->setCurrentIndex(0);
+        return;
+    }
+
+    if(color == Qt::ColorScheme::Light){
+        ui->inputColorScheme->setCurrentIndex(1);
+        return;
+    }
+
+    if(color == Qt::ColorScheme::Dark){
+        ui->inputColorScheme->setCurrentIndex(2);
+        return;
     }
 }

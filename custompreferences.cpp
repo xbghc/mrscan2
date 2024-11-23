@@ -4,6 +4,7 @@
 #include <QFont>
 #include <QJsonDocument>
 #include <QStyleFactory>
+#include <QStyleHints>
 
 const QString CustomPreferences::filePath = "./configs/preferences.json";
 
@@ -60,6 +61,19 @@ void CustomPreferences::setupAppStyle(QJsonObject style)
             QApplication::setStyle(QStyleFactory::create(theme));
         }else{
             qDebug() << "unkown theme: " << theme;
+        }
+    }
+
+    if(style.contains("colorScheme")){
+        auto colorScheme = style["colorScheme"].toString();
+        if(colorScheme == "System"){
+            QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Unknown);
+        }else if(colorScheme == "Light"){
+            QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
+        }else if(colorScheme == "Dark"){
+            QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);
+        }else{
+            qDebug() << "unknown color scheme: " << colorScheme;
         }
     }
 }

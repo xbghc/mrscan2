@@ -2,6 +2,7 @@
 #define PREFERENCESTYLE_H
 
 #include <QJsonObject>
+#include <QStyleHints>
 #include <QWidget>
 
 namespace Ui {
@@ -25,6 +26,7 @@ private:
     void setFontSize(int size);
     void setFontFamily(QString family);
     void setTheme(QString theme);
+    void setColorScheme(Qt::ColorScheme color);
 };
 
 #endif // PREFERENCESTYLE_H
