@@ -1,12 +1,12 @@
-#ifndef FAKESCANNER_H
-#define FAKESCANNER_H
+#ifndef VIRTUALSCANNER_H
+#define VIRTUALSCANNER_H
 
 #include <vector>
 
-class FakeScanner
+class VirtualScanner
 {
 public:
-    FakeScanner();
+    VirtualScanner();
     int open();
     int close();
     int write(const unsigned char* buf, int len);
@@ -28,4 +28,4 @@ private:
     int t2(int id, int implement, int dataSize, const unsigned char* data);
 };
 
-#endif // FAKESCANNER_H
+#endif // VIRTUALSCANNER_H

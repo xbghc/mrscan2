@@ -1,5 +1,5 @@
 #include "scanneradapter.h"
-#include "fakescanner.h"
+#include "virtualscanner.h"
 #include "sequenceencoder.h"
 #include "sequencevalidator.h"
 

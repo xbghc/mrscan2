@@ -42,7 +42,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         configs/exams.json
         examinfodialog.h examinfodialog.cpp examinfodialog.ui
         scanneradapter.h scanneradapter.cpp
-        fakescanner.h fakescanner.cpp
+        virtualscanner.h virtualscanner.cpp
         sequenceencoder.h sequenceencoder.cpp
         examtablemodel.h examtablemodel.cpp
         sequencevalidator.h sequencevalidator.cpp

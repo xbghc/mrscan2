@@ -1,4 +1,4 @@
-#include "fakescanner.h"
+#include "virtualscanner.h"
 
 #include <cstring>
 #include <QDebug>
@@ -71,7 +71,7 @@ const unsigned char* mockImagesResult(int id, int count, int width, int height){
 
 }
 
-int FakeScanner::stop(int id, int implement){
+int VirtualScanner::stop(int id, int implement){
     if(scanningId == -1){
         qDebug() << "nothing is scanning";
         return -1;
@@ -92,7 +92,7 @@ int FakeScanner::stop(int id, int implement){
     return id;
 }
 
-int FakeScanner::tune(int id, int implement, int dataSize, const unsigned char* data){
+int VirtualScanner::tune(int id, int implement, int dataSize, const unsigned char* data){
     // todo
     if(implement != 1){
         qDebug() << "unsupport implement stop";
@@ -104,21 +104,21 @@ int FakeScanner::tune(int id, int implement, int dataSize, const unsigned char* 
     return id;
 }
 
-int FakeScanner::rfopt(int id, int implement, int dataSize, const unsigned char* data){
+int VirtualScanner::rfopt(int id, int implement, int dataSize, const unsigned char* data){
     // todo
 
     scanningId = id;
     return id;
 }
 
-int FakeScanner::shimming(int id, int implement, int dataSize, const unsigned char* data){
+int VirtualScanner::shimming(int id, int implement, int dataSize, const unsigned char* data){
     // todo
 
     scanningId = id;
     return id;
 }
 
-int FakeScanner::t1(int id, int implement, int dataSize, const unsigned char* data){
+int VirtualScanner::t1(int id, int implement, int dataSize, const unsigned char* data){
     if(!content.empty()){
         qDebug() << "can't strat new exam when data has not been completely read";
         return -1;
@@ -148,7 +148,7 @@ int FakeScanner::t1(int id, int implement, int dataSize, const unsigned char* da
     return id;
 }
 
-int FakeScanner::t2(int id, int implement, int dataSize, const unsigned char* data){
+int VirtualScanner::t2(int id, int implement, int dataSize, const unsigned char* data){
     // todo
     if(!content.empty()){
         qDebug() << "can't strat new exam when data has not been completely read";
@@ -175,21 +175,21 @@ int FakeScanner::t2(int id, int implement, int dataSize, const unsigned char* da
 }
 
 
-FakeScanner::FakeScanner() {
+VirtualScanner::VirtualScanner() {
     scanningId = -1;
 }
 
-int FakeScanner::open()
+int VirtualScanner::open()
 {
     return 0;
 }
 
-int FakeScanner::close()
+int VirtualScanner::close()
 {
     return 0;
 }
 
-int FakeScanner::write(const unsigned char *buf, int len)
+int VirtualScanner::write(const unsigned char *buf, int len)
 {
     QJsonObject header = decodeHeader(buf);
 
@@ -232,11 +232,11 @@ int FakeScanner::write(const unsigned char *buf, int len)
         break;
     }
 
-    qDebug() << "fake device get unknown sequence type";
+    qDebug() << "virtual device get unknown sequence type";
     return -1;
 }
 
-int FakeScanner::read(unsigned char *buf, int len)
+int VirtualScanner::read(unsigned char *buf, int len)
 {
     if(buf == nullptr || len <= 0){
         qDebug() << "buf is nullptr or len <= 0";

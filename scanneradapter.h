@@ -8,7 +8,7 @@
 #include <QThread>
 #include <QObject>
 
-#include "fakescanner.h"
+#include "virtualscanner.h"
 
 class ScannerAdapter: public QObject
 {
@@ -33,7 +33,7 @@ private:
     bool ensureBufferCapacity(size_t required);
 
     QThread* listenThread;
-    FakeScanner scanner;
+    VirtualScanner scanner;
     bool shouldStop=false;
     std::unique_ptr<uint8_t[]> responseBuf;
     size_t responseBufCapacity = kDefaultBufferSize;
