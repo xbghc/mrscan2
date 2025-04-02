@@ -52,7 +52,6 @@ ScannerAdapter::ScannerAdapter(QObject *parent)
 ScannerAdapter::~ScannerAdapter() {
     shouldStop = true;
     if(listenThread != nullptr){
-        qDebug() << "wait";
         listenThread->wait();
     }
 }

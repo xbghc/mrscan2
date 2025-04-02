@@ -13,14 +13,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     // display images
     connect(ui->examTab, &ExamTab::displayExam, this, [this](ExamHistory history){
-        for(auto& image:history.images()){
-            ui->imagesWidget->addImage(image);
-        }
+
     });
     connect(ui->historyTab, &HistoryTab::currentHistoryChanged, this, [this](ExamHistory history){
-        for(auto& image:history.images()){
-            ui->imagesWidget->addImage(image);
-        }
+
     });
 
     // scanned

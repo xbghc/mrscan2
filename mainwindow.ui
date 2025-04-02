@@ -60,7 +60,7 @@
         </widget>
        </item>
        <item>
-        <widget class="ImageGridWidget" name="imagesWidget" native="true">
+        <widget class="QImagesWidget" name="imagesWidget" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -80,7 +80,7 @@
      <x>0</x>
      <y>0</y>
      <width>1200</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSettings">
@@ -176,9 +176,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>ImageGridWidget</class>
+   <class>QImagesWidget</class>
    <extends>QWidget</extends>
-   <header>imagegridwidget.h</header>
+   <header>qimageswidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
