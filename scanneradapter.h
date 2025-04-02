@@ -18,25 +18,15 @@ public:
     ~ScannerAdapter();
     bool isConnected;
     int open();
-    int scan(QJsonObject &sequence);
+    void scan(QJsonObject &sequence);
     int stop(int id);
     int close();
 signals:
+    void onScanStarted(int id);
     void scanned(QByteArray response);
     void stoped(int id);
 private:
-    const static int32_t kResponseHeaderSize=16;
-    static const size_t kDefaultBufferSize = 32 * 1024 * 1024; // 32MB
-
-    void listen();
-    bool listenerReadHeader(unsigned char* headerBuf, int& dataSize);
-    bool ensureBufferCapacity(size_t required);
-
-    QThread* listenThread;
     VirtualScanner scanner;
-    bool shouldStop=false;
-    std::unique_ptr<uint8_t[]> responseBuf;
-    size_t responseBufCapacity = kDefaultBufferSize;
 };
 
 #endif // SCANNERADAPTER_H

@@ -1,11 +1,13 @@
 #ifndef VIRTUALSCANNER_H
 #define VIRTUALSCANNER_H
 
+#include <cstddef>
 
 class VirtualScanner
 {
 public:
     VirtualScanner();
+    ~VirtualScanner();
     int open();
     int close();
     int write(const unsigned char* buf, size_t len);

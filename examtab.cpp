@@ -23,9 +23,6 @@ ExamTab::ExamTab(QWidget *parent) : QWidget(parent), ui(new Ui::studytab) {
     ui->tableView->resizeColumnsToContents();
     ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
-    adapter = new ScannerAdapter;
-    adapter->open();
-
     // selected index changed
     connect(ui->tableView->selectionModel(), &QItemSelectionModel::currentRowChanged,
             this, [this](const QModelIndex &current, const QModelIndex &previous){
@@ -43,43 +40,12 @@ ExamTab::ExamTab(QWidget *parent) : QWidget(parent), ui(new Ui::studytab) {
         ui->scanButton->setEnabled(enable);
     });
 
-    // scanned
-    connect(adapter, &ScannerAdapter::scanned, this, [this](QByteArray responseBytes){
-        // 1. save to file in ./patients/patientID/scanID/
-        int scanId;
-        ScannerResponse response = ScannerResponse::fromBytes(responseBytes);
-        if(response.getId() != examModel->getScanningId()){
-            qDebug() << "scan id unmatched, expeted: " << examModel->getScanningId() << "response: " << response.getId();
-            return;
-        }
-
-        int patientId = this->ui->comboBox->currentData().toInt();
-
-        QJsonObject request = examModel->getExamData(examModel->getScanningRow());
-        ExamHistory history(request, responseBytes);
-        history.setPatient(patientId);
-        history.save();
-
-        // 2. change status and enable components
-        this->ui->comboBox->setEnabled(true);
-        this->ui->scanButton->setText("start");
-        this->ui->scanButton->setEnabled(false);
-        examModel->examDone();
-
-        // 3. invoke the function to visualize the result
-        emit displayExam(history);
-
-        // 4. update history list
-        emit scanned();
-    });
 }
 
 ExamTab::~ExamTab() {
     delete ui;
     delete examModel;
 
-    adapter->close();
-    delete adapter;
 }
 
 int ExamTab::currentExamIndex()
@@ -94,6 +60,41 @@ void ExamTab::loadPatients() {
         QString label = QString::number(p.getId()) + "-" + p.getName();
         ui->comboBox->addItem(label, p.getId());
     }
+}
+
+void ExamTab::onScanStarted(int id)
+{
+    int curRow = currentExamIndex();
+    if(id < 0){
+        qDebug() << "scan failed";
+        return;
+    }
+
+    ui->scanButton->setText(tr("stop"));
+    ui->comboBox->setEnabled(false);
+    examModel->examStarted(curRow, id);
+}
+
+void ExamTab::onScanEnd(QByteArray response) // 以后会移除参数，Exam和数据无关
+{
+    int patientId = this->ui->comboBox->currentData().toInt();
+
+    QJsonObject request = examModel->getExamData(examModel->getScanningRow());
+    ExamHistory history(request, response);
+    history.setPatient(patientId);
+    history.save();
+
+    emit displayExam(history);
+
+    emit fileSaved();
+
+    // TODO 将上方所有内容移动到mainWindow中
+
+    this->ui->comboBox->setEnabled(true);
+    this->ui->scanButton->setText("start");
+    this->ui->scanButton->setEnabled(false);
+    examModel->examDone();
+
 }
 
 void ExamTab::on_toolButton_3_clicked() {
@@ -223,7 +224,8 @@ void ExamTab::on_scanButton_clicked()
     if(examModel->getScanningRow() == curRow){
         int id = examModel->getScanningId();
 
-        adapter->stop(id);
+        emit onStopButtonClicked(id);
+
         int stopid = examModel->examStoped();
         if(stopid != id){
             qDebug() << "exam model stop a wrong id, expected id: " << id << ", actual id: " << stopid;
@@ -236,15 +238,8 @@ void ExamTab::on_scanButton_clicked()
 
     // start
     QJsonObject exam = examModel->getExamData(curRow);
-    int id = adapter->scan(exam);
-    if(id < 0){
-        qDebug() << "scan failed";
-        return;
-    }
+    emit onStartButtonClicked(exam);
 
-    ui->scanButton->setText(tr("stop"));
-    ui->comboBox->setEnabled(false);
-    examModel->examStarted(curRow, id);
 }
 
 QString ExamTab::getStatus(int row)

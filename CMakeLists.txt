@@ -52,7 +52,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         configs/tunings.json
 
         historytablemodel.h historytablemodel.cpp
-        scannerresponse.h scannerresponse.cpp
+
         examhistory.h examhistory.cpp
         qcustomplot.cpp qcustomplot.h
         configs/preferences.json
@@ -61,6 +61,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
         QImagesWidget/components/qcheckcombobox.cpp QImagesWidget/components/qcheckcombobox.h QImagesWidget/components/qcheckcombobox.qrc QImagesWidget/components/qcheckcombobox.svg
         QImagesWidget/contentwidget.cpp QImagesWidget/contentwidget.h QImagesWidget/icons.qrc QImagesWidget/mrdparser.cpp QImagesWidget/mrdparser.h QImagesWidget/qimageswidget.cpp QImagesWidget/qimageswidget.h QImagesWidget/qimageswidget.ui QImagesWidget/utils.cpp QImagesWidget/utils.h
+
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET mrscan2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

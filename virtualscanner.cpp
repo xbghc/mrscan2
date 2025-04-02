@@ -5,6 +5,13 @@
 VirtualScanner::VirtualScanner() {
 }
 
+VirtualScanner::~VirtualScanner()
+{
+    if(_result!=nullptr){
+        delete[] _result;
+    }
+}
+
 int VirtualScanner::open()
 {
     return 0;

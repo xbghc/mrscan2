@@ -5,7 +5,6 @@
 
 #include "examhistory.h"
 #include "examtablemodel.h"
-#include "scanneradapter.h"
 
 namespace Ui {
 class studytab;
@@ -19,12 +18,18 @@ public:
     explicit ExamTab(QWidget *parent = nullptr);
     ~ExamTab();
     int currentExamIndex();
+
 signals:
     void currentExamChanged(QJsonObject patient, QJsonObject exam);
     void displayExam(ExamHistory history);
-    void scanned();
+    void fileSaved(); // TODO 移除
+    void onStartButtonClicked(QJsonObject& exam); // TODO 移除参数
+    void onStopButtonClicked(int id); // TODO 移除参数
+
 public slots:
     void loadPatients();
+    void onScanStarted(int id);
+    void onScanEnd(QByteArray responseBytes);
 
 private slots:
     void on_toolButton_3_clicked();
@@ -48,7 +53,7 @@ private slots:
 private:
     Ui::studytab *ui;
     ExamTableModel* examModel;
-    ScannerAdapter* adapter;
+
     QString getStatus(int row);
 };
 

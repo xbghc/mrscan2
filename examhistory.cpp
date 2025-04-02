@@ -1,6 +1,7 @@
 #include <QJsonDocument>
 
 #include "examhistory.h"
+#include "QImagesWidget/mrdparser.h"
 
 namespace{
 QDir getExamDir(int patientId, int examId){
@@ -29,18 +30,19 @@ ExamHistory::ExamHistory(int patientId, int examId)
         qDebug() << "open " << responseFile.fileName() << " failed";
     }
 
-    m_response = ScannerResponse::fromBytes(responseFile.readAll());
+    m_response = responseFile.readAll();
 }
 
 ExamHistory::ExamHistory(QJsonObject request, const QByteArray& response)
     : m_request(request)
 {
-m_response = ScannerResponse::fromBytes(response);
+    m_response = response;
 }
 
 const QList<QImage> ExamHistory::images() const
 {
-    return m_response.getImages();
+    auto mrd = MrdParser::parse(m_response);
+    return MrdParser::reconImages(mrd);
 }
 
 void ExamHistory::setPatient(const int patientId)
@@ -53,7 +55,7 @@ void ExamHistory::setRequest(QJsonObject request)
     m_request = request;
 }
 
-void ExamHistory::setResponse(ScannerResponse response)
+void ExamHistory::setResponse(const QByteArray& response)
 {
     m_response = response;
 }
@@ -82,7 +84,7 @@ bool ExamHistory::save()
     if(!responseFile.open(QIODevice::WriteOnly)){
         return false;
     }
-    responseFile.write(m_response.getRawData());
+    responseFile.write(m_response);
 
     return true;
 }

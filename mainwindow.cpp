@@ -11,6 +11,14 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    adapter = new ScannerAdapter;
+    adapter->open();
+
+    connect(adapter, &ScannerAdapter::onScanStarted, ui->examTab, &ExamTab::onScanStarted);
+    connect(adapter, &ScannerAdapter::scanned, ui->examTab, &ExamTab::onScanEnd);
+    connect(ui->examTab, &ExamTab::onStopButtonClicked, adapter, &ScannerAdapter::stop);
+    connect(ui->examTab, &ExamTab::onStartButtonClicked, adapter, &ScannerAdapter::scan);
+
     // display images
     connect(ui->examTab, &ExamTab::displayExam, this, [this](ExamHistory history){
 
@@ -20,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     // scanned
-    connect(ui->examTab, &ExamTab::scanned, this, [this](){
+    connect(ui->examTab, &ExamTab::fileSaved, this, [this](){
         ui->historyTab->loadHistoryList();
     });
 
@@ -52,4 +60,6 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+    adapter->close();
+    delete adapter;
 }
