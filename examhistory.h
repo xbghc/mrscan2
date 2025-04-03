@@ -21,11 +21,15 @@ public:
     void setRequest(QJsonObject request);
     void setResponse(const QByteArray& response);
 
+    QString requestPath();
+    QString responsePath();
     bool save();
 private:
     int m_patientId=-1;
     QJsonObject m_request;
     QByteArray m_response;
+
+    QString dirPath();
 };
 
 #endif // EXAMHISTORY_H

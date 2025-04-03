@@ -22,8 +22,8 @@ public:
     int stop(int id);
     int close();
 signals:
-    void onScanStarted(int id);
-    void scanned(QByteArray response);
+    void scanStarted(int id);
+    void scanEnded(QByteArray response);
     void stoped(int id);
 private:
     VirtualScanner scanner;

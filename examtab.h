@@ -21,8 +21,7 @@ public:
 
 signals:
     void currentExamChanged(QJsonObject patient, QJsonObject exam);
-    void displayExam(ExamHistory history);
-    void fileSaved(); // TODO 移除
+    void fileSaved(ExamHistory history); // TODO 移除
     void onStartButtonClicked(QJsonObject& exam); // TODO 移除参数
     void onStopButtonClicked(int id); // TODO 移除参数
 

@@ -60,31 +60,53 @@ void ExamHistory::setResponse(const QByteArray& response)
     m_response = response;
 }
 
+
+
+QString ExamHistory::requestPath()
+{
+    auto dir_path = dirPath();
+    auto dir = QDir(dir_path);
+    return dir.absoluteFilePath("request.json");
+}
+
+QString ExamHistory::responsePath()
+{
+    auto dir_path = dirPath();
+    auto dir = QDir(dir_path);
+    return dir.absoluteFilePath("response#1.dat");
+}
+
 bool ExamHistory::save()
 {
-    if(m_patientId == -1){
-        qDebug() << "history model: patient id is not set";
-        return false;
-    }
-    int requestId = m_request["id"].toInt();
-    QDir dir = getExamDir(m_patientId, requestId);
-    if(!dir.exists() && !dir.mkpath(".")){
-        return false;
-    }
-
-    QFile requestFile(dir.filePath("request.json"));
+    QFile requestFile(requestPath());
     if(!requestFile.open(QIODevice::WriteOnly)){
-        return false;
+        return "";
     }
     QJsonDocument doc(m_request);
     requestFile.write(doc.toJson(QJsonDocument::Indented));
     requestFile.close();
 
-    QFile responseFile(dir.filePath("response.dat"));
+    QFile responseFile(responsePath());
     if(!responseFile.open(QIODevice::WriteOnly)){
         return false;
     }
     responseFile.write(m_response);
 
     return true;
+}
+
+QString ExamHistory::dirPath()
+{
+    if(m_patientId == -1){
+        qDebug() << "history model: patient id is not set";
+        return "";
+    }
+
+    int requestId = m_request["id"].toInt();
+    QDir dir = getExamDir(m_patientId, requestId);
+    if(!dir.exists() && !dir.mkpath(".")){
+        return "";
+    }
+
+    return dir.absolutePath();
 }

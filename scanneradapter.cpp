@@ -84,7 +84,7 @@ void ScannerAdapter::scan(QJsonObject &sequence) {
         return;
     }
 
-    emit onScanStarted(id);
+    emit scanStarted(id);
 
     int dataSize = scanner.read(nullptr, 0);
     QByteArray buffer;
@@ -99,7 +99,7 @@ void ScannerAdapter::scan(QJsonObject &sequence) {
         }
         totalReceived += curReceived;
     }
-    emit scanned(buffer);
+    emit scanEnded(buffer);
 }
 
 int ScannerAdapter::stop(int id)

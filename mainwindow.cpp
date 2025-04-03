@@ -14,14 +14,14 @@ MainWindow::MainWindow(QWidget *parent)
     adapter = new ScannerAdapter;
     adapter->open();
 
-    connect(adapter, &ScannerAdapter::onScanStarted, ui->examTab, &ExamTab::onScanStarted);
-    connect(adapter, &ScannerAdapter::scanned, ui->examTab, &ExamTab::onScanEnd);
+    connect(adapter, &ScannerAdapter::scanStarted, ui->examTab, &ExamTab::onScanStarted);
+    connect(adapter, &ScannerAdapter::scanEnded, ui->examTab, &ExamTab::onScanEnd);
     connect(ui->examTab, &ExamTab::onStopButtonClicked, adapter, &ScannerAdapter::stop);
     connect(ui->examTab, &ExamTab::onStartButtonClicked, adapter, &ScannerAdapter::scan);
 
     // display images
-    connect(ui->examTab, &ExamTab::displayExam, this, [this](ExamHistory history){
-
+    connect(ui->examTab, &ExamTab::fileSaved, this, [this](ExamHistory history){
+        ui->imagesWidget->loadMrdFiles(history.responsePath());
     });
     connect(ui->historyTab, &HistoryTab::currentHistoryChanged, this, [this](ExamHistory history){
 

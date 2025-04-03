@@ -84,9 +84,7 @@ void ExamTab::onScanEnd(QByteArray response) // 以后会移除参数，Exam和�
     history.setPatient(patientId);
     history.save();
 
-    emit displayExam(history);
-
-    emit fileSaved();
+    emit fileSaved(history);
 
     // TODO 将上方所有内容移动到mainWindow中
 
