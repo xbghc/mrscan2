@@ -31,23 +31,23 @@ public slots:
     void onScanEnd(QByteArray responseBytes);
 
 private slots:
-    void on_toolButton_3_clicked();
+    void openEditPatientDialog();
 
-    void on_toolButton_clicked();
+    void openNewPatientDialog();
 
-    void on_toolButton_2_clicked();
+    void deletePatient();
 
-    void on_pushButton_3_clicked();
+    void shiftUp();
 
-    void on_pushButton_4_clicked();
+    void shiftDown();
 
-    void on_pushButton_5_clicked();
+    void removeExam();
 
-    void on_pushButton_6_clicked();
+    void copyExam();
 
-    void on_pushButton_2_clicked();
+    void editExam();
 
-    void on_scanButton_clicked();
+    void onScanButtonClicked();
 
 private:
     Ui::studytab *ui;

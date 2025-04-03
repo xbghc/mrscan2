@@ -40,12 +40,21 @@ ExamTab::ExamTab(QWidget *parent) : QWidget(parent), ui(new Ui::studytab) {
         ui->scanButton->setEnabled(enable);
     });
 
+    connect(ui->editPatientButton, &QToolButton::clicked, this, &ExamTab::openEditPatientDialog);
+    connect(ui->newPatientButton, &QToolButton::clicked, this, &ExamTab::openNewPatientDialog);
+    connect(ui->deletePatientButton, &QToolButton::clicked, this, &ExamTab::deletePatient);
+
+    connect(ui->shiftUpButton, &QPushButton::clicked, this, &ExamTab::shiftUp);
+    connect(ui->shiftDownButton, &QPushButton::clicked, this, &ExamTab::shiftDown);
+    connect(ui->removeExamButton, &QPushButton::clicked, this, &ExamTab::removeExam);
+    connect(ui->copyButton, &QPushButton::clicked, this, &ExamTab::copyExam);
+    connect(ui->editExamButton, &QPushButton::clicked, this, &ExamTab::editExam);
+    connect(ui->scanButton, &QPushButton::clicked, this, &ExamTab::onScanButtonClicked);
 }
 
 ExamTab::~ExamTab() {
     delete ui;
     delete examModel;
-
 }
 
 int ExamTab::currentExamIndex()
@@ -95,19 +104,8 @@ void ExamTab::onScanEnd(QByteArray response) // 以后会移除参数，Exam和�
 
 }
 
-void ExamTab::on_toolButton_3_clicked() {
-    // button clicked to create new patient
-    PatientInfoDialog dialog(this);
-    dialog.setPatient(nullptr);
-    dialog.setModal(true);
-
-    connect(&dialog, &PatientInfoDialog::accepted, this,
-            [this]() { loadPatients(); });
-    dialog.exec();
-}
-
-void ExamTab::on_toolButton_clicked() {
-    // button clicked to edit patient
+void ExamTab::openEditPatientDialog()
+{
     PatientInfoDialog dialog(this);
     int id = ui->comboBox->currentData().toInt();
     Patient patient = Patient::getPatient(id);
@@ -119,7 +117,18 @@ void ExamTab::on_toolButton_clicked() {
     dialog.exec();
 }
 
-void ExamTab::on_toolButton_2_clicked() {
+void ExamTab::openNewPatientDialog() {
+    // button clicked to create new patient
+    PatientInfoDialog dialog(this);
+    dialog.setPatient(nullptr);
+    dialog.setModal(true);
+
+    connect(&dialog, &PatientInfoDialog::accepted, this,
+            [this]() { loadPatients(); });
+    dialog.exec();
+}
+
+void ExamTab::deletePatient() {
     // button clicked to remove patient
     if (QMessageBox::question(this, "delete?", "confim to delete?",
                               QMessageBox::Yes | QMessageBox::No) ==
@@ -131,8 +140,7 @@ void ExamTab::on_toolButton_2_clicked() {
     }
 }
 
-// up button clicked
-void ExamTab::on_pushButton_3_clicked() {
+void ExamTab::shiftUp() {
 
     int curRow = currentExamIndex();
     if (curRow == -1) {
@@ -149,7 +157,7 @@ void ExamTab::on_pushButton_3_clicked() {
 }
 
 // down button clicked
-void ExamTab::on_pushButton_4_clicked() {
+void ExamTab::shiftDown() {
 
     int curRow = currentExamIndex();
     if (curRow == -1) {
@@ -165,8 +173,7 @@ void ExamTab::on_pushButton_4_clicked() {
     examModel->swapRows(curRow, curRow + 1);
 }
 
-// remove button clicked
-void ExamTab::on_pushButton_5_clicked() {
+void ExamTab::removeExam() {
 
     int curRow = currentExamIndex();
     if (curRow == -1) {
@@ -178,7 +185,7 @@ void ExamTab::on_pushButton_5_clicked() {
 }
 
 // copy button clicked
-void ExamTab::on_pushButton_6_clicked() {
+void ExamTab::copyExam() {
     int curRow = currentExamIndex();
     if (curRow == -1) {
         qDebug() << "no exam is selected";
@@ -189,7 +196,7 @@ void ExamTab::on_pushButton_6_clicked() {
 }
 
 // edit button clicked
-void ExamTab::on_pushButton_2_clicked() {
+void ExamTab::editExam() {
 
     int curRow = currentExamIndex();
     if (curRow == -1) {
@@ -210,7 +217,7 @@ void ExamTab::on_pushButton_2_clicked() {
 }
 
 // start/stop button clicked
-void ExamTab::on_scanButton_clicked()
+void ExamTab::onScanButtonClicked()
 {
     int curRow = currentExamIndex();
     if (curRow == -1) {
@@ -237,7 +244,6 @@ void ExamTab::on_scanButton_clicked()
     // start
     QJsonObject exam = examModel->getExamData(curRow);
     emit onStartButtonClicked(exam);
-
 }
 
 QString ExamTab::getStatus(int row)

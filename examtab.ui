@@ -34,7 +34,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QToolButton" name="toolButton_3">
+      <widget class="QToolButton" name="newPatientButton">
        <property name="text">
         <string/>
        </property>
@@ -44,7 +44,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QToolButton" name="toolButton">
+      <widget class="QToolButton" name="editPatientButton">
        <property name="text">
         <string/>
        </property>
@@ -54,7 +54,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QToolButton" name="toolButton_2">
+      <widget class="QToolButton" name="deletePatientButton">
        <property name="text">
         <string>...</string>
        </property>
@@ -93,35 +93,35 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_2">
+        <widget class="QPushButton" name="editExamButton">
          <property name="text">
           <string>Edit</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_3">
+        <widget class="QPushButton" name="shiftUpButton">
          <property name="text">
           <string>↑</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_4">
+        <widget class="QPushButton" name="shiftDownButton">
          <property name="text">
           <string>↓</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_5">
+        <widget class="QPushButton" name="removeExamButton">
          <property name="text">
           <string>Remove</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_6">
+        <widget class="QPushButton" name="copyButton">
          <property name="text">
           <string>Copy</string>
          </property>
