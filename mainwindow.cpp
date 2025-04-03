@@ -11,6 +11,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    // TODO 不知道为什么默认高度会出错，需要手动调整
+    this->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    this->resize(QSize(this->width(), this->height()));
+
     adapter = new ScannerAdapter;
     adapter->open();
 
