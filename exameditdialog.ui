@@ -364,13 +364,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QWidget" name="contentWidget" native="true">
-        <layout class="QVBoxLayout" name="verticalLayout_2">
-         <item>
-          <widget class="QWidget" name="widget_3" native="true"/>
-         </item>
-        </layout>
-       </widget>
+       <widget class="ScoutWidget" name="contentWidget" native="true"/>
       </item>
      </layout>
     </widget>
@@ -404,6 +398,14 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ScoutWidget</class>
+   <extends>QWidget</extends>
+   <header>scoutwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

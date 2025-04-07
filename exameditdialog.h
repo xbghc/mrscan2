@@ -21,6 +21,7 @@ public:
     ~ExamEditDialog();
     void setData(const QJsonObject& exam);
     QJsonObject getParameters();
+    void setScoutImages(QList<QImage> images, double fov, QList<QVector3D> angles, QList<QVector3D> offsets);
 
 private slots:
     void on_comboSlice_currentIndexChanged(int index);

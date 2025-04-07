@@ -10,6 +10,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMessageBox>
+#include <QVector3D>
 
 namespace {} // namespace
 
@@ -210,6 +211,18 @@ void ExamTab::editExam() {
         QJsonObject parameters = dlg.getParameters();
         this->examModel->setExamParams(curRow, parameters);
     });
+
+    // TODO examModel的代码可读性太差，调整好之后，判断是否扫描scout，如果是，调用dlg.setScoutImages
+    // 下面是mock的数据
+    QList<QImage> images;
+    QList<QVector3D> angles;
+    QList<QVector3D> offsets;
+    for(int i=0;i<9;i++){
+        images.push_back(QImage(256, 256, QImage::Format_Grayscale8));
+        angles.push_back(QVector3D(90, 0, 0));
+        offsets.push_back(QVector3D(0, -40+10*i, 0));
+    }
+    dlg.setScoutImages(images, 256, angles, offsets);
 
     dlg.setModal(true);
     dlg.exec();

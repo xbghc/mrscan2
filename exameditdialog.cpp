@@ -53,6 +53,8 @@ ExamEditDialog::ExamEditDialog(QWidget *parent)
         m_slices.resize(num);
         setSliceComboNumbers(num);
     });
+
+    // TODO 判断是否已经进行了scout扫描，如果有，设置图片
 }
 
 ExamEditDialog::~ExamEditDialog()
@@ -102,6 +104,15 @@ QJsonObject ExamEditDialog::getParameters()
     }
 
     return out;
+}
+
+void ExamEditDialog::setScoutImages(QList<QImage> images, double fov, QList<QVector3D> angles, QList<QVector3D> offsets)
+{
+    ui->contentWidget->setScoutImages(images, fov, angles, offsets);
+
+    // TODO 测试用
+    ui->contentWidget->preview(256, 10, 10, 5, {0, 0, 0}, {0, 0, 0});
+    // ui->contentWidget->preview(10, 5, {{90, 0, 0}, {90, 0, 0}}, {{0, 0, 0}, {-20, 0, 0}, {10, 0, 0}, {-10, 0, 0}, {20, 0, 0}});
 }
 
 void ExamEditDialog::setSlices(QJsonArray slicesArray)
