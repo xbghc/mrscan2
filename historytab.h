@@ -4,7 +4,7 @@
 #include <QWidget>
 
 #include "examhistory.h"
-#include "historytablemodel.h"
+#include "historymodel.h"
 
 namespace Ui {
 class HistoryTab;
@@ -19,12 +19,13 @@ public:
     ~HistoryTab();
 
     void loadHistoryList();
+
 signals:
-    void currentHistoryChanged(ExamHistory history);
+    void currentIndexChanged(ExamHistory history);
 private:
     Ui::HistoryTab *ui;
 
-    HistoryTableModel* m_model;
+    HistoryModel* m_model;
 };
 
 #endif // HISTORYTAB_H

@@ -1,5 +1,5 @@
 #include "examtab.h"
-#include "examinfodialog.h"
+#include "exameditdialog.h"
 #include "patient.h"
 #include "patientinfodialog.h"
 #include "ui_examtab.h"
@@ -18,7 +18,7 @@ ExamTab::ExamTab(QWidget *parent) : QWidget(parent), ui(new Ui::studytab) {
 
     loadPatients();
 
-    examModel = new ExamTableModel;
+    examModel = new ExamModel;
     ui->tableView->setModel(examModel);
     ui->tableView->resizeColumnsToContents();
     ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
@@ -197,23 +197,22 @@ void ExamTab::copyExam() {
 
 // edit button clicked
 void ExamTab::editExam() {
-
     int curRow = currentExamIndex();
     if (curRow == -1) {
         qDebug() << "no exam is selected";
         return;
     }
 
-    ExamInfoDialog dialog(this);
+    ExamEditDialog dlg(this);
     QJsonObject data = examModel->getExamData(curRow);
-    dialog.setData(data);
-    connect(&dialog, &QDialog::accepted, this, [&]() {
-        QJsonObject parameters = dialog.getParameters();
+    dlg.setData(data);
+    connect(&dlg, &QDialog::accepted, this, [&]() {
+        QJsonObject parameters = dlg.getParameters();
         this->examModel->setExamParams(curRow, parameters);
     });
 
-    dialog.setModal(true);
-    dialog.exec();
+    dlg.setModal(true);
+    dlg.exec();
 }
 
 // start/stop button clicked

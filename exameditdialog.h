@@ -1,5 +1,5 @@
-#ifndef EXAMINFODIALOG_H
-#define EXAMINFODIALOG_H
+#ifndef EXAMEDITDIALOG_H
+#define EXAMEDITDIALOG_H
 
 #include <QDoubleSpinBox>
 #include <QDialog>
@@ -12,13 +12,13 @@ namespace Ui {
 class ExamInfoDialog;
 }
 
-class ExamInfoDialog : public QDialog
+class ExamEditDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit ExamInfoDialog(QWidget *parent = nullptr);
-    ~ExamInfoDialog();
+    explicit ExamEditDialog(QWidget *parent = nullptr);
+    ~ExamEditDialog();
     void setData(const QJsonObject& exam);
     QJsonObject getParameters();
 
@@ -52,4 +52,4 @@ private:
     void setSliceComboNumbers(int num);
 };
 
-#endif // EXAMINFODIALOG_H
+#endif // EXAMEDITDIALOG_H

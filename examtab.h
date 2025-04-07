@@ -4,7 +4,7 @@
 #include <QWidget>
 
 #include "examhistory.h"
-#include "examtablemodel.h"
+#include "exammodel.h"
 
 namespace Ui {
 class studytab;
@@ -32,26 +32,18 @@ public slots:
 
 private slots:
     void openEditPatientDialog();
-
     void openNewPatientDialog();
-
     void deletePatient();
-
     void shiftUp();
-
     void shiftDown();
-
     void removeExam();
-
     void copyExam();
-
     void editExam();
-
     void onScanButtonClicked();
 
 private:
     Ui::studytab *ui;
-    ExamTableModel* examModel;
+    ExamModel* examModel;
 
     QString getStatus(int row);
 };

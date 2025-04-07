@@ -1,4 +1,4 @@
-#include "examtablemodel.h"
+#include "exammodel.h"
 
 #include <QDir>
 #include <QFile>
@@ -27,7 +27,7 @@ QJsonArray loadExams() {
 }
 } // namespace
 
-ExamTableModel::ExamTableModel(QObject *parent)
+ExamModel::ExamModel(QObject *parent)
     : QAbstractTableModel{parent}, timerThread(nullptr) {
     m_data = loadExams();
     for (int i = 0; i < m_data.size(); i++) {
@@ -38,7 +38,7 @@ ExamTableModel::ExamTableModel(QObject *parent)
     m_headers << "Sequence" << "Time" << "Status";
 }
 
-ExamTableModel::~ExamTableModel() {
+ExamModel::~ExamModel() {
     if (timerThread == nullptr) {
         return;
     }
@@ -50,17 +50,17 @@ ExamTableModel::~ExamTableModel() {
     delete timerThread;
 }
 
-int ExamTableModel::rowCount(const QModelIndex &parent) const {
+int ExamModel::rowCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
     return m_data.size();
 }
 
-int ExamTableModel::columnCount(const QModelIndex &parent) const {
+int ExamModel::columnCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
     return m_headers.size();
 }
 
-QVariant ExamTableModel::data(const QModelIndex &index, int role) const {
+QVariant ExamModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid() || role != Qt::DisplayRole)
         return QVariant();
 
@@ -81,7 +81,7 @@ QVariant ExamTableModel::data(const QModelIndex &index, int role) const {
     }
 }
 
-QVariant ExamTableModel::headerData(int section, Qt::Orientation orientation,
+QVariant ExamModel::headerData(int section, Qt::Orientation orientation,
                                     int role) const {
     if (role == Qt::DisplayRole && orientation == Qt::Horizontal) {
         return m_headers[section];
@@ -89,7 +89,7 @@ QVariant ExamTableModel::headerData(int section, Qt::Orientation orientation,
     return QVariant();
 }
 
-void ExamTableModel::swapRows(int row1, int row2) {
+void ExamModel::swapRows(int row1, int row2) {
     if (row1 < 0 || row1 >= m_data.size() || row2 < 0 || row2 >= m_data.size() ||
         row1 == row2)
         return;
@@ -107,7 +107,7 @@ void ExamTableModel::swapRows(int row1, int row2) {
     endMoveRows();
 }
 
-void ExamTableModel::copyRow(int row) {
+void ExamModel::copyRow(int row) {
     if (row < 0 || row >= m_data.size())
         return;
 
@@ -118,7 +118,7 @@ void ExamTableModel::copyRow(int row) {
     endInsertRows();
 }
 
-void ExamTableModel::removeRow(int row) {
+void ExamModel::removeRow(int row) {
     if (row < 0 || row >= m_data.size())
         return;
 
@@ -129,7 +129,7 @@ void ExamTableModel::removeRow(int row) {
     endRemoveRows();
 }
 
-QJsonObject ExamTableModel::getExamData(int row) {
+QJsonObject ExamModel::getExamData(int row) {
     if (row < 0 || row >= m_data.size()) {
         qDebug() << "getExamData: wrong row: " << row;
         return QJsonObject();
@@ -138,7 +138,7 @@ QJsonObject ExamTableModel::getExamData(int row) {
     return m_data[row].toObject();
 }
 
-void ExamTableModel::setExamParams(int row, QJsonObject parameters) {
+void ExamModel::setExamParams(int row, QJsonObject parameters) {
     if (row < 0 || row >= m_data.size()) {
         qDebug() << "getExamData: wrong row: " << row;
         return;
@@ -154,7 +154,7 @@ void ExamTableModel::setExamParams(int row, QJsonObject parameters) {
     m_data.replace(row, exam);
 }
 
-void ExamTableModel::setExamResponse(int row, QJsonObject response)
+void ExamModel::setExamResponse(int row, QJsonObject response)
 {
     if (row < 0 || row >= m_data.size()) {
         qDebug() << "getExamData: wrong row: " << row;
@@ -166,7 +166,7 @@ void ExamTableModel::setExamResponse(int row, QJsonObject response)
     m_data.replace(row, exam);
 }
 
-void ExamTableModel::examStarted(int row, int id) {
+void ExamModel::examStarted(int row, int id) {
     if (row < 0 || row >= m_data.size()) {
         qDebug() << "getExamData: wrong row: " << row;
         return;
@@ -209,7 +209,7 @@ void ExamTableModel::examStarted(int row, int id) {
     timerThread->start();
 }
 
-int ExamTableModel::getScanningRow()
+int ExamModel::getScanningRow()
 {
     for(int row=0;row<rowCount();row++){
         if(m_status[row] == ExamStatus::Processing){
@@ -219,7 +219,7 @@ int ExamTableModel::getScanningRow()
     return -1;
 }
 
-int ExamTableModel::getScanningId() {
+int ExamModel::getScanningId() {
     int row = getScanningRow();
     if (row < 0) {
         return -1;
@@ -234,7 +234,7 @@ int ExamTableModel::getScanningId() {
     return exam["id"].toInt();
 }
 
-int ExamTableModel::examStoped()
+int ExamModel::examStoped()
 {
     int row = getScanningRow();
     if(row < 0 || m_status[row] != ExamStatus::Processing){
@@ -247,7 +247,7 @@ int ExamTableModel::examStoped()
     return exam["id"].toInt();
 }
 
-int ExamTableModel::examDone()
+int ExamModel::examDone()
 {
     int row = getScanningRow();
     if(row < 0 || m_status[row] != ExamStatus::Processing){

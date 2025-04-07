@@ -1,16 +1,16 @@
-#include "historytablemodel.h"
+#include "historymodel.h"
 
 #include <QDir>
 #include <QJsonDocument>
 
-HistoryTableModel::HistoryTableModel(QObject *parent)
+HistoryModel::HistoryModel(QObject *parent)
     : QAbstractTableModel(parent)
 {
     m_headers << "scan id" << "patient id" << "scan datetime";
     loadHistoryList();
 }
 
-QVariant HistoryTableModel::headerData(int section, Qt::Orientation orientation, int role) const
+QVariant HistoryModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (role != Qt::DisplayRole)
         return QVariant();
@@ -22,7 +22,7 @@ QVariant HistoryTableModel::headerData(int section, Qt::Orientation orientation,
     return QVariant();
 }
 
-int HistoryTableModel::rowCount(const QModelIndex &parent) const
+int HistoryModel::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
         return 0;
@@ -30,7 +30,7 @@ int HistoryTableModel::rowCount(const QModelIndex &parent) const
     return m_historyList.count();
 }
 
-int HistoryTableModel::columnCount(const QModelIndex &parent) const
+int HistoryModel::columnCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
         return 0;
@@ -38,7 +38,7 @@ int HistoryTableModel::columnCount(const QModelIndex &parent) const
     return m_headers.count();
 }
 
-QVariant HistoryTableModel::data(const QModelIndex &index, int role) const
+QVariant HistoryModel::data(const QModelIndex &index, int role) const
 {
     if (role != Qt::DisplayRole) {
         return QVariant();
@@ -63,7 +63,7 @@ QVariant HistoryTableModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-void HistoryTableModel::loadHistoryList()
+void HistoryModel::loadHistoryList()
 {
     beginResetModel();
     m_historyList.clear();
@@ -88,7 +88,7 @@ void HistoryTableModel::loadHistoryList()
     endResetModel();
 }
 
-ExamHistory HistoryTableModel::getHistoryObj(int row)
+ExamHistory HistoryModel::getHistoryObj(int row)
 {
     if(row < 0 || row > m_historyList.count()){
         qDebug() << "index out of history list";

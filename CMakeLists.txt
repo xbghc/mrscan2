@@ -43,15 +43,15 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
         configs/sequences.json
         configs/exams.json
-        examinfodialog.h examinfodialog.cpp examinfodialog.ui
+        exameditdialog.h exameditdialog.cpp exameditdialog.ui
         scanneradapter.h scanneradapter.cpp
         virtualscanner.h virtualscanner.cpp
         sequenceencoder.h sequenceencoder.cpp
-        examtablemodel.h examtablemodel.cpp
+        exammodel.h exammodel.cpp
         sequencevalidator.h sequencevalidator.cpp
         configs/tunings.json
 
-        historytablemodel.h historytablemodel.cpp
+        historymodel.h historymodel.cpp
 
         examhistory.h examhistory.cpp
         qcustomplot.cpp qcustomplot.h
@@ -61,6 +61,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
         QImagesWidget/components/qcheckcombobox.cpp QImagesWidget/components/qcheckcombobox.h QImagesWidget/components/qcheckcombobox.qrc QImagesWidget/components/qcheckcombobox.svg
         QImagesWidget/contentwidget.cpp QImagesWidget/contentwidget.h QImagesWidget/icons.qrc QImagesWidget/mrdparser.cpp QImagesWidget/mrdparser.h QImagesWidget/qimageswidget.cpp QImagesWidget/qimageswidget.h QImagesWidget/qimageswidget.ui QImagesWidget/utils.cpp QImagesWidget/utils.h
+        scoutwidget.h scoutwidget.cpp
 
 
     )

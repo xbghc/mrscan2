@@ -1,11 +1,11 @@
-#ifndef EXAMTABLEMODEL_H
-#define EXAMTABLEMODEL_H
+#ifndef EXAMMODEL_H
+#define EXAMMODEL_H
 
 #include <QAbstractTableModel>
 #include <QJsonArray>
 #include <QThread>
 
-class ExamTableModel : public QAbstractTableModel
+class ExamModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
@@ -15,8 +15,8 @@ public:
         Done = 2,
     };
 
-    explicit ExamTableModel(QObject *parent = nullptr);
-    ~ExamTableModel();
+    explicit ExamModel(QObject *parent = nullptr);
+    ~ExamModel();
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index,
@@ -43,4 +43,4 @@ private:
     QThread* timerThread;
 };
 
-#endif // EXAMTABLEMODEL_H
+#endif // EXAMMODEL_H

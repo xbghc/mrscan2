@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1376</width>
-    <height>551</height>
+    <width>926</width>
+    <height>648</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,7 +34,7 @@
            <x>0</x>
            <y>0</y>
            <width>197</width>
-           <height>482</height>
+           <height>579</height>
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout">
@@ -366,58 +366,6 @@
       <item>
        <widget class="QWidget" name="contentWidget" native="true">
         <layout class="QVBoxLayout" name="verticalLayout_2">
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <item>
-            <widget class="QGraphicsView" name="graphicsView">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>256</width>
-               <height>256</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGraphicsView" name="graphicsView_2">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>256</width>
-               <height>256</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGraphicsView" name="graphicsView_3">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>256</width>
-               <height>256</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
          <item>
           <widget class="QWidget" name="widget_3" native="true"/>
          </item>

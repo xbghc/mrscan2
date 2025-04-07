@@ -27,8 +27,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->examTab, &ExamTab::fileSaved, this, [this](ExamHistory history){
         ui->imagesWidget->loadMrdFiles(history.responsePath());
     });
-    connect(ui->historyTab, &HistoryTab::currentHistoryChanged, this, [this](ExamHistory history){
 
+    connect(ui->historyTab, &HistoryTab::currentIndexChanged, this, [this](ExamHistory history){
+        ui->imagesWidget->loadMrdFiles(history.responsePath());
     });
 
     // scanned

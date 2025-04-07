@@ -7,14 +7,14 @@ HistoryTab::HistoryTab(QWidget *parent)
 {
     ui->setupUi(this);
 
-    m_model = new HistoryTableModel;
+    m_model = new HistoryModel;
     ui->tableView->setModel(m_model);
     ui->tableView->resizeColumnsToContents();
 
     connect(ui->tableView->selectionModel(), &QItemSelectionModel::currentRowChanged,
             this, [this](const QModelIndex &current, const QModelIndex &previous){
         int curRow = current.row();
-        emit currentHistoryChanged(m_model->getHistoryObj(curRow));
+        emit currentIndexChanged(m_model->getHistoryObj(curRow));
     });
 }
 

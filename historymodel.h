@@ -1,5 +1,5 @@
-#ifndef HISTORYTABLEMODEL_H
-#define HISTORYTABLEMODEL_H
+#ifndef HISTORYMODEL_H
+#define HISTORYMODEL_H
 
 #include <QAbstractTableModel>
 #include <QJsonObject>
@@ -7,11 +7,11 @@
 
 #include "examhistory.h"
 
-class HistoryTableModel : public QAbstractTableModel
+class HistoryModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    explicit HistoryTableModel(QObject *parent = nullptr);
+    explicit HistoryModel(QObject *parent = nullptr);
     QVariant headerData(int section,
                         Qt::Orientation orientation,
                         int role = Qt::DisplayRole) const override;
@@ -33,4 +33,4 @@ private:
     QVector<HistoryItem> m_historyList;
 };
 
-#endif // HISTORYTABLEMODEL_H
+#endif // HISTORYMODEL_H

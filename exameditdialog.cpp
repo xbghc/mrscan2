@@ -1,10 +1,10 @@
 #include <QMessageBox>
 
-#include "examinfodialog.h"
-#include "ui_examinfodialog.h"
+#include "exameditdialog.h"
+#include "ui_exameditdialog.h"
 
 
-ExamInfoDialog::ExamInfoDialog(QWidget *parent)
+ExamEditDialog::ExamEditDialog(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::ExamInfoDialog)
 {
@@ -55,12 +55,12 @@ ExamInfoDialog::ExamInfoDialog(QWidget *parent)
     });
 }
 
-ExamInfoDialog::~ExamInfoDialog()
+ExamEditDialog::~ExamEditDialog()
 {
     delete ui;
 }
 
-void ExamInfoDialog::setData(const QJsonObject &exam)
+void ExamEditDialog::setData(const QJsonObject &exam)
 {
     QJsonObject parameters = exam["parameters"].toObject();
     for(const auto&[abstractSpinBox, jsonKey]:paramEditKeyMap.asKeyValueRange()){
@@ -82,7 +82,7 @@ void ExamInfoDialog::setData(const QJsonObject &exam)
     }
 }
 
-QJsonObject ExamInfoDialog::getParameters()
+QJsonObject ExamEditDialog::getParameters()
 {
     QJsonObject out;
     for(const auto&[abstractSpinBox, jsonKey]:paramEditKeyMap.asKeyValueRange()){
@@ -104,7 +104,7 @@ QJsonObject ExamInfoDialog::getParameters()
     return out;
 }
 
-void ExamInfoDialog::setSlices(QJsonArray slicesArray)
+void ExamEditDialog::setSlices(QJsonArray slicesArray)
 {
     if(ui->checkGroupMode->isChecked()){
         qDebug() << "unexpected status: set slices at group mode";
@@ -127,7 +127,7 @@ void ExamInfoDialog::setSlices(QJsonArray slicesArray)
     setSliceComboNumbers(slicesArray.count());
 }
 
-QJsonArray ExamInfoDialog::getSlices()
+QJsonArray ExamEditDialog::getSlices()
 {
     QJsonArray out;
     for(const auto& slice:m_slices){
@@ -141,7 +141,7 @@ QJsonArray ExamInfoDialog::getSlices()
     return out;
 }
 
-void ExamInfoDialog::setSliceComboNumbers(int n)
+void ExamEditDialog::setSliceComboNumbers(int n)
 {
     if (n < 0) return;
 
@@ -163,7 +163,7 @@ void ExamInfoDialog::setSliceComboNumbers(int n)
     }
 }
 
-void ExamInfoDialog::on_comboSlice_currentIndexChanged(int index)
+void ExamEditDialog::on_comboSlice_currentIndexChanged(int index)
 {
     if(ui->checkGroupMode->isChecked()){
         qDebug() << "unexpected status: comboBox changed at group mode";
@@ -175,7 +175,7 @@ void ExamInfoDialog::on_comboSlice_currentIndexChanged(int index)
     }
 }
 
-void ExamInfoDialog::on_checkGroupMode_stateChanged(int arg1)
+void ExamEditDialog::on_checkGroupMode_stateChanged(int arg1)
 {
     if(arg1 == Qt::Unchecked){
         ui->stackedWidget->setCurrentIndex(0);
