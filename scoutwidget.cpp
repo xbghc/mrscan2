@@ -1,55 +1,47 @@
 #include "scoutwidget.h"
 #include <QMatrix4x4>
-#include <qpen.h>
+#include <QPen>
+#include "utils.h"
 
-
-namespace{
-bool equal(float a, float b){
-    return abs(a-b) < 1e-6;
+namespace {
+// 比较两个浮点数是否相等
+bool equal(float a, float b, float epsilon = 1e-6) {
+    return std::abs(a - b) < epsilon;
 }
 
-QVector3D getVector(QVector3D angles){
-    auto r = QMatrix4x4();
-    r.rotate(angles[0], QVector3D(1, 0, 0));
-    r.rotate(angles[1], QVector3D(0, 1, 0));
-    r.rotate(angles[2], QVector3D(0, 0, 1));
+// 根据欧拉角计算法向量
+QVector3D getVector(const QVector3D& angles) {
+    QMatrix4x4 r;
+    r.rotate(angles.x(), QVector3D(1, 0, 0));
+    r.rotate(angles.y(), QVector3D(0, 1, 0));
+    r.rotate(angles.z(), QVector3D(0, 0, 1));
 
     return r.map(QVector3D(0, 0, 1));
 }
 
-QVector3D getAxis(QVector3D angles){
-    auto v = getVector(angles);
-    for(int i=0;i<3;i++){
-        if(equal(v[i], 1)){
-            for(int j=i+1;j<3;j++){
-                if(!equal(v[j], 0)){
-                    qDebug() << "scout's normal vector has wrong angles, must be axis x,y or z";
-                    return QVector3D(0, 0, 0);
-                }
-            }
-            QVector3D out(0, 0, 0);
-            out[i] = 1;
-            return out;
-        }else if(equal(v[i], -1)){
-            for(int j=i+1;j<3;j++){
-                if(!equal(v[j], 0)){
-                    qDebug() << "scout's normal vector has wrong angles, must be axis x,y or z";
-                    return QVector3D(0, 0, 0);
-                }
-            }
-            QVector3D out(0, 0, 0);
-            out[i] = -1;
-            return out;
-        }
-
-        // 运行到这里说明v[i]不为1或-1，那么应该等于0
-        if(!equal(v[i], 0)){
-            qDebug() << "scout's normal vector has wrong angles, must be axis x,y or z";
-            return QVector3D(0, 0, 0);
-        }
+// 判断向量是否平行于坐标轴，如果是返回对应的单位向量
+QVector3D getAxis(const QVector3D& angles) {
+    QVector3D v = getVector(angles);
+    QVector3D result(0, 0, 0);
+    
+    // 检查是否平行于x轴
+    if (equal(std::abs(v.x()), 1.0f)) {
+        result.setX(v.x() > 0 ? 1 : -1);
+        return result;
+    } 
+    // 检查是否平行于y轴
+    else if (equal(std::abs(v.y()), 1.0f)) {
+        result.setY(v.y() > 0 ? 1 : -1);
+        return result;
+    } 
+    // 检查是否平行于z轴
+    else if (equal(std::abs(v.z()), 1.0f)) {
+        result.setZ(v.z() > 0 ? 1 : -1);
+        return result;
     }
-    qDebug() << "scout's normal vector has wrong angles, must be axis x,y or z";
-    return QVector3D(0, 0, 0);
+    
+    LOG_WARNING("scout的法向量角度错误，必须与x、y或z轴平行");
+    return result;
 }
 
 QList<QPointF> getLineInViewport(double a, double b, double c, double viewFov, double lineFov){
@@ -156,6 +148,13 @@ void ScoutWidget::setFov(double fov)
     m_fov = fov;
 }
 
+void ScoutWidget::clearLines()
+{
+    // 清除之前所有添加的线条，但保留图像
+    // QImagesWidget没有直接的clearLines方法，但我们可以通过调用updateMarkers()来刷新场景
+    // updateMarkers()会清除场景(scene->clear())并重新添加图像
+    updateMarkers();
+}
 void ScoutWidget::previewSlice(double fov, QVector3D angles, QVector3D offsets)
 {
     // TODO 函数代码可以优化

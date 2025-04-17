@@ -66,6 +66,42 @@ QList<QVariant> QCheckComboBox::values(QCheckComboBox::Filter filter)
     return result;
 }
 
+int QCheckComboBox::itemCount() const
+{
+    return m_model->rowCount();
+}
+
+void QCheckComboBox::setChecked(int index, bool checked)
+{
+    if (index < 0 || index >= m_model->rowCount()) {
+        return;
+    }
+    
+    QModelIndex modelIndex = m_model->index(index, 0);
+    Qt::CheckState state = checked ? Qt::Checked : Qt::Unchecked;
+    m_model->setData(modelIndex, state, Qt::CheckStateRole);
+    
+    // 触发状态改变信号
+    emit itemStatusChanged();
+}
+
+void QCheckComboBox::removeAllItems()
+{
+    m_model->clear();
+    emit itemStatusChanged();
+}
+
+bool QCheckComboBox::isChecked(int index) const
+{
+    if (index < 0 || index >= m_model->rowCount()) {
+        return false;
+    }
+    
+    QModelIndex modelIndex = m_model->index(index, 0);
+    QVariant checkState = m_model->data(modelIndex, Qt::CheckStateRole);
+    return checkState.toInt() == Qt::Checked;
+}
+
 void QCheckComboBox::resizeEvent(QResizeEvent *event) {
     QWidget::resizeEvent(event);
     updateLayout();

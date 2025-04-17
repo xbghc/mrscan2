@@ -6,6 +6,7 @@
 #include <QImage>
 #include <QList>
 #include <QWidget>
+#include <QVector>
 
 namespace Ui{
 class ResultWidget;
@@ -16,10 +17,10 @@ class ResultWidget : public QWidget
     Q_OBJECT
 
 public:
-    ResultWidget(QWidget *parent = nullptr);
+    explicit ResultWidget(QWidget *parent = nullptr);
     ~ResultWidget();
 
-    int loadMrdFiles(QString path); // path是任意一个通道文件的路径，但是所有文件都需要在同一文件夹中
+    int loadMrdFiles(QString fpath); // path是任意一个通道文件的路径，但是所有文件都需要在同一文件夹中
     void clear();
 
 public slots:
@@ -27,12 +28,16 @@ public slots:
     void setColNum(int col);
     void setHeight(int height);
     void setWidth(int width);
+    void updateMarkers();
 
 private:
-    QList<QList<QImage>> m_channels;
+    QVector<QVector<QImage>> m_channels;
 
     Ui::ResultWidget* ui;
 
-    void updateMarkers();
+    void initializeUI();
+    void setupConnections();
+    QString extractChannelLabel(const QString& filePath);
+    void updateImageList();
 };
 #endif // RESULTWIDGET_H

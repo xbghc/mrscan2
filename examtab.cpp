@@ -3,7 +3,7 @@
 #include "patient.h"
 #include "patientinfodialog.h"
 #include "ui_examtab.h"
-#include "examhistory.h"
+#include "utils.h"
 
 #include <QDir>
 #include <QJsonArray>
@@ -72,11 +72,32 @@ void ExamTab::loadPatients() {
     }
 }
 
+void ExamTab::updateScanButtonState(bool isScanning) {
+    ui->scanButton->setText(isScanning ? tr("stop") : tr("start"));
+    ui->scanButton->setEnabled(true);
+}
+
+void ExamTab::enablePatientSelection(bool enable) {
+    ui->comboBox->setEnabled(enable);
+}
+
+int ExamTab::getCurrentPatientId() const {
+    return ui->comboBox->currentData().toInt();
+}
+
+QJsonObject ExamTab::getCurrentExam() const {
+    int curRow = ui->tableView->currentIndex().row();
+    if(curRow >= 0) {
+        return examModel->getExamData(curRow);
+    }
+    return QJsonObject();
+}
+
 void ExamTab::onScanStarted(int id)
 {
     int curRow = currentExamIndex();
     if(id < 0){
-        qDebug() << "scan failed";
+        LOG_ERROR("扫描失败");
         return;
     }
 
@@ -85,24 +106,13 @@ void ExamTab::onScanStarted(int id)
     examModel->examStarted(curRow, id);
 }
 
-void ExamTab::onScanEnd(QByteArray response) // 以后会移除参数，Exam和数据无关
+void ExamTab::onScanEnd(QByteArray response)
 {
-    int patientId = this->ui->comboBox->currentData().toInt();
-
-    QJsonObject request = examModel->getExamData(examModel->getScanningRow());
-    ExamHistory history(request, response);
-    history.setPatient(patientId);
-    history.save();
-
-    emit fileSaved(history);
-
-    // TODO 将上方所有内容移动到mainWindow中
-
+    // 现在这里只处理UI更新，不处理数据保存
     this->ui->comboBox->setEnabled(true);
     this->ui->scanButton->setText("start");
     this->ui->scanButton->setEnabled(false);
     examModel->examDone();
-
 }
 
 void ExamTab::openEditPatientDialog()
@@ -119,7 +129,6 @@ void ExamTab::openEditPatientDialog()
 }
 
 void ExamTab::openNewPatientDialog() {
-    // button clicked to create new patient
     PatientInfoDialog dialog(this);
     dialog.setPatient(nullptr);
     dialog.setModal(true);
@@ -130,8 +139,7 @@ void ExamTab::openNewPatientDialog() {
 }
 
 void ExamTab::deletePatient() {
-    // button clicked to remove patient
-    if (QMessageBox::question(this, "delete?", "confim to delete?",
+    if (QMessageBox::question(this, tr("删除?"), tr("确认删除该患者?"),
                               QMessageBox::Yes | QMessageBox::No) ==
         QMessageBox::Yes) {
         PatientInfoDialog dialog(this);
@@ -142,32 +150,29 @@ void ExamTab::deletePatient() {
 }
 
 void ExamTab::shiftUp() {
-
     int curRow = currentExamIndex();
     if (curRow == -1) {
-        qDebug() << "no exam is selected";
+        LOG_WARNING("未选择检查");
         return;
     }
 
     if (curRow == 0) {
-        qDebug() << "alreay the first exam";
+        LOG_WARNING("已经是第一个检查");
         return;
     }
 
     examModel->swapRows(curRow, curRow - 1);
 }
 
-// down button clicked
 void ExamTab::shiftDown() {
-
     int curRow = currentExamIndex();
     if (curRow == -1) {
-        qDebug() << "no exam is selected";
+        LOG_WARNING("未选择检查");
         return;
     }
 
     if (curRow == examModel->rowCount() - 1) {
-        qDebug() << "already the last exam";
+        LOG_WARNING("已经是最后一个检查");
         return;
     }
 
@@ -175,32 +180,29 @@ void ExamTab::shiftDown() {
 }
 
 void ExamTab::removeExam() {
-
     int curRow = currentExamIndex();
     if (curRow == -1) {
-        qDebug() << "no exam is selected";
+        LOG_WARNING("未选择检查");
         return;
     }
 
     examModel->removeRow(curRow);
 }
 
-// copy button clicked
 void ExamTab::copyExam() {
     int curRow = currentExamIndex();
     if (curRow == -1) {
-        qDebug() << "no exam is selected";
+        LOG_WARNING("未选择检查");
         return;
     }
 
     examModel->copyRow(curRow);
 }
 
-// edit button clicked
 void ExamTab::editExam() {
     int curRow = currentExamIndex();
     if (curRow == -1) {
-        qDebug() << "no exam is selected";
+        LOG_WARNING("未选择检查");
         return;
     }
 
@@ -228,28 +230,18 @@ void ExamTab::editExam() {
     dlg.exec();
 }
 
-// start/stop button clicked
 void ExamTab::onScanButtonClicked()
 {
     int curRow = currentExamIndex();
     if (curRow == -1) {
-        qDebug() << "no exam is selected";
+        LOG_WARNING("未选择检查");
         return;
     }
 
     // stop
     if(examModel->getScanningRow() == curRow){
         int id = examModel->getScanningId();
-
         emit onStopButtonClicked(id);
-
-        int stopid = examModel->examStoped();
-        if(stopid != id){
-            qDebug() << "exam model stop a wrong id, expected id: " << id << ", actual id: " << stopid;
-        }
-        ui->scanButton->setText(tr("start"));
-        this->ui->comboBox->setEnabled(true);
-
         return;
     }
 

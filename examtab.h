@@ -1,10 +1,11 @@
 #ifndef EXAMTAB_H
 #define EXAMTAB_H
 
+#include <QJsonObject>
+#include <QModelIndex>
 #include <QWidget>
-
-#include "examhistory.h"
 #include "exammodel.h"
+#include "examhistory.h"
 
 namespace Ui {
 class studytab;
@@ -17,18 +18,18 @@ class ExamTab : public QWidget
 public:
     explicit ExamTab(QWidget *parent = nullptr);
     ~ExamTab();
-    int currentExamIndex();
 
-signals:
-    void currentExamChanged(QJsonObject patient, QJsonObject exam);
-    void fileSaved(ExamHistory history); // TODO 移除
-    void onStartButtonClicked(QJsonObject& exam); // TODO 移除参数
-    void onStopButtonClicked(int id); // TODO 移除参数
+    int currentExamIndex();
+    void loadPatients();
+    void updateScanButtonState(bool isScanning);
+    void enablePatientSelection(bool enable);
+    QString getStatus(int row);
+    int getCurrentPatientId() const;
+    QJsonObject getCurrentExam() const;
 
 public slots:
-    void loadPatients();
     void onScanStarted(int id);
-    void onScanEnd(QByteArray responseBytes);
+    void onScanEnd(QByteArray response);
 
 private slots:
     void openEditPatientDialog();
@@ -41,11 +42,14 @@ private slots:
     void editExam();
     void onScanButtonClicked();
 
+signals:
+    void onStartButtonClicked(QJsonObject sequence);
+    void onStopButtonClicked(int id);
+    void fileSaved(ExamHistory history);
+
 private:
     Ui::studytab *ui;
     ExamModel* examModel;
-
-    QString getStatus(int row);
 };
 
 #endif // EXAMTAB_H
