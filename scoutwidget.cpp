@@ -4,12 +4,12 @@
 #include "utils.h"
 
 namespace {
-// 比较两个浮点数是否相等
+// Compare if two floating point numbers are equal
 bool equal(float a, float b, float epsilon = 1e-6) {
     return std::abs(a - b) < epsilon;
 }
 
-// 根据欧拉角计算法向量
+// Calculate normal vector based on Euler angles
 QVector3D getVector(const QVector3D& angles) {
     QMatrix4x4 r;
     r.rotate(angles.x(), QVector3D(1, 0, 0));
@@ -19,28 +19,28 @@ QVector3D getVector(const QVector3D& angles) {
     return r.map(QVector3D(0, 0, 1));
 }
 
-// 判断向量是否平行于坐标轴，如果是返回对应的单位向量
+// Check if vector is parallel to coordinate axes, if so return the corresponding unit vector
 QVector3D getAxis(const QVector3D& angles) {
     QVector3D v = getVector(angles);
     QVector3D result(0, 0, 0);
     
-    // 检查是否平行于x轴
+    // Check if parallel to x-axis
     if (equal(std::abs(v.x()), 1.0f)) {
         result.setX(v.x() > 0 ? 1 : -1);
         return result;
     } 
-    // 检查是否平行于y轴
+    // Check if parallel to y-axis
     else if (equal(std::abs(v.y()), 1.0f)) {
         result.setY(v.y() > 0 ? 1 : -1);
         return result;
     } 
-    // 检查是否平行于z轴
+    // Check if parallel to z-axis
     else if (equal(std::abs(v.z()), 1.0f)) {
         result.setZ(v.z() > 0 ? 1 : -1);
         return result;
     }
     
-    LOG_WARNING("scout的法向量角度错误，必须与x、y或z轴平行");
+    LOG_WARNING("Scout normal vector angle error, must be parallel to x, y or z axis");
     return result;
 }
 
@@ -49,7 +49,7 @@ QList<QPointF> getLineInViewport(double a, double b, double c, double viewFov, d
     QList<QPointF> points;
 
     if(a == 0){
-        // 1. 当切片与y平行(a=0)，有by + c = 0, 则y=-c/b
+        // 1. When slice is parallel to y (a=0), we have by + c = 0, so y=-c/b
         auto y = -c/b;
         if(abs(y) > viewFov/2){
             qDebug() << "line out of viewport";
@@ -57,9 +57,9 @@ QList<QPointF> getLineInViewport(double a, double b, double c, double viewFov, d
         points.push_back(QPointF(-viewFov/2, y));
         points.push_back(QPointF(viewFov/2, y));
     }else{
-        // 2. 已知y, x = (c-by)/a; 已知x, y = (c-ax)/b
+        // 2. Given y, x = (c-by)/a; Given x, y = (c-ax)/b
         //
-        // 假设y为±fov/2
+        // Assume y equals ±fov/2
         //
         auto y1 = viewFov/2;
         auto y2 = -viewFov/2;
@@ -74,7 +74,7 @@ QList<QPointF> getLineInViewport(double a, double b, double c, double viewFov, d
             y1 = (c-(a*x1))/b;
         }
         if(abs(y1) > viewFov/2){
-            qDebug() << "直线在scout范围之外";
+            qDebug() << "Line is outside scout range";
         }
         points.push_back(QPointF(x1, y1));
 
@@ -86,13 +86,13 @@ QList<QPointF> getLineInViewport(double a, double b, double c, double viewFov, d
             y2 = (c-(a*x1))/b;
         }
         if(abs(y2) > viewFov/2){
-            qDebug() << "直线在scout范围之外";
+            qDebug() << "Line is outside scout range";
         }
         points.push_back(QPointF(x2, y2));
     }
 
     if(points.length() != 2){
-        qDebug() << "交线计算出错";
+        qDebug() << "Intersection line calculation error";
     }
 
     return points;
@@ -150,29 +150,29 @@ void ScoutWidget::setFov(double fov)
 
 void ScoutWidget::clearLines()
 {
-    // 清除之前所有添加的线条，但保留图像
-    // QImagesWidget没有直接的clearLines方法，但我们可以通过调用updateMarkers()来刷新场景
-    // updateMarkers()会清除场景(scene->clear())并重新添加图像
+    // Clear all previously added lines, but keep the images
+    // QImagesWidget doesn't have a direct clearLines method, but we can refresh the scene by calling updateMarkers()
+    // updateMarkers() will clear the scene (scene->clear()) and re-add the images
     updateMarkers();
 }
 void ScoutWidget::previewSlice(double fov, QVector3D angles, QVector3D offsets)
 {
-    // TODO 函数代码可以优化
+    // TODO Function code can be optimized
 
     for(int i=0;i<m_angles.length();i++){
-        /* 这里无视FOV，将切片视作平面
-         * 先根据angles求出切片的法向量v，v[0]*x+v[1]*y+v[2]*z+c=0
-         * scout相对于原点有偏移，在graphicScene中视为中心，相当于slice朝反方向偏移，所以slice的偏移为offsets - m_offsets[i]
-         * scout与某个坐标轴平行，所以x,y,z中某个值为0，于是有ax + by + c = 0，这个x和y与3维中的xy含义不同
-         * 下面的xy讨论的都是scout平面中的xy而非3维中的xy
-         * scout的取值范围为(-m_fov/2, m_fov/2)
+        /* Ignore FOV here, view the slice as a plane
+         * First calculate the normal vector v of the slice based on angles, v[0]*x+v[1]*y+v[2]*z+c=0
+         * Scout has an offset relative to the origin, viewed as center in graphicScene, equivalent to slice offset in opposite direction, so slice offset is offsets - m_offsets[i]
+         * Scout is parallel to a coordinate axis, so one of x,y,z equals 0, thus we have ax + by + c = 0, where x and y have different meanings than in 3D
+         * The x and y discussed below are in the scout plane rather than in 3D
+         * Scout value range is (-m_fov/2, m_fov/2)
         */
         auto v = getVector(angles);
         auto c = (m_offsets[i][0] - offsets[0])*v[0] + (m_offsets[i][1] - offsets[1])*v[1] + (m_offsets[i][2] - offsets[2])*v[2];
         auto axis = getAxis(m_angles[i]);
 
         QList<QPointF> points;
-        // 法向量为1和-1对结果是有影响的
+        // Normal vectors of 1 and -1 affect the result
         if(axis[0] != 0){
             points = getLineInViewport(v[1] * axis[0], v[2] * axis[0], c, m_fov, fov);
         }else if(axis[1] != 0){
@@ -182,9 +182,9 @@ void ScoutWidget::previewSlice(double fov, QVector3D angles, QVector3D offsets)
         }
 
         auto line = new QGraphicsLineItem(points[0].x(), points[0].y(), points[1].x(), points[1].y());
-        QPen pen(Qt::red);      // 颜色
-        pen.setWidth(2);        // 线宽
-        pen.setStyle(Qt::DashLine); // 虚线
+        QPen pen(Qt::red);      // Color
+        pen.setWidth(2);        // Line width
+        pen.setStyle(Qt::DashLine); // Dashed line
         line->setPen(pen);
         QImagesWidget::addLine(i, line);
         // qDebug() << line.line();

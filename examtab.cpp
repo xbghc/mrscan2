@@ -97,7 +97,7 @@ void ExamTab::onScanStarted(int id)
 {
     int curRow = currentExamIndex();
     if(id < 0){
-        LOG_ERROR("扫描失败");
+        LOG_ERROR("Scan failed");
         return;
     }
 
@@ -108,7 +108,7 @@ void ExamTab::onScanStarted(int id)
 
 void ExamTab::onScanEnd(QByteArray response)
 {
-    // 现在这里只处理UI更新，不处理数据保存
+    // Now we only handle UI updates here, not data saving
     this->ui->comboBox->setEnabled(true);
     this->ui->scanButton->setText("start");
     this->ui->scanButton->setEnabled(false);
@@ -139,7 +139,7 @@ void ExamTab::openNewPatientDialog() {
 }
 
 void ExamTab::deletePatient() {
-    if (QMessageBox::question(this, tr("删除?"), tr("确认删除该患者?"),
+    if (QMessageBox::question(this, tr("Delete?"), tr("Confirm delete this patient?"),
                               QMessageBox::Yes | QMessageBox::No) ==
         QMessageBox::Yes) {
         PatientInfoDialog dialog(this);
@@ -152,12 +152,12 @@ void ExamTab::deletePatient() {
 void ExamTab::shiftUp() {
     int curRow = currentExamIndex();
     if (curRow == -1) {
-        LOG_WARNING("未选择检查");
+        LOG_WARNING("No exam selected");
         return;
     }
 
     if (curRow == 0) {
-        LOG_WARNING("已经是第一个检查");
+        LOG_WARNING("Already the first exam");
         return;
     }
 
@@ -167,12 +167,12 @@ void ExamTab::shiftUp() {
 void ExamTab::shiftDown() {
     int curRow = currentExamIndex();
     if (curRow == -1) {
-        LOG_WARNING("未选择检查");
+        LOG_WARNING("No exam selected");
         return;
     }
 
     if (curRow == examModel->rowCount() - 1) {
-        LOG_WARNING("已经是最后一个检查");
+        LOG_WARNING("Already the last exam");
         return;
     }
 
@@ -182,7 +182,7 @@ void ExamTab::shiftDown() {
 void ExamTab::removeExam() {
     int curRow = currentExamIndex();
     if (curRow == -1) {
-        LOG_WARNING("未选择检查");
+        LOG_WARNING("No exam selected");
         return;
     }
 
@@ -192,7 +192,7 @@ void ExamTab::removeExam() {
 void ExamTab::copyExam() {
     int curRow = currentExamIndex();
     if (curRow == -1) {
-        LOG_WARNING("未选择检查");
+        LOG_WARNING("No exam selected");
         return;
     }
 
@@ -202,7 +202,7 @@ void ExamTab::copyExam() {
 void ExamTab::editExam() {
     int curRow = currentExamIndex();
     if (curRow == -1) {
-        LOG_WARNING("未选择检查");
+        LOG_WARNING("No exam selected");
         return;
     }
 
@@ -214,8 +214,8 @@ void ExamTab::editExam() {
         this->examModel->setExamParams(curRow, parameters);
     });
 
-    // TODO examModel的代码可读性太差，调整好之后，判断是否扫描scout，如果是，调用dlg.setScoutImages
-    // 下面是mock的数据
+    // TODO The readability of examModel code is poor, after adjustment, determine whether to scan scout, if so, call dlg.setScoutImages
+    // Below is mock data
     QList<QImage> images;
     QList<QVector3D> angles;
     QList<QVector3D> offsets;
@@ -234,7 +234,7 @@ void ExamTab::onScanButtonClicked()
 {
     int curRow = currentExamIndex();
     if (curRow == -1) {
-        LOG_WARNING("未选择检查");
+        LOG_WARNING("No exam selected");
         return;
     }
 

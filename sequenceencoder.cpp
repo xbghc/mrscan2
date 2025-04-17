@@ -136,7 +136,7 @@ unsigned char *encodeT2(QJsonObject &sequence, int &size, char implement=1) {
         float yOffset = slice["yOffset"].toDouble();
         float zOffset = slice["zOffset"].toDouble();
 
-        // 按顺序写入6个参数
+        // Write 6 parameters in sequence
         memcpy(out + j, &xAngle, 4);
         memcpy(out + j + 4, &yAngle, 4);
         memcpy(out + j + 8, &zAngle, 4);

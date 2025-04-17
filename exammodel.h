@@ -15,7 +15,7 @@ class ExamModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    // 列枚举，使代码更清晰
+    // Column enumeration to make code more readable
     enum Column {
         NameColumn = 0,
         TimeColumn = 1,
@@ -26,23 +26,23 @@ public:
     explicit ExamModel(QObject *parent = nullptr);
     ~ExamModel();
     
-    // QAbstractTableModel实现
+    // QAbstractTableModel implementation
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
     
-    // 行操作方法
+    // Row operation methods
     void swapRows(int row1, int row2);
     void copyRow(int row);
     bool removeRow(int row, const QModelIndex &parent = QModelIndex());
     
-    // 检查数据访问
+    // Exam data access
     QJsonObject getExamData(int row);
     void setExamParams(int row, const QJsonObject& parameters);
     void setExamResponse(int row, const QJsonObject& response);
     
-    // 扫描流程管理
+    // Scan process management
     void examStarted(int row, int id);
     int getScanningRow();
     int getScanningId();
@@ -50,7 +50,7 @@ public:
     int examDone();
     bool isScanning() const { return m_scanningRow >= 0; }
     
-    // 从JSON文件加载检查
+    // Load exams from JSON file
     bool loadExams(const QString& filePath = "./configs/exams.json");
     bool saveExams(const QString& filePath = "./configs/exams.json") const;
     
@@ -62,31 +62,31 @@ private slots:
     void updateTimers();
     
 private:
-    // 列标题
+    // Column headers
     QStringList m_headers;
     
-    // 检查数据列表
+    // Exam data list
     QList<ExamItem> m_exams;
     
-    // 正在扫描的行和状态管理
+    // Scanning row and status management
     int m_scanningRow;
     void resetScanningState();
     
-    // 计时相关
+    // Timer related
     QThread* m_timerThread;
     QTime m_startTime;
     QMutex m_mutex;
     bool m_threadShouldExit;
     
-    // 帮助方法
+    // Helper methods
     bool isValidRow(int row) const;
     void startTimerThread();
     void stopTimerThread();
     
-    // 扫描完成/停止的通用方法
+    // Common method for scan completion/stop
     int finishExam(int row, ExamItem::Status newStatus, bool shouldSave);
     
-    // 从文件加载检查
+    // Load exams from file
     QList<ExamItem> loadExamsFromFile(const QString& filePath) const;
 };
 

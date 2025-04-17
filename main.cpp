@@ -11,10 +11,10 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    // 初始化日志系统
+    // Initialize log system
     Logger::setLogToFile(true);
     Logger::setMinLogLevel(LogLevel::Debug);
-    LOG_INFO("应用程序启动");
+    LOG_INFO("Application started");
 
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
@@ -22,30 +22,30 @@ int main(int argc, char *argv[])
         const QString baseName = "mrscan2_" + QLocale(locale).name();
         if (translator.load(":/i18n/" + baseName)) {
             a.installTranslator(&translator);
-            LOG_INFO(QString("加载语言: %1").arg(locale));
+            LOG_INFO(QString("Loaded language: %1").arg(locale));
             break;
         }
     }
 
-    // 确保配置目录存在
+    // Ensure config directory exists
     QDir configDir("./configs");
     if (!configDir.exists()) {
         configDir.mkpath(".");
-        LOG_INFO("创建配置目录");
+        LOG_INFO("Created config directory");
     }
 
     CustomPreferences::setupApp();
-    LOG_INFO("自定义配置设置完成");
+    LOG_INFO("Custom preferences setup completed");
 
-    // 可以在这里创建自定义的扫描仪适配器或者使用默认实现
+    // You can create a custom scanner adapter here or use the default implementation
     // IScannerAdapter* customAdapter = new CustomScannerAdapter();
     // MainWindow w(nullptr, customAdapter);
     
     MainWindow w;
     w.show();
-    LOG_INFO("主窗口显示");
+    LOG_INFO("Main window displayed");
 
     int result = a.exec();
-    LOG_INFO(QString("应用程序退出，返回码：%1").arg(result));
+    LOG_INFO(QString("Application exited with code: %1").arg(result));
     return result;
 }

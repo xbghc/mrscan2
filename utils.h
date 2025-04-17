@@ -7,7 +7,7 @@
 #include <QDateTime>
 #include <QDebug>
 
-// 日志级别
+// Log levels
 enum class LogLevel {
     Debug,
     Info,
@@ -16,14 +16,14 @@ enum class LogLevel {
     Critical
 };
 
-// 使用宏简化日志调用
+// Macros to simplify logging calls
 #define LOG_DEBUG(msg) Logger::log(LogLevel::Debug, msg, __FILE__, __LINE__)
 #define LOG_INFO(msg) Logger::log(LogLevel::Info, msg, __FILE__, __LINE__)
 #define LOG_WARNING(msg) Logger::log(LogLevel::Warning, msg, __FILE__, __LINE__)
 #define LOG_ERROR(msg) Logger::log(LogLevel::Error, msg, __FILE__, __LINE__)
 #define LOG_CRITICAL(msg) Logger::log(LogLevel::Critical, msg, __FILE__, __LINE__)
 
-// 全局日志类
+// Global logger class
 class Logger {
 public:
     static void log(LogLevel level, const QString& message, const char* file = nullptr, int line = 0);
@@ -36,7 +36,7 @@ private:
     static LogLevel s_minLogLevel;
 };
 
-// 全局错误处理类
+// Global error handling class
 class ErrorHandler {
 public:
     static void handleError(const QString& message, const QString& details = QString());

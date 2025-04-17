@@ -20,7 +20,7 @@ public:
     explicit ResultWidget(QWidget *parent = nullptr);
     ~ResultWidget();
 
-    int loadMrdFiles(QString fpath); // path是任意一个通道文件的路径，但是所有文件都需要在同一文件夹中
+    int loadMrdFiles(QString fpath); // path is any channel file path, but all files need to be in the same folder
     void clear();
 
 public slots:

@@ -78,33 +78,33 @@ void fftshift3d(fftw_complex* data, const size_t* shape) {
     const size_t sy = ny / 2;
     const size_t sz = nz / 2;
 
-    // 分配临时数组
+    // Allocate temporary array
     fftw_complex* temp = fftw_alloc_complex(nx * ny * nz);
 
-    // 遍历每个元素并重新排列
+    // Iterate through each element and rearrange
     for (size_t x = 0; x < nx; ++x) {
         for (size_t y = 0; y < ny; ++y) {
             for (size_t z = 0; z < nz; ++z) {
-                // 计算新坐标（循环移位）
+                // Calculate new coordinates (circular shift)
                 const size_t new_x = (x + sx) % nx;
                 const size_t new_y = (y + sy) % ny;
                 const size_t new_z = (z + sz) % nz;
 
-                // 计算新旧线性索引
+                // Calculate new and old linear indices
                 const size_t old_idx = x * ny * nz + y * nz + z;
                 const size_t new_idx = new_x * ny * nz + new_y * nz + new_z;
 
-                // 复制数据到临时数组
+                // Copy data to temporary array
                 temp[new_idx][0] = data[old_idx][0];
                 temp[new_idx][1] = data[old_idx][1];
             }
         }
     }
 
-    // 将结果复制回原数组
+    // Copy results back to original array
     std::memcpy(data, temp, sizeof(fftw_complex) * nx * ny * nz);
 
-    // 释放临时内存
+    // Free temporary memory
     fftw_free(temp);
 }
 } // namespace
@@ -136,7 +136,7 @@ MrdData *MrdParser::parse(const QByteArray &content)
         data = parseKData<qint8>(content, nele, isComplex);
         break;
     case 2:
-        // 2和3一样
+        // Case 2 and 3 are the same
     case 3:
         data = parseKData<qint16>(content, nele, isComplex);
         break;
@@ -196,13 +196,13 @@ QList<QImage> MrdParser::reconImages(MrdData* mrd)
     auto out = exec_fft_3d(mrd->kdata, n);
     fftshift3d(out, n);
 
-    // 取绝对值
+    // Take absolute values
     size_t noPixels = n[0] * n[1] * n[2];
     auto images_data = abs(out, noPixels);
     fftw_free(out);
 
-    // 归一化并返回图片
-    // 整个数组归一化
+    // Normalize and return images
+    // Normalize the entire array
     double max = 0;
     for(size_t i=0;i<noImages;i++){
         for(size_t y=0;y<n[1];y++){
@@ -221,7 +221,7 @@ QList<QImage> MrdParser::reconImages(MrdData* mrd)
     if(mrd->slices == 1){
         // T1
         for(size_t i=0;i<noImages;i++){
-            // 单张图片归一化
+            // Normalize single image
             // double max = 0;
             // for(size_t y=0;y<n[0];y++){
             //     for(size_t x=0;x<n[2];x++){
@@ -247,7 +247,7 @@ QList<QImage> MrdParser::reconImages(MrdData* mrd)
     }else{
         // T2
         for(size_t i=0;i<noImages;i++){
-            // 单张图片归一化
+            // Normalize single image
             // double max = 0;
             // for(size_t y=0;y<n[1];y++){
             //     for(size_t x=0;x<n[2];x++){

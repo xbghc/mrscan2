@@ -19,7 +19,7 @@ public:
     ~QCheckComboBox();
 
     void addItem(const QString& text, const QVariant& data=QVariant());
-    QList<QVariant> values(QCheckComboBox::Filter filter=Filter::ALL); // 因为需要ALL，所以不能用Qt::Status作为筛选参数
+    QList<QVariant> values(QCheckComboBox::Filter filter=Filter::ALL); // Using ALL requires custom filter instead of Qt::Status
 
     int itemCount() const;
     void setChecked(int index, bool checked);

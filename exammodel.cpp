@@ -35,12 +35,12 @@ ExamModel::ExamModel(QObject *parent)
     , m_timerThread(nullptr)
     , m_threadShouldExit(false)
 {
-    m_headers << "序列" << "时间" << "状态";
+    m_headers << "Sequence" << "Time" << "Status";
     loadExams();
 }
 
 ExamModel::~ExamModel() {
-    // 确保停止线程并保存数据
+    // Ensure thread is stopped and data is saved
     if (m_timerThread != nullptr) {
         stopTimerThread();
     }
@@ -48,11 +48,11 @@ ExamModel::~ExamModel() {
     saveExams();
 }
 
-// 重置扫描状态的新方法
+// New method to reset scanning state
 void ExamModel::resetScanningState() {
     QMutexLocker locker(&m_mutex);
     m_scanningRow = -1;
-    LOG_DEBUG("扫描状态已重置");
+    LOG_DEBUG("Scanning state has been reset");
 }
 
 int ExamModel::rowCount(const QModelIndex &parent) const {
@@ -120,7 +120,7 @@ bool ExamModel::removeRow(int row, const QModelIndex &parent) {
     if (!isValidRow(row))
         return false;
 
-    // 处理扫描状态
+    // Handle scanning state
     bool needStopTimer = false;
     {
         QMutexLocker locker(&m_mutex);
@@ -129,18 +129,18 @@ bool ExamModel::removeRow(int row, const QModelIndex &parent) {
         }
     }
     
-    // 如果需要，在锁外停止计时线程
+    // If needed, stop the timer thread outside the lock
     if (needStopTimer) {
         stopTimerThread();
         resetScanningState();
     }
 
-    // 更新行索引，这是UI模型操作，不需要锁
+    // Update row index, this is a UI model operation, no lock needed
     beginRemoveRows(QModelIndex(), row, row);
     m_exams.removeAt(row);
     endRemoveRows();
     
-    // 更新扫描行索引
+    // Update scanning row index
     {
         QMutexLocker locker(&m_mutex);
         if (m_scanningRow > row) {
@@ -153,7 +153,7 @@ bool ExamModel::removeRow(int row, const QModelIndex &parent) {
 
 QJsonObject ExamModel::getExamData(int row) {
     if (!isValidRow(row)) {
-        LOG_ERROR(QString("获取检查数据时行索引无效: %1").arg(row));
+        LOG_ERROR(QString("Invalid row index when getting exam data: %1").arg(row));
         return QJsonObject();
     }
 
@@ -162,12 +162,12 @@ QJsonObject ExamModel::getExamData(int row) {
 
 void ExamModel::setExamParams(int row, const QJsonObject& parameters) {
     if (!isValidRow(row)) {
-        LOG_ERROR(QString("设置检查参数时行索引无效: %1").arg(row));
+        LOG_ERROR(QString("Invalid row index when setting exam parameters: %1").arg(row));
         return;
     }
 
     if (m_exams[row].status() != ExamItem::Status::Ready) {
-        LOG_WARNING(QString("尝试修改非就绪状态的检查参数，行: %1").arg(row));
+        LOG_WARNING(QString("Attempting to modify parameters of non-ready exam, row: %1").arg(row));
     }
 
     m_exams[row].setParameters(parameters);
@@ -177,7 +177,7 @@ void ExamModel::setExamParams(int row, const QJsonObject& parameters) {
 
 void ExamModel::setExamResponse(int row, const QJsonObject& response) {
     if (!isValidRow(row)) {
-        LOG_ERROR(QString("设置检查响应时行索引无效: %1").arg(row));
+        LOG_ERROR(QString("Invalid row index when setting exam response: %1").arg(row));
         return;
     }
 
@@ -186,37 +186,37 @@ void ExamModel::setExamResponse(int row, const QJsonObject& response) {
 
 void ExamModel::examStarted(int row, int id) {
     if (!isValidRow(row)) {
-        LOG_ERROR(QString("检查开始时行索引无效: %1").arg(row));
+        LOG_ERROR(QString("Invalid row index when exam starts: %1").arg(row));
         return;
     }
 
     if (id < 0) {
-        LOG_ERROR(QString("检查开始但ID无效: %1").arg(id));
+        LOG_ERROR(QString("Exam started but ID is invalid: %1").arg(id));
         return;
     }
 
-    // 检查计时线程状态并设置扫描状态
+    // Check timer thread status and set scanning state
     bool canStartTimer = false;
     {
         QMutexLocker locker(&m_mutex);
         if (m_timerThread != nullptr) {
-            LOG_ERROR("计时线程已存在，无法启动");
+            LOG_ERROR("Timer thread already exists, cannot start");
             return;
         }
         
-        // 设置ID和状态
+        // Set ID and state
         m_exams[row].setId(id);
         m_scanningRow = row;
         canStartTimer = true;
     }
     
-    // 更新UI模型，不需要锁
+    // Update UI model, no lock needed
     m_exams[row].setStatus(ExamItem::Status::Processing);
     QModelIndex index = createIndex(row, StatusColumn);
     emit dataChanged(index, index);
     emit examStatusChanged(row, ExamItem::Status::Processing);
     
-    // 如果可以，在锁外启动计时器
+    // If possible, start timer outside lock
     if (canStartTimer) {
         startTimerThread();
     }
@@ -241,7 +241,7 @@ int ExamModel::examStoped() {
     locker.unlock();
     
     if (row < 0 || row >= m_exams.size()) {
-        LOG_WARNING("无法停止检查：没有正在进行的检查");
+        LOG_WARNING("Cannot stop exam: no exam in progress");
         return -1;
     }
     
@@ -254,7 +254,7 @@ int ExamModel::examDone() {
     locker.unlock();
     
     if (row < 0 || row >= m_exams.size()) {
-        LOG_WARNING("无法完成检查：没有正在进行的检查");
+        LOG_WARNING("Cannot complete exam: no exam in progress");
         return -1;
     }
     
@@ -271,13 +271,13 @@ bool ExamModel::loadExams(const QString& filePath) {
 bool ExamModel::saveExams(const QString& filePath) const {
     QDir dir("./configs");
     if (!dir.exists() && !dir.mkpath(".")) {
-        LOG_ERROR(QString("无法创建配置目录: %1").arg(dir.path()));
+        LOG_ERROR(QString("Cannot create config directory: %1").arg(dir.path()));
         return false;
     }
 
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly)) {
-        LOG_ERROR(QString("无法写入配置文件: %1").arg(filePath));
+        LOG_ERROR(QString("Cannot write config file: %1").arg(filePath));
         return false;
     }
 
@@ -290,7 +290,7 @@ bool ExamModel::saveExams(const QString& filePath) const {
     file.write(doc.toJson());
     file.close();
     
-    LOG_INFO(QString("检查配置已保存: %1").arg(filePath));
+    LOG_INFO(QString("Exam config saved: %1").arg(filePath));
     return true;
 }
 
@@ -305,13 +305,13 @@ void ExamModel::updateTimers() {
             return;
     }
     
-    // 计算时间
+    // Calculate time
     int seconds = m_startTime.secsTo(QTime::currentTime());
     int m = (seconds % 3600) / 60;
     int s = seconds % 60;
     QString timeStr = QString("%1:%2").arg(m, 1, 10, QChar('0')).arg(s, 2, 10, QChar('0'));
     
-    // 更新UI模型
+    // Update UI model
     m_exams[currentRow].setTime(timeStr);
     QModelIndex index = createIndex(currentRow, TimeColumn);
     emit dataChanged(index, index);
@@ -330,16 +330,16 @@ void ExamModel::startTimerThread() {
         QMutexLocker locker(&m_mutex);
         
         if (m_timerThread != nullptr) {
-            LOG_WARNING("计时线程已存在，无法再次启动");
+            LOG_WARNING("Timer thread already exists, cannot start again");
             return;
         }
         
-        // 设置开始时间
+        // Set start time
         m_startTime = QTime::currentTime();
         m_threadShouldExit = false;
         scanningRow = m_scanningRow;
         
-        // 创建新线程
+        // Create new thread
         newThread = QThread::create([this, scanningRow]() {
             while (true) {
                 bool shouldExit;
@@ -351,26 +351,26 @@ void ExamModel::startTimerThread() {
                     currentRow = m_scanningRow;
                 }
                 
-                // 判断是否应该退出
+                // Check if should exit
                 if (shouldExit || currentRow == -1 || currentRow != scanningRow) {
                     break;
                 }
                 
-                // 在锁外更新计时
+                // Update timer outside lock
                 QMetaObject::invokeMethod(this, "updateTimers", Qt::QueuedConnection);
-                QThread::msleep(1000); // 每秒更新一次
+                QThread::msleep(1000); // Update every second
             }
             
-            LOG_DEBUG("计时线程正常退出");
+            LOG_DEBUG("Timer thread exited normally");
         });
         
         m_timerThread = newThread;
     }
     
-    // 在锁外启动线程
+    // Start thread outside lock
     if (newThread) {
         newThread->start();
-        LOG_DEBUG("计时线程已启动");
+        LOG_DEBUG("Timer thread started");
     }
 }
 
@@ -383,17 +383,17 @@ void ExamModel::stopTimerThread() {
             return;
         }
         
-        // 设置退出标志
+        // Set exit flag
         m_threadShouldExit = true;
         threadToStop = m_timerThread;
         m_timerThread = nullptr;
     }
     
-    // 在锁外等待线程完成
+    // Wait for thread to complete outside lock
     if (threadToStop) {
         threadToStop->wait();
         delete threadToStop;
-        LOG_DEBUG("计时线程已停止");
+        LOG_DEBUG("Timer thread stopped");
     }
 }
 
@@ -402,7 +402,7 @@ QList<ExamItem> ExamModel::loadExamsFromFile(const QString& filePath) const {
     
     QFile file(filePath);
     if (!file.exists() || !file.open(QIODevice::ReadOnly)) {
-        LOG_WARNING(QString("无检查配置文件: %1").arg(filePath));
+        LOG_WARNING(QString("No exam config file: %1").arg(filePath));
         return exams;
     }
 
@@ -414,47 +414,47 @@ QList<ExamItem> ExamModel::loadExamsFromFile(const QString& filePath) const {
         }
     }
     
-    LOG_INFO(QString("已加载%1个检查").arg(exams.size()));
+    LOG_INFO(QString("Loaded %1 exams").arg(exams.size()));
     return exams;
 }
 
 int ExamModel::finishExam(int row, ExamItem::Status newStatus, bool shouldSave) {
     if (!isValidRow(row)) {
-        LOG_ERROR(QString("完成/停止检查失败：行索引 %1 无效").arg(row));
+        LOG_ERROR(QString("Failed to finish/stop exam: invalid row index %1").arg(row));
         return -1;
     }
     
-    // 锁外进行状态检查，减少持锁时间
+    // Check exam status outside lock to reduce lock time
     if (m_exams[row].status() != ExamItem::Status::Processing) {
         QString statusText = ExamItem::statusText(m_exams[row].status());
-        LOG_WARNING(QString("检查 %1 状态错误（当前状态: %2），无法更改状态")
+        LOG_WARNING(QString("Exam %1 status error (current status: %2), cannot change status")
                   .arg(m_exams[row].name())
                   .arg(statusText));
         return -1;
     }
     
-    // 获取ID，不需要锁
+    // Get ID, no lock needed
     int id = m_exams[row].id();
     
-    // 停止计时线程
+    // Stop timer thread
     stopTimerThread();
     
-    // 更新状态不需要锁，因为这是UI模型更新
+    // Update status outside lock, as this is a UI model update
     m_exams[row].setStatus(newStatus);
     QModelIndex index = createIndex(row, StatusColumn);
     emit dataChanged(index, index);
     emit examStatusChanged(row, newStatus);
     
-    // 重置扫描状态需要锁
+    // Reset scanning state needs lock
     resetScanningState();
     
-    // 保存配置，如果需要
+    // Save config if needed
     if (shouldSave) {
         saveExams();
     }
     
-    LOG_INFO(QString("检查%1：ID=%2, 名称=\"%3\"")
-            .arg(newStatus == ExamItem::Status::Done ? "完成" : "停止")
+    LOG_INFO(QString("Exam %1: ID=%2, Name=\"%3\"")
+            .arg(newStatus == ExamItem::Status::Done ? "completed" : "stopped")
             .arg(id)
             .arg(m_exams[row].name()));
     

@@ -6,19 +6,19 @@
 #include <QMessageBox>
 #include <QTextStream>
 
-// 静态成员初始化
+// Initialize static members
 bool Logger::s_logToFile = false;
 QString Logger::s_logFilePath = "logs/mrscan.log";
 LogLevel Logger::s_minLogLevel = LogLevel::Debug;
 
 void Logger::log(LogLevel level, const QString& message, const char* file, int line)
 {
-    // 检查日志级别
+    // Check log level
     if (level < s_minLogLevel) {
         return;
     }
 
-    // 获取日志级别对应的字符串
+    // Get string representation of log level
     QString levelStr;
     switch (level) {
     case LogLevel::Debug:
@@ -38,7 +38,7 @@ void Logger::log(LogLevel level, const QString& message, const char* file, int l
         break;
     }
 
-    // 构建日志消息
+    // Build log message
     QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
     QString logMessage;
     
@@ -57,7 +57,7 @@ void Logger::log(LogLevel level, const QString& message, const char* file, int l
             .arg(message);
     }
 
-    // 输出到控制台
+    // Output to console
     switch (level) {
     case LogLevel::Debug:
         qDebug() << logMessage;
@@ -74,7 +74,7 @@ void Logger::log(LogLevel level, const QString& message, const char* file, int l
         break;
     }
 
-    // 写入日志文件
+    // Write to log file
     if (s_logToFile) {
         QDir dir;
         dir.mkpath(QFileInfo(s_logFilePath).absolutePath());

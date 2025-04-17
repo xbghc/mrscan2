@@ -81,7 +81,7 @@ void QCheckComboBox::setChecked(int index, bool checked)
     Qt::CheckState state = checked ? Qt::Checked : Qt::Unchecked;
     m_model->setData(modelIndex, state, Qt::CheckStateRole);
     
-    // 触发状态改变信号
+    // Trigger status change signal
     emit itemStatusChanged();
 }
 

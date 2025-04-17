@@ -30,28 +30,28 @@ int ScannerAdapter::open() {
 
 void ScannerAdapter::scan(QJsonObject &sequence) {
     if (!SequenceValidator::validate(sequence)) {
-        LOG_ERROR("无效的扫描序列");
+        LOG_ERROR("Invalid scan sequence");
         return;
     }
 
     int size;
     unsigned char *code = SequenceEncoder::encode(sequence, size);
     if (code == nullptr) {
-        LOG_ERROR("序列编码失败");
+        LOG_ERROR("Sequence encoding failed");
         return;
     }
 
-    // 使用ConfigManager生成ID
+    // Use ConfigManager to generate ID
     int id = ConfigManager::instance()->generateId();
     if (id < 0) {
-        LOG_ERROR("生成ID失败");
+        LOG_ERROR("Failed to generate ID");
         return;
     }
-    LOG_INFO(QString("扫描开始，ID: %1").arg(id));
+    LOG_INFO(QString("Scan started, ID: %1").arg(id));
     memcpy(code + 4, &id, 4);
 
     if (scanner.write(code, size) != size) {
-        LOG_ERROR("向扫描仪写入数据失败");
+        LOG_ERROR("Failed to write data to scanner");
         return;
     }
 
@@ -65,18 +65,18 @@ void ScannerAdapter::scan(QJsonObject &sequence) {
     while(totalReceived<dataSize){
         curReceived = scanner.read(reinterpret_cast<unsigned char*>(buffer.data()), dataSize-totalReceived);
         if(curReceived == 0){
-            LOG_ERROR(QString("预期大小(%1)与实际大小(%2)不符").arg(dataSize).arg(totalReceived));
+            LOG_ERROR(QString("Expected size (%1) does not match actual size (%2)").arg(dataSize).arg(totalReceived));
             break;
         }
         totalReceived += curReceived;
     }
-    LOG_INFO(QString("扫描完成，ID: %1，数据大小: %2").arg(id).arg(totalReceived));
+    LOG_INFO(QString("Scan completed, ID: %1, Data size: %2").arg(id).arg(totalReceived));
     emit scanEnded(buffer);
 }
 
 int ScannerAdapter::stop(int id)
 {
-    LOG_INFO(QString("停止扫描，ID: %1").arg(id));
+    LOG_INFO(QString("Stopping scan, ID: %1").arg(id));
     int size;
     unsigned char *code = SequenceEncoder::encodeStop(id, size);
     memcpy(code+4, &id, 4);
@@ -85,13 +85,13 @@ int ScannerAdapter::stop(int id)
         emit stoped(id);
         return id;
     }
-    LOG_ERROR(QString("停止扫描失败，ID: %1").arg(id));
+    LOG_ERROR(QString("Failed to stop scan, ID: %1").arg(id));
     return -1;
 }
 
 int ScannerAdapter::close() { 
     m_isConnected = false;
-    LOG_INFO("关闭扫描仪连接");
+    LOG_INFO("Closing scanner connection");
     return scanner.close(); 
 }
 

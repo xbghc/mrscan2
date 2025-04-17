@@ -28,6 +28,6 @@ private slots:
 private:
     Ui::MainWindow *ui;
     IScannerAdapter *adapter;
-    bool ownAdapter;  // 标记是否需要在析构时删除适配器
+    bool ownAdapter;  // Flag whether the adapter needs to be deleted in the destructor
 };
 #endif // MAINWINDOW_H

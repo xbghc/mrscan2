@@ -10,7 +10,7 @@
 
 #include "virtualscanner.h"
 
-// 定义扫描仪适配器接口
+// Define scanner adapter interface
 class IScannerAdapter : public QObject
 {
     Q_OBJECT
@@ -29,7 +29,7 @@ signals:
     void stoped(int id);
 };
 
-// 具体实现类
+// Concrete implementation class
 class ScannerAdapter: public IScannerAdapter
 {
     Q_OBJECT

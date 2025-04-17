@@ -8,7 +8,7 @@
 #include <QJsonArray>
 #include <QMutexLocker>
 
-// 初始化静态变量
+// Initialize static variables
 ConfigManager* ConfigManager::s_instance = nullptr;
 
 ConfigManager* ConfigManager::instance()
@@ -22,11 +22,11 @@ ConfigManager* ConfigManager::instance()
 ConfigManager::ConfigManager(QObject* parent)
     : QObject(parent)
 {
-    // 确保配置目录存在
+    // Ensure config directory exists
     QDir configDir("./configs");
     if (!configDir.exists()) {
         if (!configDir.mkpath(".")) {
-            LOG_ERROR("无法创建配置目录");
+            LOG_ERROR("Failed to create config directory");
         }
     }
 }
@@ -42,7 +42,7 @@ bool ConfigManager::loadConfig(const QString& configName)
     QFile file(filePath);
     
     if (!file.exists()) {
-        LOG_WARNING(QString("配置文件不存在: %1").arg(filePath));
+        LOG_WARNING(QString("Config file does not exist: %1").arg(filePath));
         
         QMutexLocker locker(&m_mutex);
         m_configs[configName] = QJsonValue();
@@ -51,7 +51,7 @@ bool ConfigManager::loadConfig(const QString& configName)
     }
     
     if (!file.open(QIODevice::ReadOnly)) {
-        LOG_ERROR(QString("无法打开配置文件: %1").arg(filePath));
+        LOG_ERROR(QString("Cannot open config file: %1").arg(filePath));
         return false;
     }
     
@@ -60,7 +60,7 @@ bool ConfigManager::loadConfig(const QString& configName)
     
     QJsonDocument doc = QJsonDocument::fromJson(data);
     if (doc.isNull()) {
-        LOG_ERROR(QString("配置文件格式不正确: %1").arg(filePath));
+        LOG_ERROR(QString("Config file format is incorrect: %1").arg(filePath));
         return false;
     }
     
@@ -70,7 +70,7 @@ bool ConfigManager::loadConfig(const QString& configName)
     } else if (doc.isArray()) {
         configValue = doc.array();
     } else {
-        LOG_ERROR(QString("配置文件内容不是有效的JSON对象或数组: %1").arg(filePath));
+        LOG_ERROR(QString("Config file content is not a valid JSON object or array: %1").arg(filePath));
         return false;
     }
     
@@ -94,7 +94,7 @@ bool ConfigManager::saveConfig(const QString& configName)
     }
     
     if (!exists) {
-        LOG_WARNING(QString("尝试保存不存在的配置: %1").arg(configName));
+        LOG_WARNING(QString("Attempting to save non-existent config: %1").arg(configName));
         return false;
     }
     
@@ -106,14 +106,13 @@ bool ConfigManager::saveConfig(const QString& configName)
     } else if (configValue.isArray()) {
         doc = QJsonDocument(configValue.toArray());
     } else {
-        LOG_ERROR(QString("配置不是有效的JSON对象或数组: %1").arg(configName));
+        LOG_ERROR(QString("Config is not a valid JSON object or array: %1").arg(configName));
         return false;
     }
-    
-    // 文件操作在锁之外进行
+
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly)) {
-        LOG_ERROR(QString("无法写入配置文件: %1").arg(filePath));
+        LOG_ERROR(QString("Cannot write to config file: %1").arg(filePath));
         return false;
     }
     
@@ -125,7 +124,7 @@ bool ConfigManager::saveConfig(const QString& configName)
         m_configModified[configName] = false;
     }
     
-    LOG_INFO(QString("配置已保存: %1").arg(configName));
+    LOG_INFO(QString("Config saved: %1").arg(configName));
     
     return true;
 }
@@ -168,7 +167,6 @@ QJsonValue ConfigManager::getValue(const QString& configName, const QString& pat
     }
     
     if (!configExists) {
-        // 锁外加载配置
         if (!loadConfig(configName)) {
             return QJsonValue();
         }
@@ -217,9 +215,8 @@ bool ConfigManager::setValue(const QString& configName, const QString& path, con
     }
     
     if (!configExists) {
-        // 锁外加载配置
         if (!loadConfig(configName)) {
-            // 加载失败，创建新的空配置
+            // Loading failed, create a new empty configuration
             configValue = path.isEmpty() ? value : QJsonObject();
         } else {
             QMutexLocker locker(&m_mutex);
@@ -237,7 +234,7 @@ bool ConfigManager::setValue(const QString& configName, const QString& path, con
     
     QStringList pathParts = parsePath(path);
     
-    // 在修改前复制一份
+    // Make a copy before modification
     QJsonValue updatedValue = configValue;
     bool success = setValueAtPath(updatedValue, pathParts, value);
     
@@ -274,7 +271,7 @@ int ConfigManager::generateId()
         }
     }
     
-    // 更新并保存新ID
+    // Update and save new ID
     setValue("ids", "nextId", currentId + 1);
     saveConfig("ids");
     
@@ -351,7 +348,7 @@ bool ConfigManager::setValueAtPath(QJsonValue& root, const QStringList& pathPart
             return false;
         }
         
-        // 如果需要扩展数组
+        // If array needs to be expanded
         while (arr.size() <= index) {
             arr.append(QJsonValue());
         }
@@ -373,15 +370,15 @@ bool ConfigManager::setValueAtPath(QJsonValue& root, const QStringList& pathPart
             }
         }
     } else if (root.isNull() || root.isUndefined()) {
-        // 如果当前节点为空，需要创建新对象
+        // If the current node is empty, create a new object
         bool isNumber;
         remainingParts.first().toInt(&isNumber);
         
         if (isNumber) {
-            // 下一级是数组
+            // Next level is an array
             root = QJsonArray();
         } else {
-            // 下一级是对象
+            // Next level is an object
             root = QJsonObject();
         }
         
