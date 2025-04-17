@@ -26,6 +26,8 @@ public:
     void preview(double fov, double thickness, double sliceSeparation, int noSlices, QVector3D angles, QVector3D offsets);
     void preview(double fov, double thickness, int noSlices, QList<QVector3D> angles, QList<QVector3D> offsets);
 
+    void setFov(double fov);
+
 private:
     QList<QVector3D> m_angles;
     QList<QVector3D> m_offsets;

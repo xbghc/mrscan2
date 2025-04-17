@@ -151,6 +151,11 @@ void ScoutWidget::preview(double fov, double thickness, int noSlices, QList<QVec
     }
 }
 
+void ScoutWidget::setFov(double fov)
+{
+    m_fov = fov;
+}
+
 void ScoutWidget::previewSlice(double fov, QVector3D angles, QVector3D offsets)
 {
     // TODO 函数代码可以优化

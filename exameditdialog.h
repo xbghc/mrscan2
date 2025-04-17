@@ -51,6 +51,10 @@ private:
     void setSlices(QJsonArray _slices);
     QJsonArray getSlices();
     void setSliceComboNumbers(int num);
+
+    void initScoutWidget();
+
+    void preview();
 };
 
 #endif // EXAMEDITDIALOG_H

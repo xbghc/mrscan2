@@ -54,6 +54,8 @@ ExamEditDialog::ExamEditDialog(QWidget *parent)
         setSliceComboNumbers(num);
     });
 
+    initScoutWidget();
+
     // TODO 判断是否已经进行了scout扫描，如果有，设置图片
 }
 
@@ -108,11 +110,9 @@ QJsonObject ExamEditDialog::getParameters()
 
 void ExamEditDialog::setScoutImages(QList<QImage> images, double fov, QList<QVector3D> angles, QList<QVector3D> offsets)
 {
-    ui->contentWidget->setScoutImages(images, fov, angles, offsets);
+    ui->scoutWidget->setScoutImages(images, fov, angles, offsets);
 
-    // TODO 测试用
-    ui->contentWidget->preview(256, 10, 10, 5, {0, 0, 0}, {0, 0, 0});
-    // ui->contentWidget->preview(10, 5, {{90, 0, 0}, {90, 0, 0}}, {{0, 0, 0}, {-20, 0, 0}, {10, 0, 0}, {-10, 0, 0}, {20, 0, 0}});
+    preview();
 }
 
 void ExamEditDialog::setSlices(QJsonArray slicesArray)
@@ -171,6 +171,46 @@ void ExamEditDialog::setSliceComboNumbers(int n)
 
     if (n > 0) {
         ui->comboSlice->setCurrentIndex(0);
+    }
+}
+
+void ExamEditDialog::initScoutWidget()
+{
+    connect(ui->editFOV, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
+    connect(ui->editSliceThickness, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
+    connect(ui->editNoSlices, &QSpinBox::valueChanged, this, &ExamEditDialog::preview);
+    connect(ui->editSliceSeparation, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
+    connect(ui->editXAngle, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
+    connect(ui->editYAngle, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
+    connect(ui->editZAngle, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
+    connect(ui->editXOffset, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
+    connect(ui->editYOffset, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
+    connect(ui->editZOffset, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
+}
+
+void ExamEditDialog::preview()
+{
+    auto fov = ui->editFOV->value();
+    auto noSlices = ui->editNoSlices->value();
+    auto thickness = ui->editSliceThickness->value();
+
+    if(ui->checkGroupMode->isChecked()){
+        // Group Mode
+        auto separation = ui->editSliceSeparation->value();
+
+        auto angles = QVector3D(ui->editXAngle->value(), ui->editYAngle->value(), ui->editZAngle->value());
+        auto offsets = QVector3D(ui->editXOffset->value(), ui->editYOffset->value(), ui->editZOffset->value());
+        ui->scoutWidget->preview(fov, thickness, separation, noSlices, angles, offsets);
+    }else{
+        QList<QVector3D> angles;
+        QList<QVector3D> offsets;
+
+        for(int i=0;i<m_slices.count();i++){
+            angles.push_back(QVector3D(m_slices[i][0], m_slices[i][1], m_slices[i][2]));
+            offsets.push_back(QVector3D(m_slices[i][3], m_slices[i][4], m_slices[i][5]));
+        }
+
+        ui->scoutWidget->preview(fov, thickness, noSlices, angles, offsets);
     }
 }
 
