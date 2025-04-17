@@ -1,7 +1,7 @@
 #include <QJsonDocument>
 
 #include "examhistory.h"
-#include "QImagesWidget/mrdparser.h"
+#include "mrdparser.h"
 
 namespace{
 QDir getExamDir(int patientId, int examId){

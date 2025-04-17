@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qcheckcombobox.svg</file>
+    </qresource>
+</RCC>

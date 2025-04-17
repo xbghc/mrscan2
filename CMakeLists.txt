@@ -59,11 +59,13 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         custompreferences.h custompreferences.cpp
         abstractpreferencestab.h abstractpreferencestab.cpp
 
-        QImagesWidget/components/qcheckcombobox.cpp QImagesWidget/components/qcheckcombobox.h QImagesWidget/components/qcheckcombobox.qrc QImagesWidget/components/qcheckcombobox.svg
-        QImagesWidget/contentwidget.cpp QImagesWidget/contentwidget.h QImagesWidget/icons.qrc QImagesWidget/mrdparser.cpp QImagesWidget/mrdparser.h QImagesWidget/qimageswidget.cpp QImagesWidget/qimageswidget.h QImagesWidget/qimageswidget.ui QImagesWidget/utils.cpp QImagesWidget/utils.h
+        components/qcheckcombobox.cpp components/qcheckcombobox.h components/qcheckcombobox.qrc components/qcheckcombobox.svg
+        QImagesWidget/qimageswidget.cpp QImagesWidget/qimageswidget.h
         scoutwidget.h scoutwidget.cpp
-
-
+        resultwidget.h resultwidget.cpp resultwidget.ui
+        utils.cpp utils.h
+        mrdparser.cpp mrdparser.h
+        icons.qrc
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET mrscan2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

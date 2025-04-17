@@ -60,7 +60,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QImagesWidget" name="imagesWidget" native="true">
+        <widget class="ResultWidget" name="imagesWidget" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -176,9 +176,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>QImagesWidget</class>
+   <class>ResultWidget</class>
    <extends>QWidget</extends>
-   <header>qimageswidget.h</header>
+   <header>resultwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

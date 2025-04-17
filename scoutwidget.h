@@ -4,7 +4,7 @@
 #include <QJsonObject>
 #include <QVector3D>
 
-#include "contentwidget.h"
+#include "qimageswidget.h"
 
 class Slice{
     QVector3D angles;
@@ -14,7 +14,7 @@ class Slice{
 };
 
 
-class ScoutWidget : public ContentWidget
+class ScoutWidget : public QImagesWidget
 {
     Q_OBJECT
 public:

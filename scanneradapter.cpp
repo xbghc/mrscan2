@@ -4,7 +4,7 @@
 #include "sequencevalidator.h"
 
 #include <QFile>
-#include "QImagesWidget/utils.h"
+#include "utils.h"
 
 namespace {
 

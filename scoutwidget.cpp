@@ -109,7 +109,7 @@ QList<QPointF> getLineInViewport(double a, double b, double c, double viewFov, d
 } // namespace
 
 ScoutWidget::ScoutWidget(QWidget *parent)
-    : ContentWidget(parent)
+    : QImagesWidget(parent)
 {
     setRowNum(3);
     setColNum(3);
@@ -118,7 +118,7 @@ ScoutWidget::ScoutWidget(QWidget *parent)
 
 void ScoutWidget::setScoutImages(QList<QImage> images, double fov, QList<QVector3D> angles, QList<QVector3D> offsets)
 {
-    ContentWidget::setImages(images);
+    QImagesWidget::setImages(images);
     m_fov = fov;
     m_angles = angles;
     m_offsets = offsets;
@@ -126,7 +126,7 @@ void ScoutWidget::setScoutImages(QList<QImage> images, double fov, QList<QVector
 
 void ScoutWidget::updateMarkers()
 {
-    ContentWidget::updateMarkers();
+    QImagesWidget::updateMarkers();
 }
 
 void ScoutWidget::preview(double fov, double thickness, double sliceSeparation, int noSlices, QVector3D angles, QVector3D offsets)
@@ -182,7 +182,7 @@ void ScoutWidget::previewSlice(double fov, QVector3D angles, QVector3D offsets)
         pen.setWidth(2);        // 线宽
         pen.setStyle(Qt::DashLine); // 虚线
         line->setPen(pen);
-        ContentWidget::addLine(i, line);
+        QImagesWidget::addLine(i, line);
         // qDebug() << line.line();
     }
 }
