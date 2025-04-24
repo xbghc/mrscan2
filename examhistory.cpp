@@ -2,32 +2,29 @@
 
 #include "examhistory.h"
 #include "mrdparser.h"
-
-namespace{
-QDir getExamDir(int patientId, int examId){
-    return QDir(QString("./patients/%1/%2").arg(patientId).arg(examId));
-}
-}
+#include "pathmanager.h"
+#include "utils.h"
 
 ExamHistory::ExamHistory() {}
 
 ExamHistory::ExamHistory(int patientId, int examId)
 {
-    QDir dir = getExamDir(patientId, examId);
-    if(!dir.exists()){
-        qDebug() << "exam dir not exists";
+    if (!PathManager::examDirExists(patientId, examId)) {
+        LOG_WARNING(QString("Exam directory does not exist, patientId: %1, examId: %2").arg(patientId).arg(examId));
         return;
     }
 
-    QFile requestFile(dir.filePath("request.json"));
-    if(!requestFile.open(QIODevice::ReadOnly)){
-        qDebug() << "open " << requestFile.fileName() << " failed";
+    QString requestFilePath = PathManager::getRequestFilePath(patientId, examId);
+    QFile requestFile(requestFilePath);
+    if (!requestFile.open(QIODevice::ReadOnly)) {
+        LOG_ERROR(QString("Failed to open %1").arg(requestFile.fileName()));
     }
     m_request = QJsonDocument::fromJson(requestFile.readAll()).object();
 
-    QFile responseFile(dir.filePath("response.dat"));
-    if(!responseFile.open(QIODevice::ReadOnly)){
-        qDebug() << "open " << responseFile.fileName() << " failed";
+    QString responseFilePath = PathManager::getResponseFilePath(patientId, examId);
+    QFile responseFile(responseFilePath);
+    if (!responseFile.open(QIODevice::ReadOnly)) {
+        LOG_ERROR(QString("Failed to open %1").arg(responseFile.fileName()));
     }
 
     m_response = responseFile.readAll();
@@ -60,53 +57,75 @@ void ExamHistory::setResponse(const QByteArray& response)
     m_response = response;
 }
 
-
-
 QString ExamHistory::requestPath()
 {
-    auto dir_path = dirPath();
-    auto dir = QDir(dir_path);
-    return dir.absoluteFilePath("request.json");
+    if (m_patientId == -1) {
+        LOG_ERROR("Patient ID is not set");
+        return "";
+    }
+    
+    int requestId = m_request["id"].toInt();
+    return PathManager::getRequestFilePath(m_patientId, requestId);
 }
 
 QString ExamHistory::responsePath()
 {
-    auto dir_path = dirPath();
-    auto dir = QDir(dir_path);
-    return dir.absoluteFilePath("response#1.dat");
+    if (m_patientId == -1) {
+        LOG_ERROR("Patient ID is not set");
+        return "";
+    }
+    
+    int requestId = m_request["id"].toInt();
+    return PathManager::getResponseFilePath(m_patientId, requestId);
 }
 
 bool ExamHistory::save()
 {
+    if (m_patientId == -1) {
+        LOG_ERROR("Patient ID is not set");
+        return false;
+    }
+    
+    int requestId = m_request["id"].toInt();
+    
+    if (!PathManager::ensureExamDirExists(m_patientId, requestId)) {
+        LOG_ERROR("Failed to create exam directory");
+        return false;
+    }
+    
     QFile requestFile(requestPath());
-    if(!requestFile.open(QIODevice::WriteOnly)){
-        return "";
+    if (!requestFile.open(QIODevice::WriteOnly)) {
+        LOG_ERROR(QString("Failed to open file for writing: %1").arg(requestFile.fileName()));
+        return false;
     }
     QJsonDocument doc(m_request);
     requestFile.write(doc.toJson(QJsonDocument::Indented));
     requestFile.close();
 
     QFile responseFile(responsePath());
-    if(!responseFile.open(QIODevice::WriteOnly)){
+    if (!responseFile.open(QIODevice::WriteOnly)) {
+        LOG_ERROR(QString("Failed to open file for writing: %1").arg(responseFile.fileName()));
         return false;
     }
     responseFile.write(m_response);
+    responseFile.close();
 
     return true;
 }
 
 QString ExamHistory::dirPath()
 {
-    if(m_patientId == -1){
-        qDebug() << "history model: patient id is not set";
+    if (m_patientId == -1) {
+        LOG_ERROR("Patient ID is not set");
         return "";
     }
 
     int requestId = m_request["id"].toInt();
-    QDir dir = getExamDir(m_patientId, requestId);
-    if(!dir.exists() && !dir.mkpath(".")){
+    
+    if (!PathManager::ensureExamDirExists(m_patientId, requestId)) {
+        LOG_ERROR("Failed to create exam directory");
         return "";
     }
-
-    return dir.absolutePath();
+    
+    return PathManager::getExamDir(m_patientId, requestId);
 }

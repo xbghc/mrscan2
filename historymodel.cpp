@@ -2,6 +2,8 @@
 
 #include <QDir>
 #include <QJsonDocument>
+#include "pathmanager.h"
+#include "utils.h"
 
 HistoryModel::HistoryModel(QObject *parent)
     : QAbstractTableModel(parent)
@@ -68,21 +70,17 @@ void HistoryModel::loadHistoryList()
     beginResetModel();
     m_historyList.clear();
 
-    QDir rootDir("./patients");
-    rootDir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
-    for(const auto& patientId:rootDir.entryList()){
-        QDir patientDir(rootDir.filePath(patientId));
-        if(!patientDir.exists()){
-            qDebug() << "unexpected directory structure";
-            continue;
-        }
-
-        patientDir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
-        for(const auto &examId:patientDir.entryList()){
-            QString examDirPath = patientDir.filePath(examId);
+    QStringList patientIds = PathManager::getAllPatientIds();
+    for(const auto& patientIdStr : patientIds) {
+        int patientId = patientIdStr.toInt();
+        QStringList examIds = PathManager::getExamIdsForPatient(patientId);
+        
+        for(const auto &examIdStr : examIds) {
+            int examId = examIdStr.toInt();
+            QString examDirPath = PathManager::getExamDir(patientId, examId);
             QFileInfo dirInfo(examDirPath);
             QDateTime createTime = dirInfo.birthTime();
-            m_historyList.append(HistoryItem(examId.toInt(), patientId.toInt(), createTime));
+            m_historyList.append(HistoryItem(examId, patientId, createTime));
         }
     }
     endResetModel();
@@ -91,7 +89,7 @@ void HistoryModel::loadHistoryList()
 ExamHistory HistoryModel::getHistoryObj(int row)
 {
     if(row < 0 || row > m_historyList.count()){
-        qDebug() << "index out of history list";
+        LOG_ERROR("Index out of history list range");
         return ExamHistory();
     }
 

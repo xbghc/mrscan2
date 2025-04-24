@@ -68,6 +68,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         abstractpreferencestab.h abstractpreferencestab.cpp
         utils.cpp utils.h
         mrdparser.cpp mrdparser.h
+        pathmanager.h pathmanager.cpp
         
         # Image processing related
         qcustomplot.cpp qcustomplot.h
