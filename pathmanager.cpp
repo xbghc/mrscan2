@@ -3,6 +3,7 @@
 
 const QString PathManager::ROOT_DIR = "./";
 const QString PathManager::PATIENTS_DIR = "patients";
+QString PathManager::m_historyPathFormat = "%1/%2"; // 默认格式为 patientId/examId
 
 QString PathManager::getPatientDir(int patientId)
 {
@@ -11,7 +12,7 @@ QString PathManager::getPatientDir(int patientId)
 
 QString PathManager::getExamDir(int patientId, int examId)
 {
-    return QDir(getPatientDir(patientId)).filePath(QString("%1").arg(examId));
+    return QDir(getPatientDir(patientId)).filePath(QString(m_historyPathFormat).arg(patientId).arg(examId));
 }
 
 QString PathManager::getRequestFilePath(int patientId, int examId)
@@ -73,4 +74,16 @@ QStringList PathManager::getExamIdsForPatient(int patientId)
     QDir patientDir(getPatientDir(patientId));
     patientDir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
     return patientDir.entryList();
+}
+
+void PathManager::setHistoryPathFormat(const QString& format)
+{
+    if (!format.isEmpty()) {
+        m_historyPathFormat = format;
+    }
+}
+
+QString PathManager::getHistoryPathFormat()
+{
+    return m_historyPathFormat;
 } 

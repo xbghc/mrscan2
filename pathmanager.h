@@ -24,6 +24,12 @@ public:
     
     static bool examDirExists(int patientId, int examId);
     static bool patientDirExists(int patientId);
+
+    static void setHistoryPathFormat(const QString& format);
+    static QString getHistoryPathFormat();
+
+private:
+    static QString m_historyPathFormat;
 };
 
 #endif // PATHMANAGER_H 

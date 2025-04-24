@@ -5,6 +5,7 @@
 #include <QJsonDocument>
 #include <QStyleFactory>
 #include <QStyleHints>
+#include "pathmanager.h"
 
 const QString CustomPreferences::filePath = "./configs/preferences.json";
 
@@ -40,8 +41,14 @@ void CustomPreferences::setupApp()
 
 void CustomPreferences::setupApp(QJsonObject preferences)
 {
-
     setupAppStyle(preferences["style"].toObject());
+    
+    if (preferences.contains("history") && preferences["history"].isObject()) {
+        QJsonObject historyObj = preferences["history"].toObject();
+        if (historyObj.contains("pathFormat") && historyObj["pathFormat"].isString()) {
+            PathManager::setHistoryPathFormat(historyObj["pathFormat"].toString());
+        }
+    }
 }
 
 void CustomPreferences::setupAppStyle(QJsonObject style)

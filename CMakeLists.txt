@@ -42,6 +42,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         preferencesdialog.h preferencesdialog.cpp preferencesdialog.ui
         preferencestyle.h preferencestyle.cpp preferencestyle.ui
         preferenceimage.h preferenceimage.cpp preferenceimage.ui
+        preferencehistory.h preferencehistory.cpp preferencehistory.ui
         tuningcentralfrequency.h tuningcentralfrequency.cpp tuningcentralfrequency.ui
         tuningradiofrequencypower.h tuningradiofrequencypower.cpp tuningradiofrequencypower.ui
         tuningshimming.h tuningshimming.cpp tuningshimming.ui

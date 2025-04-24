@@ -46,6 +46,11 @@
          <string>Images</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>History</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item>
@@ -56,8 +61,12 @@
        <property name="frameShadow">
         <enum>QFrame::Shadow::Raised</enum>
        </property>
+       <property name="currentIndex">
+        <number>2</number>
+       </property>
        <widget class="PreferenceStyle" name="styleTab"/>
        <widget class="PreferenceImage" name="imageTab"/>
+       <widget class="PreferenceHistory" name="HistoryTab"/>
       </widget>
      </item>
     </layout>
@@ -109,6 +118,12 @@
    <class>PreferenceImage</class>
    <extends>QWidget</extends>
    <header>preferenceimage.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PreferenceHistory</class>
+   <extends>QWidget</extends>
+   <header>preferencehistory.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
