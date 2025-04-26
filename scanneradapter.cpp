@@ -28,7 +28,7 @@ int ScannerAdapter::open() {
     return status;
 }
 
-void ScannerAdapter::scan(QJsonObject &sequence) {
+void ScannerAdapter::scan(QJsonObject sequence) {
     if (!SequenceValidator::validate(sequence)) {
         LOG_ERROR("Invalid scan sequence");
         return;

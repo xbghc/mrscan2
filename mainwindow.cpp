@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent, IScannerAdapter* scannerAdapter)
     , ui(new Ui::MainWindow)
     , adapter(scannerAdapter)
     , ownAdapter(scannerAdapter == nullptr)
+    , workerThread(new QThread)
 {
     ui->setupUi(this);
 
@@ -36,7 +37,8 @@ MainWindow::MainWindow(QWidget *parent, IScannerAdapter* scannerAdapter)
     if (adapter == nullptr) {
         adapter = new ScannerAdapter;
     }
-    
+    adapter->moveToThread(workerThread);
+    workerThread->start();
     adapter->open();
 
     // Connect scan signals to ExamTab
@@ -45,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent, IScannerAdapter* scannerAdapter)
     
     // Receive scan operation signals from ExamTab
     connect(ui->examTab, &ExamTab::onStopButtonClicked, this, &MainWindow::handleScanStop);
-    connect(ui->examTab, &ExamTab::onStartButtonClicked, this, &MainWindow::handleScanStart);
+    connect(ui->examTab, &ExamTab::onStartButtonClicked, adapter, &IScannerAdapter::scan);
     connect(ui->examTab, &ExamTab::fileSaved, this, &MainWindow::handleExamHistorySaved);
 
     // When displaying images
@@ -82,6 +84,9 @@ MainWindow::~MainWindow()
 {
     LOG_INFO("Main window destroyed");
     delete ui;
+    workerThread->quit();
+    workerThread->wait();
+    delete workerThread;
     
     if (adapter) {
         adapter->close();
@@ -89,12 +94,6 @@ MainWindow::~MainWindow()
             delete adapter;
         }
     }
-}
-
-void MainWindow::handleScanStart(QJsonObject sequence)
-{
-    LOG_INFO("Start scanning");
-    adapter->scan(sequence);
 }
 
 void MainWindow::handleScanStop(int id)

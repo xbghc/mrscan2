@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QThread>
 #include "scanneradapter.h"
 #include "examhistory.h"
 
@@ -20,7 +21,6 @@ public:
     ~MainWindow();
 
 private slots:
-    void handleScanStart(QJsonObject sequence);
     void handleScanStop(int id);
     void handleScanComplete(QByteArray response);
     void handleExamHistorySaved(ExamHistory history);
@@ -29,5 +29,7 @@ private:
     Ui::MainWindow *ui;
     IScannerAdapter *adapter;
     bool ownAdapter;  // Flag whether the adapter needs to be deleted in the destructor
+    QThread *workerThread;
+
 };
 #endif // MAINWINDOW_H

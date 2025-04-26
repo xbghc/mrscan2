@@ -61,12 +61,9 @@
        <property name="frameShadow">
         <enum>QFrame::Shadow::Raised</enum>
        </property>
-       <property name="currentIndex">
-        <number>2</number>
-       </property>
        <widget class="PreferenceStyle" name="styleTab"/>
        <widget class="PreferenceImage" name="imageTab"/>
-       <widget class="PreferenceHistory" name="HistoryTab"/>
+       <widget class="PreferenceHistory" name="historyTab"/>
       </widget>
      </item>
     </layout>

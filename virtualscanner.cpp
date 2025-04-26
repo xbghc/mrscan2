@@ -1,6 +1,6 @@
 #include "virtualscanner.h"
 #include <cstring>
-
+#include <QThread>
 
 VirtualScanner::VirtualScanner() {
 }
@@ -31,7 +31,10 @@ int VirtualScanner::read(unsigned char *buf, size_t len)
 {
     if(buf==nullptr){
         return _size;
-    } else if(len >= _size){
+    }
+
+    QThread::sleep(5);
+    if(len >= _size){
         memcpy(buf, _result, _size);
         return _size;
     } else{
