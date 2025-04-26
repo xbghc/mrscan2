@@ -2,6 +2,7 @@
 #include <QMatrix4x4>
 #include <QPen>
 #include "utils.h"
+#include <memory>
 
 namespace {
 // Compare if two floating point numbers are equal
@@ -52,7 +53,7 @@ QList<QPointF> getLineInViewport(double a, double b, double c, double viewFov, d
         // 1. When slice is parallel to y (a=0), we have by + c = 0, so y=-c/b
         auto y = -c/b;
         if(abs(y) > viewFov/2){
-            qDebug() << "line out of viewport";
+            LOG_WARNING("Line out of viewport");
         }
         points.push_back(QPointF(-viewFov/2, y));
         points.push_back(QPointF(viewFov/2, y));
@@ -74,7 +75,7 @@ QList<QPointF> getLineInViewport(double a, double b, double c, double viewFov, d
             y1 = (c-(a*x1))/b;
         }
         if(abs(y1) > viewFov/2){
-            qDebug() << "Line is outside scout range";
+            LOG_WARNING("Line is outside scout range");
         }
         points.push_back(QPointF(x1, y1));
 
@@ -86,13 +87,13 @@ QList<QPointF> getLineInViewport(double a, double b, double c, double viewFov, d
             y2 = (c-(a*x1))/b;
         }
         if(abs(y2) > viewFov/2){
-            qDebug() << "Line is outside scout range";
+            LOG_WARNING("Line is outside scout range");
         }
         points.push_back(QPointF(x2, y2));
     }
 
     if(points.length() != 2){
-        qDebug() << "Intersection line calculation error";
+        LOG_WARNING("Intersection line calculation error");
     }
 
     return points;
@@ -155,6 +156,7 @@ void ScoutWidget::clearLines()
     // updateMarkers() will clear the scene (scene->clear()) and re-add the images
     updateMarkers();
 }
+
 void ScoutWidget::previewSlice(double fov, QVector3D angles, QVector3D offsets)
 {
     // TODO Function code can be optimized
@@ -187,6 +189,5 @@ void ScoutWidget::previewSlice(double fov, QVector3D angles, QVector3D offsets)
         pen.setStyle(Qt::DashLine); // Dashed line
         line->setPen(pen);
         QImagesWidget::addLine(i, line);
-        // qDebug() << line.line();
     }
 }

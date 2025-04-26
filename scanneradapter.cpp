@@ -6,17 +6,12 @@
 
 #include <QFile>
 #include "utils.h"
+#include <memory>
 
 ScannerAdapter::ScannerAdapter(QObject *parent)
     : IScannerAdapter(parent), m_isConnected(false)
 {
-    auto fileContent = read("D:\\Projects\\QImagesWidget\\data\\20230528103740-T2_TSE-T-3k#1.mrd");
 
-    auto len = fileContent.length();
-    auto buffer = new unsigned char[len];
-    memcpy(buffer, fileContent.constData(), len);
-
-    scanner.setResult(buffer, len);
 }
 
 ScannerAdapter::~ScannerAdapter() {
@@ -35,7 +30,7 @@ void ScannerAdapter::scan(QJsonObject sequence) {
     }
 
     int size;
-    unsigned char *code = SequenceEncoder::encode(sequence, size);
+    auto code = SequenceEncoder::encode(sequence, size);
     if (code == nullptr) {
         LOG_ERROR("Sequence encoding failed");
         return;
@@ -48,9 +43,9 @@ void ScannerAdapter::scan(QJsonObject sequence) {
         return;
     }
     LOG_INFO(QString("Scan started, ID: %1").arg(id));
-    memcpy(code + 4, &id, 4);
+    memcpy(code.get() + 4, &id, 4);
 
-    if (scanner.write(code, size) != size) {
+    if (scanner.write(code.get(), size) != size) {
         LOG_ERROR("Failed to write data to scanner");
         return;
     }
@@ -78,10 +73,10 @@ int ScannerAdapter::stop(int id)
 {
     LOG_INFO(QString("Stopping scan, ID: %1").arg(id));
     int size;
-    unsigned char *code = SequenceEncoder::encodeStop(id, size);
-    memcpy(code+4, &id, 4);
+    auto code = SequenceEncoder::encodeStop(id, size);
+    memcpy(code.get()+4, &id, 4);
 
-    if(scanner.write(code, size) == size){
+    if(scanner.write(code.get(), size) == size){
         emit stoped(id);
         return id;
     }

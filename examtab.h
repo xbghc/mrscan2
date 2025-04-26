@@ -6,6 +6,7 @@
 #include <QWidget>
 #include "exammodel.h"
 #include "examhistory.h"
+#include <memory>
 
 namespace Ui {
 class studytab;
@@ -49,7 +50,7 @@ signals:
 
 private:
     Ui::studytab *ui;
-    ExamModel* examModel;
+    std::unique_ptr<ExamModel> examModel;
 };
 
 #endif // EXAMTAB_H

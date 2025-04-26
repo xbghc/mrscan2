@@ -11,6 +11,7 @@
 #include <QJsonObject>
 #include <QMessageBox>
 #include <QVector3D>
+#include <memory>
 
 namespace {} // namespace
 
@@ -19,8 +20,8 @@ ExamTab::ExamTab(QWidget *parent) : QWidget(parent), ui(new Ui::studytab) {
 
     loadPatients();
 
-    examModel = new ExamModel;
-    ui->tableView->setModel(examModel);
+    examModel = std::make_unique<ExamModel>();
+    ui->tableView->setModel(examModel.get());
     ui->tableView->resizeColumnsToContents();
     ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
@@ -55,7 +56,6 @@ ExamTab::ExamTab(QWidget *parent) : QWidget(parent), ui(new Ui::studytab) {
 
 ExamTab::~ExamTab() {
     delete ui;
-    delete examModel;
 }
 
 int ExamTab::currentExamIndex()
