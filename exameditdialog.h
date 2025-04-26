@@ -7,6 +7,7 @@
 #include <QJsonObject>
 #include <QMap>
 #include <QVector>
+#include <memory>
 
 namespace Ui {
 class ExamInfoDialog;
@@ -32,7 +33,7 @@ private:
     QMap<QDoubleSpinBox*, int> sliceSpinBoxIndexMap;
     QMap<QAbstractSpinBox*, QString> paramEditKeyMap;
 
-    Ui::ExamInfoDialog *ui;
+    std::unique_ptr<Ui::ExamInfoDialog> ui;
     struct SliceData{
         double m_data[6];
 

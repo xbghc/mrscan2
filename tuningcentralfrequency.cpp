@@ -3,12 +3,9 @@
 
 TuningCentralFrequency::TuningCentralFrequency(QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::TuningCentralFrequency)
+    , ui(std::make_unique<Ui::TuningCentralFrequency>())
 {
     ui->setupUi(this);
 }
 
-TuningCentralFrequency::~TuningCentralFrequency()
-{
-    delete ui;
-}
+TuningCentralFrequency::~TuningCentralFrequency() = default;

@@ -2,6 +2,7 @@
 #define VIRTUALSCANNER_H
 
 #include <cstddef>
+#include <memory>
 
 /**
  * @brief 虚拟扫描仪类，用于测试和开发
@@ -75,7 +76,7 @@ private:
      */
     void clearResult();
     
-    unsigned char* _result;
+    std::unique_ptr<unsigned char[]> _result;
     size_t _size;
 };
 

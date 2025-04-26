@@ -7,6 +7,7 @@
 #include <QList>
 #include <QThread>
 #include <QObject>
+#include <memory>
 
 #include "virtualscanner.h"
 
@@ -45,7 +46,7 @@ public:
     int close() override;
 
 private:
-    VirtualScanner scanner;
+    std::unique_ptr<VirtualScanner> scanner;
     bool m_isConnected{false};
 };
 

@@ -7,6 +7,7 @@
 #include <QList>
 #include <QWidget>
 #include <QVector>
+#include <memory>
 
 namespace Ui{
 class ResultWidget;
@@ -33,7 +34,7 @@ public slots:
 private:
     QVector<QVector<QImage>> m_channels;
 
-    Ui::ResultWidget* ui;
+    std::unique_ptr<Ui::ResultWidget> ui;
 
     void initializeUI();
     void setupConnections();

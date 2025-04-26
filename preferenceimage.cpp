@@ -10,7 +10,6 @@ PreferenceImage::PreferenceImage(QWidget *parent)
 
 PreferenceImage::~PreferenceImage()
 {
-    delete ui;
 }
 
 void PreferenceImage::set(QJsonObject imagePreferences)

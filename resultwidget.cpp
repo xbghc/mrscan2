@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <QApplication>
 #include <QRegularExpression>
+#include <memory>
 
 #include "mrdparser.h"
 
@@ -53,7 +54,7 @@ QStringList getAllChannelsFile(const QString& path) {
 
 ResultWidget::ResultWidget(QWidget *parent)
     : QWidget(parent)
-    , ui(new Ui::ResultWidget)
+    , ui(std::make_unique<Ui::ResultWidget>())
 {
     ui->setupUi(this);
     initializeUI();
@@ -63,7 +64,6 @@ ResultWidget::ResultWidget(QWidget *parent)
 ResultWidget::~ResultWidget()
 {
     clear();
-    delete ui;
 }
 
 void ResultWidget::initializeUI()
@@ -113,14 +113,14 @@ int ResultWidget::loadMrdFiles(QString fpath)
     for (const auto& file : files) {
         try {
             // Parse file
-            MrdData* content = MrdParser::parseFile(file);
-            if (content == nullptr) {
+            auto content = MrdParser::parseFile(file);
+            if (!content) {
                 LOG_WARNING(QString("File parsing failed: %1").arg(file));
                 continue;
             }
             
             // Reconstruct images
-            auto images = MrdParser::reconImages(content);
+            auto images = MrdParser::reconImages(content.get());
             if (images.isEmpty()) {
                 LOG_WARNING(QString("Image reconstruction failed: %1").arg(file));
                 continue;

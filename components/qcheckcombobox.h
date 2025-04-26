@@ -7,6 +7,7 @@
 #include <QListView>
 #include <QStandardItemModel>
 #include <QPropertyAnimation>
+#include <memory>
 
 class QCheckComboBox : public QWidget
 {
@@ -44,11 +45,11 @@ private slots:
     void onItemClicked(const QModelIndex&);
 
 private:
-    QTextEdit* m_text;
-    QPushButton* m_button;
-    QListView* m_popup;
-    QStandardItemModel* m_model;
-    QPropertyAnimation* m_animation;
+    std::unique_ptr<QTextEdit> m_text;
+    std::unique_ptr<QPushButton> m_button;
+    std::unique_ptr<QListView> m_popup;
+    std::unique_ptr<QStandardItemModel> m_model;
+    std::unique_ptr<QPropertyAnimation> m_animation;
     QString m_separator;
 
     void updateLayout();

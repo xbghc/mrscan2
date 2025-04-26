@@ -55,7 +55,6 @@ ExamTab::ExamTab(QWidget *parent) : QWidget(parent), ui(new Ui::studytab) {
 }
 
 ExamTab::~ExamTab() {
-    delete ui;
 }
 
 int ExamTab::currentExamIndex()

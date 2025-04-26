@@ -2,6 +2,7 @@
 #define TUNINGSHIMMING_H
 
 #include <QDialog>
+#include <memory>
 
 namespace Ui {
 class TuningShimming;
@@ -16,7 +17,7 @@ public:
     ~TuningShimming();
 
 private:
-    Ui::TuningShimming *ui;
+    std::unique_ptr<Ui::TuningShimming> ui;
 };
 
 #endif // TUNINGSHIMMING_H

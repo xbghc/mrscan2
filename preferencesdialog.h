@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QJsonObject>
+#include <memory>
 
 namespace Ui {
 class PreferencesDialog;
@@ -22,7 +23,7 @@ private slots:
     void on_pushButton_clicked();
 
 private:
-    Ui::PreferencesDialog *ui;
+    std::unique_ptr<Ui::PreferencesDialog> ui;
     void set(QJsonObject preferences);
     QJsonObject get();
 };

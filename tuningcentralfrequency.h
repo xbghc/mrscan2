@@ -2,6 +2,7 @@
 #define TUNINGCENTRALFREQUENCY_H
 
 #include <QDialog>
+#include <memory>
 
 namespace Ui {
 class TuningCentralFrequency;
@@ -16,7 +17,7 @@ public:
     ~TuningCentralFrequency();
 
 private:
-    Ui::TuningCentralFrequency *ui;
+    std::unique_ptr<Ui::TuningCentralFrequency> ui;
 };
 
 #endif // TUNINGCENTRALFREQUENCY_H

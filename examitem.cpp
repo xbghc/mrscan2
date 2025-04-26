@@ -60,4 +60,40 @@ QString ExamItem::statusText(Status status)
     default:
         return "Unknown";
     }
+}
+
+QJsonObject ExamItem::toJsonObject() const
+{
+    QJsonObject json = m_data;  // 复制内部存储的数据
+    
+    // 确保状态和时间被正确保存
+    json["status"] = static_cast<int>(m_status);
+    json["time"] = m_time;
+    
+    return json;
+}
+
+bool ExamItem::fromJsonObject(const QJsonObject& json)
+{
+    if (json.isEmpty()) {
+        return false;
+    }
+    
+    // 保存JSON数据
+    m_data = json;
+    
+    // 提取状态和时间
+    if (json.contains("status")) {
+        m_status = static_cast<Status>(json["status"].toInt());
+    } else {
+        m_status = Status::Ready;
+    }
+    
+    if (json.contains("time")) {
+        m_time = json["time"].toString();
+    } else {
+        m_time = "0:00";
+    }
+    
+    return true;
 } 

@@ -10,8 +10,6 @@
 MainWindow::MainWindow(QWidget *parent, IScannerAdapter* scannerAdapter)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , adapter(scannerAdapter)
-    , ownAdapter(scannerAdapter == nullptr)
     , workerThread(new QThread)
 {
     ui->setupUi(this);
@@ -34,20 +32,23 @@ MainWindow::MainWindow(QWidget *parent, IScannerAdapter* scannerAdapter)
     // end： Attempt to fix default height issue
 
     // If no scanner adapter is provided, create a default one
-    if (adapter == nullptr) {
-        adapter = new ScannerAdapter;
+    if (scannerAdapter == nullptr) {
+        adapter = std::make_unique<ScannerAdapter>();
+    } else {
+        adapter.reset(scannerAdapter);
     }
-    adapter->moveToThread(workerThread);
+    
+    adapter->moveToThread(workerThread.get());
     workerThread->start();
     adapter->open();
 
     // Connect scan signals to ExamTab
-    connect(adapter, &IScannerAdapter::scanStarted, ui->examTab, &ExamTab::onScanStarted);
-    connect(adapter, &IScannerAdapter::scanEnded, this, &MainWindow::handleScanComplete);
+    connect(adapter.get(), &IScannerAdapter::scanStarted, ui->examTab, &ExamTab::onScanStarted);
+    connect(adapter.get(), &IScannerAdapter::scanEnded, this, &MainWindow::handleScanComplete);
     
     // Receive scan operation signals from ExamTab
     connect(ui->examTab, &ExamTab::onStopButtonClicked, this, &MainWindow::handleScanStop);
-    connect(ui->examTab, &ExamTab::onStartButtonClicked, adapter, &IScannerAdapter::scan);
+    connect(ui->examTab, &ExamTab::onStartButtonClicked, adapter.get(), &IScannerAdapter::scan);
     connect(ui->examTab, &ExamTab::fileSaved, this, &MainWindow::handleExamHistorySaved);
 
     // When displaying images
@@ -83,17 +84,13 @@ MainWindow::MainWindow(QWidget *parent, IScannerAdapter* scannerAdapter)
 MainWindow::~MainWindow()
 {
     LOG_INFO("Main window destroyed");
-    delete ui;
-    workerThread->quit();
-    workerThread->wait();
-    delete workerThread;
     
     if (adapter) {
         adapter->close();
-        if (ownAdapter) {
-            delete adapter;
-        }
     }
+    
+    workerThread->quit();
+    workerThread->wait();
 }
 
 void MainWindow::handleScanStop(int id)

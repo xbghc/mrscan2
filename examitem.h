@@ -46,6 +46,10 @@ public:
     // 状态文本
     static QString statusText(Status status);
     
+    // JSON转换方法
+    QJsonObject toJsonObject() const;
+    bool fromJsonObject(const QJsonObject& json);
+    
 private:
     QJsonObject m_data;       // 包含所有检查数据的JSON对象
     Status m_status;          // 当前状态

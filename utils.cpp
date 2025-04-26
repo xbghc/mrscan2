@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QMessageBox>
 #include <QTextStream>
+#include <memory>
 
 // Initialize static members
 bool Logger::s_logToFile = false;
@@ -121,15 +122,12 @@ bool ErrorHandler::showErrorDialog(const QString& message, const QString& detail
     return msgBox.exec() == QMessageBox::Ok;
 }
 
-QByteArray read(QString filepath)
-{
-    QFile file(filepath);
-    if(!file.open(QIODevice::ReadOnly)){
-        LOG_ERROR(QString("Failed to open file: %1").arg(filepath));
-        return nullptr;
-    }
-
-    return file.readAll();
+QByteArray read(QString fpath){
+    QFile file(fpath);
+    file.open(QIODevice::ReadOnly);
+    auto data = file.readAll();
+    file.close();
+    return data;
 }
 
 void newEmptyFile(QFile &file)

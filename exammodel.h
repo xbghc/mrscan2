@@ -8,8 +8,9 @@
 #include <QJsonObject>
 #include <QSharedPointer>
 #include <QMutex>
-#include <QTime>
+#include <QElapsedTimer>
 #include <QThread>
+#include <memory>
 
 class ExamModel : public QAbstractTableModel
 {
@@ -73,8 +74,8 @@ private:
     void resetScanningState();
     
     // Timer related
-    QThread* m_timerThread;
-    QTime m_startTime;
+    std::unique_ptr<QThread> m_timerThread;
+    QElapsedTimer m_startTime;
     QMutex m_mutex;
     bool m_threadShouldExit;
     

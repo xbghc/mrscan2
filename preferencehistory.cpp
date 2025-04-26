@@ -13,7 +13,6 @@ PreferenceHistory::PreferenceHistory(QWidget *parent) :
 
 PreferenceHistory::~PreferenceHistory()
 {
-    delete ui;
 }
 
 void PreferenceHistory::set(QJsonObject pref)

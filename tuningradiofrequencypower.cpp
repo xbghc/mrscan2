@@ -3,12 +3,9 @@
 
 TuningRadioFrequencyPower::TuningRadioFrequencyPower(QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::TuningRadioFrequencyPower)
+    , ui(std::make_unique<Ui::TuningRadioFrequencyPower>())
 {
     ui->setupUi(this);
 }
 
-TuningRadioFrequencyPower::~TuningRadioFrequencyPower()
-{
-    delete ui;
-}
+TuningRadioFrequencyPower::~TuningRadioFrequencyPower() = default;

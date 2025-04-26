@@ -15,9 +15,9 @@ void VirtualScanner::loadTestData() {
     QByteArray fileContent = ::read("D:\\Projects\\QImagesWidget\\data\\20230528103740-T2_TSE-T-3k#1.mrd");
     if (!fileContent.isEmpty()) {
         auto len = fileContent.length();
-        unsigned char* buffer = new unsigned char[len];
-        memcpy(buffer, fileContent.constData(), len);
-        setResult(buffer, len);
+        auto buffer = std::make_unique<unsigned char[]>(len);
+        memcpy(buffer.get(), fileContent.constData(), len);
+        setResult(buffer.release(), len);
         LOG_INFO(QString("VirtualScanner: Successfully loaded test data, size: %1").arg(len));
     } else {
         LOG_WARNING("VirtualScanner: Failed to load test data");
@@ -44,7 +44,7 @@ int VirtualScanner::read(unsigned char *buf, size_t len) {
         return _size;
     }
 
-    if (_result == nullptr) {
+    if (!_result) {
         LOG_WARNING("VirtualScanner: No data available for reading");
         return 0;
     }
@@ -52,7 +52,7 @@ int VirtualScanner::read(unsigned char *buf, size_t len) {
     QThread::sleep(5);
     
     size_t copySize = (len >= _size) ? _size : len;
-    memcpy(buf, _result, copySize);
+    memcpy(buf, _result.get(), copySize);
     LOG_INFO(QString("VirtualScanner: Read called, requested: %1 provided: %2").arg(len).arg(copySize));
     return copySize;
 }
@@ -63,10 +63,7 @@ int VirtualScanner::ioctl(unsigned char *buf, size_t len) {
 }
 
 void VirtualScanner::clearResult() {
-    if (_result != nullptr) {
-        delete[] _result;
-        _result = nullptr;
-    }
+    _result.reset();
     _size = 0;
 }
 
@@ -74,7 +71,7 @@ void VirtualScanner::setResult(unsigned char *buf, size_t len) {
     clearResult();
     
     if (buf != nullptr && len > 0) {
-        _result = buf;
+        _result.reset(buf);
         _size = len;
     }
 }

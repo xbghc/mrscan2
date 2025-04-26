@@ -49,7 +49,7 @@ signals:
     void fileSaved(ExamHistory history);
 
 private:
-    Ui::studytab *ui;
+    std::unique_ptr<Ui::studytab> ui;
     std::unique_ptr<ExamModel> examModel;
 };
 

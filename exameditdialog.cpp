@@ -61,7 +61,6 @@ ExamEditDialog::ExamEditDialog(QWidget *parent)
 
 ExamEditDialog::~ExamEditDialog()
 {
-    delete ui;
 }
 
 void ExamEditDialog::setData(const QJsonObject &exam)

@@ -6,6 +6,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTime>
+#include <QTimer>
+#include <QElapsedTimer>
 #include <QMutexLocker>
 
 namespace {
@@ -14,13 +16,13 @@ QJsonArray loadExams() {
 
     QDir dir("./configs");
     if (!dir.exists() && dir.mkpath(".")) {
-        qDebug() << "failed to mkdir: " << dir.path();
+        LOG_WARNING("Failed to mkdir: " + dir.path());
         return QJsonArray();
     }
 
     QFile file(kPath);
     if (!file.exists() || !file.open(QIODevice::ReadOnly)) {
-        qDebug() << "Warning: No Exam Configuration!";
+        LOG_WARNING("No Exam Configuration!");
         return QJsonArray();
     }
 
@@ -32,7 +34,6 @@ QJsonArray loadExams() {
 ExamModel::ExamModel(QObject *parent)
     : QAbstractTableModel{parent}
     , m_scanningRow(-1)
-    , m_timerThread(nullptr)
     , m_threadShouldExit(false)
 {
     m_headers << "Sequence" << "Time" << "Status";
@@ -41,9 +42,7 @@ ExamModel::ExamModel(QObject *parent)
 
 ExamModel::~ExamModel() {
     // Ensure thread is stopped and data is saved
-    if (m_timerThread != nullptr) {
-        stopTimerThread();
-    }
+    stopTimerThread();
     resetScanningState();
     saveExams();
 }
@@ -199,7 +198,7 @@ void ExamModel::examStarted(int row, int id) {
     bool canStartTimer = false;
     {
         QMutexLocker locker(&m_mutex);
-        if (m_timerThread != nullptr) {
+        if (m_timerThread) {
             LOG_ERROR("Timer thread already exists, cannot start");
             return;
         }
@@ -262,60 +261,79 @@ int ExamModel::examDone() {
 }
 
 bool ExamModel::loadExams(const QString& filePath) {
-    m_exams = loadExamsFromFile(filePath);
+    QList<ExamItem> loadedExams = loadExamsFromFile(filePath);
+    
+    if (loadedExams.isEmpty()) {
+        LOG_ERROR(QString("Failed to load exams from file: %1").arg(filePath));
+        return false;
+    }
+    
     beginResetModel();
+    m_exams = loadedExams;
     endResetModel();
-    return !m_exams.isEmpty();
+    
+    LOG_INFO(QString("Loaded %1 exams from %2").arg(m_exams.size()).arg(filePath));
+    return true;
 }
 
 bool ExamModel::saveExams(const QString& filePath) const {
-    QDir dir("./configs");
+    if (m_exams.isEmpty()) {
+        LOG_WARNING("No exams to save");
+        return false;
+    }
+    
+    // Ensure directory exists
+    QDir dir = QFileInfo(filePath).dir();
     if (!dir.exists() && !dir.mkpath(".")) {
-        LOG_ERROR(QString("Cannot create config directory: %1").arg(dir.path()));
+        LOG_ERROR(QString("Failed to create directory for exams file: %1").arg(dir.path()));
         return false;
     }
-
-    QFile file(filePath);
-    if (!file.open(QIODevice::WriteOnly)) {
-        LOG_ERROR(QString("Cannot write config file: %1").arg(filePath));
-        return false;
-    }
-
+    
+    // Convert exams to JSON array
     QJsonArray examsArray;
     for (const ExamItem& exam : m_exams) {
-        examsArray.append(exam.data());
+        examsArray.append(exam.toJsonObject());
     }
-
+    
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        LOG_ERROR(QString("Cannot open exams file for writing: %1").arg(filePath));
+        return false;
+    }
+    
     QJsonDocument doc(examsArray);
     file.write(doc.toJson());
     file.close();
     
-    LOG_INFO(QString("Exam config saved: %1").arg(filePath));
+    LOG_INFO(QString("Saved %1 exams to %2").arg(m_exams.size()).arg(filePath));
     return true;
 }
 
 void ExamModel::updateTimers() {
-    int currentRow;
+    QMutexLocker locker(&m_mutex);
     
-    {
-        QMutexLocker locker(&m_mutex);
-        currentRow = m_scanningRow;
-        
-        if (currentRow < 0 || currentRow >= m_exams.size())
-            return;
+    if (m_threadShouldExit) {
+        return;
     }
     
-    // Calculate time
-    int seconds = m_startTime.secsTo(QTime::currentTime());
-    int m = (seconds % 3600) / 60;
-    int s = seconds % 60;
-    QString timeStr = QString("%1:%2").arg(m, 1, 10, QChar('0')).arg(s, 2, 10, QChar('0'));
+    int currentRow = m_scanningRow;
+    int elapsedMs = m_startTime.elapsed();
     
-    // Update UI model
-    m_exams[currentRow].setTime(timeStr);
-    QModelIndex index = createIndex(currentRow, TimeColumn);
-    emit dataChanged(index, index);
-    emit timerUpdated(currentRow, timeStr);
+    // Release the lock before emitting signals
+    locker.unlock();
+    
+    if (currentRow >= 0 && currentRow < m_exams.size()) {
+        int seconds = elapsedMs / 1000;
+        int minutes = seconds / 60;
+        seconds = seconds % 60;
+        
+        QString timeStr = QString("%1:%2").arg(minutes).arg(seconds, 2, 10, QChar('0'));
+        m_exams[currentRow].setTime(timeStr);
+        
+        QModelIndex index = createIndex(currentRow, TimeColumn);
+        emit dataChanged(index, index);
+        emit timerUpdated(currentRow, timeStr);
+    }
 }
 
 bool ExamModel::isValidRow(int row) const {
@@ -323,140 +341,123 @@ bool ExamModel::isValidRow(int row) const {
 }
 
 void ExamModel::startTimerThread() {
-    QThread* newThread = nullptr;
-    int scanningRow;
+    QMutexLocker locker(&m_mutex);
     
-    {
-        QMutexLocker locker(&m_mutex);
-        
-        if (m_timerThread != nullptr) {
-            LOG_WARNING("Timer thread already exists, cannot start again");
-            return;
-        }
-        
-        // Set start time
-        m_startTime = QTime::currentTime();
-        m_threadShouldExit = false;
-        scanningRow = m_scanningRow;
-        
-        // Create new thread
-        newThread = QThread::create([this, scanningRow]() {
-            while (true) {
-                bool shouldExit;
-                int currentRow;
-                
-                {
-                    QMutexLocker threadLocker(&m_mutex);
-                    shouldExit = m_threadShouldExit;
-                    currentRow = m_scanningRow;
-                }
-                
-                // Check if should exit
-                if (shouldExit || currentRow == -1 || currentRow != scanningRow) {
-                    break;
-                }
-                
-                // Update timer outside lock
-                QMetaObject::invokeMethod(this, "updateTimers", Qt::QueuedConnection);
-                QThread::msleep(1000); // Update every second
-            }
-            
-            LOG_DEBUG("Timer thread exited normally");
-        });
-        
-        m_timerThread = newThread;
+    if (m_timerThread) {
+        LOG_WARNING("Timer thread already running");
+        return;
     }
     
-    // Start thread outside lock
-    if (newThread) {
-        newThread->start();
-        LOG_DEBUG("Timer thread started");
-    }
+    m_threadShouldExit = false;
+    m_startTime.start();
+    
+    // Create a new thread with lambda
+    m_timerThread = std::make_unique<QThread>();
+    
+    // Create timer and move to thread
+    QTimer* timer = new QTimer();
+    timer->setInterval(1000);  // Update every second
+    timer->moveToThread(m_timerThread.get());
+    
+    // Connect signals/slots
+    connect(m_timerThread.get(), &QThread::started, timer, [timer]() {
+        timer->start();
+    });
+    
+    connect(m_timerThread.get(), &QThread::finished, timer, &QTimer::deleteLater);
+    connect(timer, &QTimer::timeout, this, &ExamModel::updateTimers);
+    
+    // Start the thread
+    m_timerThread->start();
+    
+    LOG_DEBUG("Timer thread started");
 }
 
 void ExamModel::stopTimerThread() {
-    QThread* threadToStop = nullptr;
+    // Set the flag to exit and get the thread pointer
+    std::unique_ptr<QThread> thread;
     
     {
         QMutexLocker locker(&m_mutex);
-        if (m_timerThread == nullptr) {
+        if (!m_timerThread) {
             return;
         }
-        
-        // Set exit flag
         m_threadShouldExit = true;
-        threadToStop = m_timerThread;
-        m_timerThread = nullptr;
+        thread = std::move(m_timerThread);  // Take ownership of the thread
     }
     
-    // Wait for thread to complete outside lock
-    if (threadToStop) {
-        threadToStop->wait();
-        delete threadToStop;
+    // Stop the thread outside of lock
+    if (thread) {
+        thread->quit();
+        if (!thread->wait(3000)) {  // Wait for 3 seconds
+            LOG_WARNING("Timer thread did not quit properly, forcing termination");
+            thread->terminate();
+            thread->wait();
+        }
+        
         LOG_DEBUG("Timer thread stopped");
     }
 }
 
 QList<ExamItem> ExamModel::loadExamsFromFile(const QString& filePath) const {
-    QList<ExamItem> exams;
+    QList<ExamItem> result;
     
     QFile file(filePath);
     if (!file.exists() || !file.open(QIODevice::ReadOnly)) {
-        LOG_WARNING(QString("No exam config file: %1").arg(filePath));
-        return exams;
+        LOG_WARNING(QString("Exams file does not exist or cannot be opened: %1").arg(filePath));
+        return result;
     }
-
-    QJsonArray examsArray = QJsonDocument::fromJson(file.readAll()).array();
     
+    QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+    file.close();
+    
+    if (!doc.isArray()) {
+        LOG_ERROR(QString("Exams file is not a valid JSON array: %1").arg(filePath));
+        return result;
+    }
+    
+    QJsonArray examsArray = doc.array();
     for (const QJsonValue& value : examsArray) {
-        if (value.isObject()) {
-            exams.append(ExamItem(value.toObject()));
+        if (!value.isObject()) {
+            LOG_WARNING("Skipping invalid exam entry (not an object)");
+            continue;
+        }
+        
+        ExamItem item;
+        if (item.fromJsonObject(value.toObject())) {
+            result.append(item);
+        } else {
+            LOG_WARNING("Failed to load exam from JSON");
         }
     }
     
-    LOG_INFO(QString("Loaded %1 exams").arg(exams.size()));
-    return exams;
+    return result;
 }
 
 int ExamModel::finishExam(int row, ExamItem::Status newStatus, bool shouldSave) {
     if (!isValidRow(row)) {
-        LOG_ERROR(QString("Failed to finish/stop exam: invalid row index %1").arg(row));
+        LOG_ERROR(QString("Invalid row index when finishing exam: %1").arg(row));
         return -1;
     }
-    
-    // Check exam status outside lock to reduce lock time
-    if (m_exams[row].status() != ExamItem::Status::Processing) {
-        QString statusText = ExamItem::statusText(m_exams[row].status());
-        LOG_WARNING(QString("Exam %1 status error (current status: %2), cannot change status")
-                  .arg(m_exams[row].name())
-                  .arg(statusText));
-        return -1;
-    }
-    
-    // Get ID, no lock needed
-    int id = m_exams[row].id();
     
     // Stop timer thread
     stopTimerThread();
     
-    // Update status outside lock, as this is a UI model update
-    m_exams[row].setStatus(newStatus);
-    QModelIndex index = createIndex(row, StatusColumn);
-    emit dataChanged(index, index);
-    emit examStatusChanged(row, newStatus);
-    
-    // Reset scanning state needs lock
+    // Reset scanning state
     resetScanningState();
     
-    // Save config if needed
+    // Update status
+    m_exams[row].setStatus(newStatus);
+    
+    // Save if needed
     if (shouldSave) {
         saveExams();
     }
     
-    LOG_INFO(QString("Exam %1: ID=%2, Name=\"%3\"")
-            .arg(newStatus == ExamItem::Status::Done ? "completed" : "stopped")
-            .arg(id)
-            .arg(m_exams[row].name()));
+    // Update UI
+    QModelIndex index = createIndex(row, StatusColumn);
+    emit dataChanged(index, index);
+    emit examStatusChanged(row, newStatus);
     
-    return id;
+    return row;
 }

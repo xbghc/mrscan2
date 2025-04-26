@@ -23,7 +23,6 @@ PreferenceStyle::PreferenceStyle(QWidget *parent)
 
 PreferenceStyle::~PreferenceStyle()
 {
-    delete ui;
 }
 
 void PreferenceStyle::set(QJsonObject style)

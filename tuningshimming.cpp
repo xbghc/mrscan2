@@ -3,12 +3,9 @@
 
 TuningShimming::TuningShimming(QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::TuningShimming)
+    , ui(std::make_unique<Ui::TuningShimming>())
 {
     ui->setupUi(this);
 }
 
-TuningShimming::~TuningShimming()
-{
-    delete ui;
-}
+TuningShimming::~TuningShimming() = default;

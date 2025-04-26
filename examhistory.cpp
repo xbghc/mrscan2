@@ -39,7 +39,7 @@ ExamHistory::ExamHistory(QJsonObject request, const QByteArray& response)
 const QList<QImage> ExamHistory::images() const
 {
     auto mrd = MrdParser::parse(m_response);
-    return MrdParser::reconImages(mrd);
+    return MrdParser::reconImages(mrd.get());
 }
 
 void ExamHistory::setPatient(const int patientId)

@@ -3,6 +3,7 @@
 
 #include <QJsonObject>
 #include <QWidget>
+#include <memory>
 
 #include "abstractpreferencestab.h"
 
@@ -22,7 +23,7 @@ public:
     QJsonObject get() override;
 
 private:
-    Ui::PreferenceImage *ui;
+    std::unique_ptr<Ui::PreferenceImage> ui;
 };
 
 #endif // PREFERENCEIMAGE_H

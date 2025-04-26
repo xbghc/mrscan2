@@ -2,6 +2,7 @@
 #define PREFERENCEHISTORY_H
 
 #include "abstractpreferencestab.h"
+#include <memory>
 
 namespace Ui {
 class PreferenceHistory;
@@ -19,7 +20,7 @@ public:
     QJsonObject get() override;
 
 private:
-    Ui::PreferenceHistory *ui;
+    std::unique_ptr<Ui::PreferenceHistory> ui;
 };
 
 #endif // PREFERENCEHISTORY_H 

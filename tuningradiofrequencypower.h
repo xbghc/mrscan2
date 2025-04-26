@@ -2,6 +2,7 @@
 #define TUNINGRADIOFREQUENCYPOWER_H
 
 #include <QDialog>
+#include <memory>
 
 namespace Ui {
 class TuningRadioFrequencyPower;
@@ -16,7 +17,7 @@ public:
     ~TuningRadioFrequencyPower();
 
 private:
-    Ui::TuningRadioFrequencyPower *ui;
+    std::unique_ptr<Ui::TuningRadioFrequencyPower> ui;
 };
 
 #endif // TUNINGRADIOFREQUENCYPOWER_H

@@ -8,6 +8,7 @@
 #include <QString>
 #include <QVariant>
 #include <QMutex>
+#include <memory>
 
 // 配置管理器 - 单例模式
 class ConfigManager : public QObject
@@ -48,6 +49,10 @@ private:
     explicit ConfigManager(QObject* parent = nullptr);
     ~ConfigManager();
     
+    // 防止复制
+    ConfigManager(const ConfigManager&) = delete;
+    ConfigManager& operator=(const ConfigManager&) = delete;
+    
     // 获取配置文件路径
     QString getConfigFilePath(const QString& configName);
     
@@ -66,9 +71,6 @@ private:
     
     // 互斥锁，确保线程安全
     QMutex m_mutex;
-    
-    // 单例实例
-    static ConfigManager* s_instance;
 };
 
 #endif // CONFIGMANAGER_H 

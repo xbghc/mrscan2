@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QStyleHints>
 #include <QWidget>
+#include <memory>
 
 #include "abstractpreferencestab.h"
 
@@ -23,7 +24,7 @@ public:
     QJsonObject get() override;
 
 private:
-    Ui::PreferenceStyle *ui;
+    std::unique_ptr<Ui::PreferenceStyle> ui;
 
     void setFontSize(int size);
     void setFontFamily(QString family);

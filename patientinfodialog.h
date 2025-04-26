@@ -2,6 +2,7 @@
 #define PATIENTINFODIALOG_H
 
 #include <QDialog>
+#include <memory>
 
 #include "patient.h"
 
@@ -23,7 +24,7 @@ private slots:
 
 private:
     int id;
-    Ui::PatientInfoDialog *ui;
+    std::unique_ptr<Ui::PatientInfoDialog> ui;
 };
 
 #endif // PATIENTINFODIALOG_H

@@ -22,11 +22,11 @@ QPushButton:pressed {
 
 QCheckComboBox::QCheckComboBox(QWidget *parent)
     : QWidget(parent),
-    m_button(new QPushButton(this)),
-    m_text(new QTextEdit(this)),
-    m_popup(new QListView(this)),
-    m_model(new QStandardItemModel(this)),
-    m_animation(new QPropertyAnimation(this)),
+    m_text(std::make_unique<QTextEdit>(this)),
+    m_button(std::make_unique<QPushButton>(this)),
+    m_popup(std::make_unique<QListView>(this)),
+    m_model(std::make_unique<QStandardItemModel>(this)),
+    m_animation(std::make_unique<QPropertyAnimation>(this)),
     m_separator(", ")
 {
     initButton();
@@ -34,7 +34,7 @@ QCheckComboBox::QCheckComboBox(QWidget *parent)
     initPopup();
     
     // init animation object
-    m_animation->setTargetObject(m_popup);
+    m_animation->setTargetObject(m_popup.get());
     m_animation->setPropertyName("geometry");
     m_animation->setDuration(150);
     m_animation->setEasingCurve(QEasingCurve::OutQuad);
@@ -45,10 +45,6 @@ QCheckComboBox::QCheckComboBox(QWidget *parent)
 
 QCheckComboBox::~QCheckComboBox()
 {
-    delete m_popup;
-    if (m_animation) {
-        delete m_animation;
-    }
 }
 
 void QCheckComboBox::addItem(const QString &text, const QVariant &data)
@@ -145,24 +141,41 @@ bool QCheckComboBox::isChecked(int index) const
     return checkState.toInt() == Qt::Checked;
 }
 
-void QCheckComboBox::resizeEvent(QResizeEvent *event) {
-    QWidget::resizeEvent(event);
+void QCheckComboBox::resizeEvent(QResizeEvent *e)
+{
     updateLayout();
+    
+    QSize popupSize = m_popup->size();
+    popupSize.setWidth(size().width());
+    m_popup->resize(popupSize);
+
+    QPropertyAnimation::State state = m_animation->state();
+    if (state != QPropertyAnimation::Stopped) {
+        QRect startRect = m_animation->startValue().toRect();
+        startRect.setWidth(size().width());
+        m_animation->setStartValue(startRect);
+
+        QRect endRect = m_animation->endValue().toRect();
+        endRect.setWidth(size().width());
+        m_animation->setEndValue(endRect);
+    }
+
+    QWidget::resizeEvent(e);
 }
 
 void QCheckComboBox::mousePressEvent(QMouseEvent *e)
 {
-    if(!m_popup->isVisible()){
+    if (!m_popup->isVisible()) {
         showPopup();
-    }else{
+    } else {
         hidePopup();
     }
-    QWidget::mousePressEvent(e);
+    e->accept();
 }
 
 bool QCheckComboBox::eventFilter(QObject *obj, QEvent *event)
 {
-    if(obj == m_button && event->type() == QEvent::MouseButtonPress){
+    if(obj == m_button.get() && event->type() == QEvent::MouseButtonPress){
         passButtonClick(obj, event);
         return true;
     }
@@ -215,8 +228,8 @@ void QCheckComboBox::updateLayout()
     m_button->move(buttonX, buttonY);
     
     // Set appropriate focus order
-    setTabOrder(this, m_text);
-    setTabOrder(m_text, m_button);
+    setTabOrder(this, m_text.get());
+    setTabOrder(m_text.get(), m_button.get());
 }
 
 void QCheckComboBox::showPopup()
@@ -284,12 +297,12 @@ void QCheckComboBox::initPopup()
 {
     m_popup->hide();
 
-    m_popup->setModel(m_model);
+    m_popup->setModel(m_model.get());
     m_popup->setWindowFlags(Qt::Popup | Qt::FramelessWindowHint);
     m_popup->setUniformItemSizes(true);
     
     m_popup->installEventFilter(this);
-    connect(m_popup, &QListView::clicked, this, &QCheckComboBox::onItemClicked);
+    connect(m_popup.get(), &QListView::clicked, this, &QCheckComboBox::onItemClicked);
 }
 
 void QCheckComboBox::passButtonClick(QObject *obj, QEvent *event)

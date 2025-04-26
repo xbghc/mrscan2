@@ -4,11 +4,22 @@
 #include <QFile>
 #include <QDebug>
 #include <qendian.h>
+#include <memory>
 
 namespace {
 
-double* abs(fftw_complex* array, int len){
-    double* res = new double[len];
+struct FFTWComplexDeleter {
+    void operator()(fftw_complex* ptr) const {
+        if (ptr) fftw_free(ptr);
+    }
+};
+
+FFTWComplexPtr createFFTWComplex(size_t size) {
+    return FFTWComplexPtr(static_cast<fftw_complex*>(fftw_alloc_complex(size)));
+}
+
+std::unique_ptr<double[]> abs(fftw_complex* array, int len){
+    auto res = std::make_unique<double[]>(len);
     for(int i=0;i<len;i++){
         auto re = array[i][0];
         auto im = array[i][1];
@@ -18,8 +29,12 @@ double* abs(fftw_complex* array, int len){
 }
 
 template <typename T>
-fftw_complex* parseKData(QByteArray content, int length, bool isComplex){
-    auto out = (fftw_complex*) fftw_alloc_complex(length);
+FFTWComplexPtr parseKData(QByteArray content, int length, bool isComplex){
+    auto out = createFFTWComplex(length);
+    if (!out) {
+        LOG_WARNING("Failed to allocate memory for kdata");
+        return nullptr;
+    }
 
     auto array = reinterpret_cast<const T*>(content.constData() + 512);
     if(isComplex){
@@ -36,7 +51,7 @@ fftw_complex* parseKData(QByteArray content, int length, bool isComplex){
     return out;
 }
 
-fftw_complex* exec_fft_3d(fftw_complex* in, const size_t* _n){
+FFTWComplexPtr exec_fft_3d(fftw_complex* in, const size_t* _n){
     int n[3];
     size_t noPixels = 1;
     for(int i=0;i<3;i++){
@@ -44,15 +59,36 @@ fftw_complex* exec_fft_3d(fftw_complex* in, const size_t* _n){
         noPixels *= _n[i];
     }
     if(noPixels == 0){
-        qDebug() << "exec fft error: 0 in n";
+        LOG_ERROR("exec fft error: 0 in n");
         return nullptr;
     }
 
-    auto out = (fftw_complex*) fftw_alloc_complex(noPixels);
+    auto out = createFFTWComplex(noPixels);
+    if (!out) {
+        LOG_ERROR("Failed to allocate memory for FFT output");
+        return nullptr;
+    }
 
-    fftw_plan plan = fftw_plan_dft(3, n, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    fftw_plan plan = fftw_plan_dft(3, n, in, out.get(), FFTW_FORWARD, FFTW_ESTIMATE);
+    if (!plan) {
+        LOG_ERROR("Failed to create FFT plan");
+        return nullptr;
+    }
+    
+    // 使用RAII包装器确保plan被释放
+    struct FFTWPlanRAII {
+        fftw_plan p;
+        FFTWPlanRAII(fftw_plan plan) : p(plan) {}
+        ~FFTWPlanRAII() { if (p) fftw_destroy_plan(p); }
+    };
+    FFTWPlanRAII planRAII(plan);
+    
     fftw_execute(plan);
     return out;
+}
+
+FFTWComplexPtr exec_fft_3d(const FFTWComplexPtr& in, const size_t* _n){
+    return exec_fft_3d(in.get(), _n);
 }
 
 template<typename T>
@@ -78,8 +114,11 @@ void fftshift3d(fftw_complex* data, const size_t* shape) {
     const size_t sy = ny / 2;
     const size_t sz = nz / 2;
 
-    // Allocate temporary array
-    fftw_complex* temp = fftw_alloc_complex(nx * ny * nz);
+    auto temp = createFFTWComplex(nx * ny * nz);
+    if (!temp) {
+        LOG_ERROR("Failed to allocate memory for fftshift");
+        return;
+    }
 
     // Iterate through each element and rearrange
     for (size_t x = 0; x < nx; ++x) {
@@ -102,14 +141,11 @@ void fftshift3d(fftw_complex* data, const size_t* shape) {
     }
 
     // Copy results back to original array
-    std::memcpy(data, temp, sizeof(fftw_complex) * nx * ny * nz);
-
-    // Free temporary memory
-    fftw_free(temp);
+    std::memcpy(data, temp.get(), sizeof(fftw_complex) * nx * ny * nz);
 }
 } // namespace
 
-MrdData *MrdParser::parse(const QByteArray &content)
+std::unique_ptr<MrdData> MrdParser::parse(const QByteArray &content)
 {
     // header
     int samples = qFromLittleEndian<qint32>(content.constData());
@@ -125,37 +161,41 @@ MrdData *MrdParser::parse(const QByteArray &content)
     int nele = experiments * echoes * slices * views * views2 * samples;
 
     // switch datatype
-    fftw_complex* data;
+    FFTWComplexPtr dataPtr = nullptr;
     bool isComplex = datatype & 0x10;
 
     switch(datatype & 0xf){
     case 0:
-        data = parseKData<quint8>(content, nele, isComplex);
+        dataPtr = parseKData<quint8>(content, nele, isComplex);
         break;
     case 1:
-        data = parseKData<qint8>(content, nele, isComplex);
+        dataPtr = parseKData<qint8>(content, nele, isComplex);
         break;
     case 2:
         // Case 2 and 3 are the same
     case 3:
-        data = parseKData<qint16>(content, nele, isComplex);
+        dataPtr = parseKData<qint16>(content, nele, isComplex);
         break;
     case 4:
-        data = parseKData<qint32>(content, nele, isComplex);
+        dataPtr = parseKData<qint32>(content, nele, isComplex);
         break;
     case 5:
-        data = parseKData<float>(content, nele, isComplex);
+        dataPtr = parseKData<float>(content, nele, isComplex);
         break;
     case 6:
-        data = parseKData<double>(content, nele, isComplex);
+        dataPtr = parseKData<double>(content, nele, isComplex);
         break;
     default:
-        qDebug() << "Unknown data type in the MRD file!";
+        LOG_ERROR("Unknown data type in the MRD file!");
         return nullptr;
     }
 
-    auto mrdData = new MrdData;
-    mrdData->kdata = data;
+    if (!dataPtr) {
+        return nullptr;
+    }
+
+    auto mrdData = std::make_unique<MrdData>();
+    mrdData->kdata = std::move(dataPtr);
     mrdData->echoes = echoes;
     mrdData->experiments = experiments;
     mrdData->samples = samples;
@@ -166,7 +206,7 @@ MrdData *MrdParser::parse(const QByteArray &content)
     return mrdData;
 }
 
-MrdData* MrdParser::parseFile(QString fpath)
+std::unique_ptr<MrdData> MrdParser::parseFile(QString fpath)
 {
     // ref:
     //   url: https://github.com/hongmingjian/mrscan/blob/master/smisscanner.py
@@ -176,8 +216,12 @@ MrdData* MrdParser::parseFile(QString fpath)
     return parse(content);
 }
 
-QList<QImage> MrdParser::reconImages(MrdData* mrd)
+QList<QImage> MrdParser::reconImages(const MrdData* mrd)
 {
+    if (!mrd || !mrd->kdata) {
+        return QList<QImage>();
+    }
+
     size_t noImages;
     size_t n[3];
     if(mrd->slices == 1){
@@ -193,53 +237,38 @@ QList<QImage> MrdParser::reconImages(MrdData* mrd)
         n[1] = mrd->views;
         n[2] = mrd->samples;
     }
-    auto out = exec_fft_3d(mrd->kdata, n);
-    fftshift3d(out, n);
+
+    auto outPtr = exec_fft_3d(mrd->kdata, n);
+    if (!outPtr) {
+        LOG_ERROR("Failed to execute FFT");
+        return QList<QImage>();
+    }
+    
+    fftshift3d(outPtr.get(), n);
 
     // Take absolute values
     size_t noPixels = n[0] * n[1] * n[2];
-    auto images_data = abs(out, noPixels);
-    fftw_free(out);
+    auto absValues = abs(outPtr.get(), noPixels);
 
-    // Normalize and return images
-    // Normalize the entire array
-    double max = 0;
-    for(size_t i=0;i<noImages;i++){
-        for(size_t y=0;y<n[1];y++){
-            for(size_t x=0;x<n[2];x++){
-                size_t pos[3] = {i, y, x};
-                auto pixel = get_3d_ele(images_data, n, pos);
-                if(pixel>max){
-                    max = pixel;
-                }
-            }
+    double max_val = 0;
+    for(size_t i=0; i<noPixels; i++){
+        if(absValues[i] > max_val){
+            max_val = absValues[i];
         }
     }
 
     QList<QImage> images;
-    images.reserve(noImages);
     if(mrd->slices == 1){
         // T1
         for(size_t i=0;i<noImages;i++){
-            // Normalize single image
-            // double max = 0;
-            // for(size_t y=0;y<n[0];y++){
-            //     for(size_t x=0;x<n[2];x++){
-            //         size_t pos[3] = {y, i, x};
-            //         auto pixel = get_3d_ele(images_data, n, pos);
-            //         if(max < pixel){
-            //             max = pixel;
-            //         }
-            //     }
-            // }
-
             QImage img(n[2], n[0], QImage::Format_Grayscale8);
-            for(size_t y=0;y<n[0];y++){
-                auto scanLine = img.scanLine(y);
-                for(size_t x=0;x<n[2];x++){
-                    size_t pos[3] = {y, i, x};
-                    auto pixel = get_3d_ele(images_data, n, pos);
-                    scanLine[x] = static_cast<uchar>(pixel / max * 255.0);
+            for(size_t j=0;j<n[0];j++){
+                size_t indexes[3] = {j, i, 0};
+                uchar* scanLine = img.scanLine(j);
+                for(size_t k=0;k<n[2];k++){
+                    indexes[2] = k;
+                    double val = get_3d_ele(absValues.get(), n, indexes);
+                    scanLine[k] = static_cast<uchar>(val * 255 / max_val);
                 }
             }
             images.push_back(img);
@@ -247,31 +276,19 @@ QList<QImage> MrdParser::reconImages(MrdData* mrd)
     }else{
         // T2
         for(size_t i=0;i<noImages;i++){
-            // Normalize single image
-            // double max = 0;
-            // for(size_t y=0;y<n[1];y++){
-            //     for(size_t x=0;x<n[2];x++){
-            //         size_t pos[3] = {i, y, x};
-            //         auto pixel = get_3d_ele(images_data, n, pos);
-            //         if(max < pixel){
-            //             max = pixel;
-            //         }
-            //     }
-            // }
-
             QImage img(n[2], n[1], QImage::Format_Grayscale8);
-            for(size_t y=0;y<n[1];y++){
-                auto scanLine = img.scanLine(y);
-                for(size_t x=0;x<n[2];x++){
-                    size_t pos[3] = {i, y, x};
-                    auto pixel = get_3d_ele(images_data, n, pos);
-                    scanLine[x] = static_cast<uchar>(pixel / max * 255.0);
+            for(size_t j=0;j<n[1];j++){
+                size_t indexes[3] = {i, j, 0};
+                uchar* scanLine = img.scanLine(j);
+                for(size_t k=0;k<n[2];k++){
+                    indexes[2] = k;
+                    double val = get_3d_ele(absValues.get(), n, indexes);
+                    scanLine[k] = static_cast<uchar>(val * 255 / max_val);
                 }
             }
             images.push_back(img);
         }
     }
 
-    delete[] images_data;
     return images;
 }

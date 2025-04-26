@@ -10,7 +10,6 @@ PatientInfoDialog::PatientInfoDialog(QWidget *parent)
 
 PatientInfoDialog::~PatientInfoDialog()
 {
-    delete ui;
 }
 
 void PatientInfoDialog::setPatient(Patient *patient)

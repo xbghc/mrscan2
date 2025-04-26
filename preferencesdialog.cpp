@@ -16,7 +16,6 @@ PreferencesDialog::PreferencesDialog(QWidget *parent)
 
 PreferencesDialog::~PreferencesDialog()
 {
-    delete ui;
 }
 
 void PreferencesDialog::on_listWidget_currentRowChanged(int currentRow)

@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QThread>
+#include <memory>
 #include "scanneradapter.h"
 #include "examhistory.h"
 
@@ -26,10 +27,9 @@ private slots:
     void handleExamHistorySaved(ExamHistory history);
 
 private:
-    Ui::MainWindow *ui;
-    IScannerAdapter *adapter;
-    bool ownAdapter;  // Flag whether the adapter needs to be deleted in the destructor
-    QThread *workerThread;
+    std::unique_ptr<Ui::MainWindow> ui;
+    std::unique_ptr<IScannerAdapter> adapter;
+    std::unique_ptr<QThread> workerThread;
 
 };
 #endif // MAINWINDOW_H
