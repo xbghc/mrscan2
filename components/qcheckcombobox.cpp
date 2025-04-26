@@ -26,12 +26,18 @@ QCheckComboBox::QCheckComboBox(QWidget *parent)
     m_text(new QTextEdit(this)),
     m_popup(new QListView(this)),
     m_model(new QStandardItemModel(this)),
-    m_animation(nullptr),
+    m_animation(new QPropertyAnimation(this)),
     m_separator(", ")
 {
     initButton();
     initTextEdit();
     initPopup();
+    
+    // init animation object
+    m_animation->setTargetObject(m_popup);
+    m_animation->setPropertyName("geometry");
+    m_animation->setDuration(150);
+    m_animation->setEasingCurve(QEasingCurve::OutQuad);
 
     updateLayout();
     setFocusPolicy(Qt::StrongFocus);
@@ -218,16 +224,6 @@ void QCheckComboBox::showPopup()
     // First automatically adjust item height based on content
     adjustItemsHeight();
     
-    // Check if animation object needs to be recreated
-    if (!m_animation) {
-        m_animation = new QPropertyAnimation(this);
-    }
-    
-    m_animation->setTargetObject(m_popup);
-    m_animation->setPropertyName("geometry");
-    m_animation->setDuration(150);
-    m_animation->setEasingCurve(QEasingCurve::OutQuad);
-
     QPoint globalPos = mapToGlobal(QPoint(0, height()));
     QRect screenRect = screen()->availableGeometry();
     
@@ -246,17 +242,17 @@ void QCheckComboBox::showPopup()
     int maxHeight = qMin(screenRect.height() - globalPos.y(), 200);
 
     int popupHeight = qMin(qMax(contentHeight, minHeight), maxHeight);
-    m_popup->setFixedSize(width(), popupHeight);
 
     QRect startRect(globalPos, QSize(width(), 0));
-    QRect endRect(globalPos, QSize(width(), m_popup->height()));
+    QRect endRect(globalPos, QSize(width(), popupHeight));
     m_animation->setStartValue(startRect);
     m_animation->setEndValue(endRect);
 
     // Use KeepWhenStopped to avoid deleting member variables
-    m_animation->start(QAbstractAnimation::KeepWhenStopped);
-    m_popup->raise();
+    m_popup->setGeometry(startRect);
     m_popup->show();
+    m_popup->raise();
+    m_animation->start(QAbstractAnimation::KeepWhenStopped);
 }
 
 void QCheckComboBox::hidePopup()
