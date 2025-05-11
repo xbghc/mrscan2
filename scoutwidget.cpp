@@ -2,7 +2,6 @@
 #include <QMatrix4x4>
 #include <QPen>
 #include "utils.h"
-#include <memory>
 
 namespace {
 // Compare if two floating point numbers are equal
@@ -157,6 +156,29 @@ void ScoutWidget::clearLines()
     updateMarkers();
 }
 
+bool ScoutWidget::eventFilter(QObject *obj, QEvent *event)
+{
+    auto view = qobject_cast<QGraphicsView*>(obj);
+    if(!view){
+        return false;
+    }
+
+    auto [row, col] = viewPosition(view);
+    switch(event->type()){
+    case QEvent::MouseButtonPress:
+        onViewMousePress(row, col, static_cast<QMouseEvent*>(event));
+        return true;
+    case QEvent::MouseMove:
+        onViewMouseMove(row, col, static_cast<QMouseEvent*>(event));
+        return true;
+    case QEvent::Wheel:
+        onViewWheeled(row, col, static_cast<QWheelEvent*>(event));
+        return true;
+    default:
+        return false;
+    }
+}
+
 void ScoutWidget::previewSlice(double fov, QVector3D angles, QVector3D offsets)
 {
     // TODO Function code can be optimized
@@ -190,4 +212,19 @@ void ScoutWidget::previewSlice(double fov, QVector3D angles, QVector3D offsets)
         line->setPen(pen);
         QImagesWidget::addLine(i, line);
     }
+}
+
+void ScoutWidget::onViewMousePress(int row, int col, QMouseEvent *event)
+{
+
+}
+
+void ScoutWidget::onViewMouseMove(int row, int col, QMouseEvent *event)
+{
+
+}
+
+void ScoutWidget::onViewWheeled(int row, int col, QWheelEvent *event)
+{
+
 }

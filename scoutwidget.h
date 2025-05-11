@@ -3,16 +3,9 @@
 
 #include <QJsonObject>
 #include <QVector3D>
+#include <QMouseEvent>
 
 #include "qimageswidget.h"
-
-class Slice{
-    QVector3D angles;
-    QVector3D offsets;
-    double fov;
-    double thickness;
-};
-
 
 class ScoutWidget : public QImagesWidget
 {
@@ -28,6 +21,10 @@ public:
 
     void setFov(double fov);
     void clearLines();
+signals:
+    void valueChanged(QVector3D angles, QVector3D offsets);
+protected:
+    bool eventFilter(QObject* obj, QEvent* event) override;
 
 private:
     QList<QVector3D> m_angles;
@@ -35,6 +32,10 @@ private:
     double m_fov;
 
     void previewSlice(double fov, QVector3D angles, QVector3D offsets);
+
+    void onViewMousePress(int row, int col, QMouseEvent* event);
+    void onViewMouseMove(int row, int col, QMouseEvent* event);
+    void onViewWheeled(int row, int col, QWheelEvent* event);
 };
 
 #endif // SCOUTWIDGET_H
