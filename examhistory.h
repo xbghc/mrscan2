@@ -15,7 +15,7 @@ public:
     explicit ExamHistory(int patientId, int examId);
     explicit ExamHistory(QJsonObject request, const QByteArray& response);
 
-    const QList<QImage> images() const;
+    const QVector<QVector<QImage>> images() const;
 
     void setPatient(const int patientId);
     void setRequest(QJsonObject request);

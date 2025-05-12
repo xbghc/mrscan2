@@ -126,7 +126,7 @@ int ResultWidget::loadMrdFiles(QString fpath)
                 continue;
             }
             
-            m_channels.push_back(images);
+            m_channels.push_back(images[0]);
             
             // Update channel list, extract channel number
             QString label = extractChannelLabel(file);

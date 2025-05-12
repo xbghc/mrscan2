@@ -1,24 +1,18 @@
 #ifndef MRDPARSER_H
 #define MRDPARSER_H
 
+#include "utils.h"
+
 #include <QImage>
 #include <QList>
 #include <QString>
 #include <fftw3.h>
-#include <memory>
 
-// 自定义FFTW资源的删除器
-struct FFTWComplexDeleter {
-    void operator()(fftw_complex* ptr) const {
-        if (ptr) fftw_free(ptr);
-    }
-};
-
-using FFTWComplexPtr = std::unique_ptr<fftw_complex[], FFTWComplexDeleter>;
-
-// kdata.shape = experiments,echoes,slices,views,views2,samples
+/*@brief kdata.shape = experiments,echoes,slices,views,views2,samples
+ *@detail 尽量不将fftw_complex对外暴露，处理好垃圾回收
+*/
 struct MrdData{
-    FFTWComplexPtr kdata;
+    fftw_complex* kdata;
     size_t samples;
     size_t views;
     size_t views2;
@@ -27,7 +21,8 @@ struct MrdData{
     size_t experiments;
 
     MrdData() {}
-    
+    ~MrdData() {if(kdata)fftw_free(kdata);}
+
     // 支持移动构造和赋值
     MrdData(MrdData&& other) noexcept = default;
     MrdData& operator=(MrdData&& other) noexcept = default;
@@ -47,7 +42,7 @@ private:
 public:
     static std::unique_ptr<MrdData> parse(const QByteArray& content);
     static std::unique_ptr<MrdData> parseFile(QString fpath);
-    static QList<QImage> reconImages(const MrdData* mrd);
+    static QVector<QVector<QImage>> reconImages(const MrdData* mrd);
 };
 
 #endif // MRDPARSER_H

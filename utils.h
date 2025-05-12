@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QDateTime>
 #include <QDebug>
+#include <fftw3.h>
 
 // Log levels
 enum class LogLevel {
@@ -42,6 +43,31 @@ public:
     static void handleError(const QString& message, const QString& details = QString());
     static bool showErrorDialog(const QString& message, const QString& details = QString());
 };
+
+
+
+/*
+ * @brief 对fftw库的一些封装，也包括相关结构，如数组等的封装
+ * @todo 封装确保fftw_complex的内存自动释放
+ * @detail 这里的vector使用标准库，没有使用QVector因为方便以后在非Qt的C++项目中使用
+ */
+namespace FFTW{
+fftw_complex* createArray(size_t size);
+
+std::vector<double> abs(fftw_complex* array, size_t len);
+
+fftw_complex* exec_fft_3d(fftw_complex* in, std::vector<int> n);
+
+/*
+ * @brief 用于逻辑上的多维数组，但是使用一维数组表示，根据数组形状和每个维度的索引给出数组索引
+ * @param shape 数组的形状
+ * @param indices 各个维度的下标
+ */
+int getIndex(std::vector<int> shape, std::vector<int> indices);
+
+void fftshift3d(fftw_complex* data, std::vector<int> shape);
+} // namespace FFTW
+
 
 QByteArray read(QString filepath);
 void newEmptyFile(QFile &file);

@@ -36,7 +36,7 @@ ExamHistory::ExamHistory(QJsonObject request, const QByteArray& response)
     m_response = response;
 }
 
-const QList<QImage> ExamHistory::images() const
+const QVector<QVector<QImage>> ExamHistory::images() const
 {
     auto mrd = MrdParser::parse(m_response);
     return MrdParser::reconImages(mrd.get());
