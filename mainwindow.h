@@ -5,7 +5,6 @@
 #include <QThread>
 #include <memory>
 #include "scanneradapter.h"
-#include "examhistory.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -22,9 +21,8 @@ public:
     ~MainWindow();
 
 private slots:
-    void handleScanStop(int id);
+    void handleScanStop(QString id);
     void handleScanComplete(QByteArray response);
-    void handleExamHistorySaved(ExamHistory history);
 
 private:
     std::unique_ptr<Ui::MainWindow> ui;

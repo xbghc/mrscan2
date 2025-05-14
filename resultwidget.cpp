@@ -1,6 +1,7 @@
 #include "../resultwidget.h"
 #include "ui_resultwidget.h"
 #include "utils.h"
+#include "mrdparser.h"
 
 #include <QDir>
 #include <QFile>
@@ -11,46 +12,6 @@
 #include <QRegularExpression>
 #include <memory>
 
-#include "mrdparser.h"
-
-namespace {
-// Get all channel files from the given path
-QStringList getAllChannelsFile(const QString& path) {
-    QFileInfo fileInfo(path);
-    if (!fileInfo.exists()) {
-        LOG_WARNING(QString("File path does not exist: %1").arg(path));
-        return {};
-    }
-
-    QDir dir = fileInfo.absoluteDir();
-    QString fileName = fileInfo.fileName();
-
-    static QRegularExpression namePattern("^(.*)#(\\d+)\\.(\\w+)$");
-    QRegularExpressionMatch match = namePattern.match(fileName);
-    if (!match.hasMatch()) {
-        LOG_WARNING("Invalid filename format, expected format: prefix#number.suffix");
-        return {};
-    }
-
-    QString prefix = QRegularExpression::escape(match.captured(1));
-    QString suffix = QRegularExpression::escape(match.captured(3));
-
-    // Build new regex to match related files
-    QString pattern = QString("^%1#\\d+\\.%2$").arg(prefix, suffix);
-    QRegularExpression regex(pattern);
-    
-    QStringList result;
-    const QStringList files = dir.entryList(QDir::Files | QDir::Readable);
-    for (const QString& file : files) {
-        if (regex.match(file).hasMatch()) {
-            result.append(dir.filePath(file));
-        }
-    }
-    
-    return result;
-}
-
-} // namespace
 
 ResultWidget::ResultWidget(QWidget *parent)
     : QWidget(parent)
@@ -94,73 +55,15 @@ void ResultWidget::setupConnections()
     connect(ui->heightSpin, &QSpinBox::valueChanged, this, &ResultWidget::setHeight);
 }
 
-int ResultWidget::loadMrdFiles(QString fpath)
-{    
-    // Clear old data
+void ResultWidget::setData(const Exam& exam)
+{
+    /// @todo 或许exam中的response应该有一个提供标签的方法，
+    /// 毕竟可能是通道1，2，4而不是按顺序
     clear();
-    
-    // Get all channel files
-    QStringList files = getAllChannelsFile(fpath);
-    if (files.isEmpty()) {
-        QMessageBox::warning(this, tr("Loading Error"), tr("No valid channel files found: %1").arg(fpath));
-        return 0;
-    }
-    
-    // Show loading progress
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-    
-    // Load all channel files
-    for (const auto& file : files) {
-        try {
-            // Parse file
-            auto content = MrdParser::parseFile(file);
-            if (!content) {
-                LOG_WARNING(QString("File parsing failed: %1").arg(file));
-                continue;
-            }
-            
-            // Reconstruct images
-            auto images = MrdParser::reconImages(content.get());
-            if (images.isEmpty()) {
-                LOG_WARNING(QString("Image reconstruction failed: %1").arg(file));
-                continue;
-            }
-            
-            m_channels.push_back(images[0]);
-            
-            // Update channel list, extract channel number
-            QString label = extractChannelLabel(file);
-            ui->ChannelBox->addItem(label, m_channels.size() - 1);
-        } catch (const std::exception& e) {
-            LOG_ERROR(QString("Error processing file: %1, Error: %2").arg(file).arg(e.what()));
-        }
-    }
-    
-    // Restore cursor
-    QApplication::restoreOverrideCursor();
-    
-    // If no channels were loaded successfully, return 0
-    if (m_channels.isEmpty()) {
-        QMessageBox::warning(this, tr("Loading Error"), tr("Unable to load any channel data"));
-        return 0;
-    }
-    
-    // Update image list
+    m_channels = exam.images();
+    ui->ChannelBox->setItems(QStringList(m_channels.size()));
     updateImageList();
-    
-    // Select first channel and image by default
-    if (ui->ChannelBox->itemCount() > 0) {
-        ui->ChannelBox->setChecked(0, true);
-    }
-    
-    if (ui->ImageBox->itemCount() > 0) {
-        ui->ImageBox->setChecked(0, true);
-    }
-    
-    // Update display
     updateMarkers();
-    
-    return m_channels.size();
 }
 
 QString ResultWidget::extractChannelLabel(const QString& filePath)

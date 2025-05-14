@@ -5,7 +5,6 @@
 #include "tuningradiofrequencypower.h"
 #include "tuningshimming.h"
 #include "utils.h"
-#include "exammodel.h"
 
 MainWindow::MainWindow(QWidget *parent, IScannerAdapter* scannerAdapter)
     : QMainWindow(parent)
@@ -47,14 +46,8 @@ MainWindow::MainWindow(QWidget *parent, IScannerAdapter* scannerAdapter)
     connect(adapter.get(), &IScannerAdapter::scanEnded, this, &MainWindow::handleScanComplete);
     
     // Receive scan operation signals from ExamTab
-    connect(ui->examTab, &ExamTab::onStopButtonClicked, this, &MainWindow::handleScanStop);
-    connect(ui->examTab, &ExamTab::onStartButtonClicked, adapter.get(), &IScannerAdapter::scan);
-    connect(ui->examTab, &ExamTab::fileSaved, this, &MainWindow::handleExamHistorySaved);
-
-    // When displaying images
-    connect(ui->historyTab, &HistoryTab::currentIndexChanged, this, [this](ExamHistory history){
-        ui->imagesWidget->loadMrdFiles(history.responsePath());
-    });
+    connect(ui->examTab, &ExamTab::stopButtonClicked, this, &MainWindow::handleScanStop);
+    connect(ui->examTab, &ExamTab::startButtonClicked, adapter.get(), &IScannerAdapter::scan);
 
     // preference
     connect(ui->actionPreferences, &QAction::triggered, this, [this]() {
@@ -93,10 +86,10 @@ MainWindow::~MainWindow()
     workerThread->wait();
 }
 
-void MainWindow::handleScanStop(int id)
+void MainWindow::handleScanStop(QString id)
 {
     LOG_INFO(QString("Stop scanning ID: %1").arg(id));
-    int stoppedId = adapter->stop(id);
+    auto stoppedId = adapter->stop(id);
     
     if (stoppedId != id) {
         LOG_ERROR(QString("Stopped scan ID does not match, expected: %1, actual: %2").arg(id).arg(stoppedId));
@@ -109,35 +102,13 @@ void MainWindow::handleScanStop(int id)
 
 void MainWindow::handleScanComplete(QByteArray response)
 {
-    LOG_INFO("Scan completed, saving data");
-    
-    // Get patient ID and current scan data
-    int patientId = ui->examTab->getCurrentPatientId();
-    
-    // Create history record
-    QJsonObject request = ui->examTab->getCurrentExam();
-    ExamHistory history(request, response);
-    history.setPatient(patientId);
-    
-    // Save history record
-    if (history.save()) {
-        LOG_INFO("History record saved successfully");
-    } else {
-        LOG_ERROR("Failed to save history record");
-    }
-    
-    // Notify UI that scan is saved
-    ui->examTab->onScanEnd(response);
-    ui->examTab->fileSaved(history);
-}
 
-void MainWindow::handleExamHistorySaved(ExamHistory history)
-{
-    // Load scan result images
-    ui->imagesWidget->loadMrdFiles(history.responsePath());
-    
-    // Update history list
+    LOG_INFO("Scan completed, saving data");
+
+    const auto& exam = ui->examTab->onResponseReceived(response);
+
+    ui->imagesWidget->setData(exam);
     ui->historyTab->loadHistoryList();
-    
+
     LOG_INFO("History record updated");
 }

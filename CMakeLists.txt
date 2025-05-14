@@ -52,8 +52,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         
         # Model related files
         patient.h patient.cpp
-        exammodel.h exammodel.cpp
-        examitem.h examitem.cpp
+
+
         historymodel.h historymodel.cpp
         examhistory.h examhistory.cpp
         
@@ -87,7 +87,10 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         configs/tunings.json
         configs/preferences.json
         mrscan2_zh_CN.qm
+        examresponse.h mrdresponse.cpp
         fftwutils.cpp
+        fileutils.cpp
+        exam.h exam.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET mrscan2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

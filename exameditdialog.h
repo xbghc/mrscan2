@@ -1,6 +1,8 @@
 #ifndef EXAMEDITDIALOG_H
 #define EXAMEDITDIALOG_H
 
+#include "exam.h"
+
 #include <QDoubleSpinBox>
 #include <QDialog>
 #include <QJsonArray>
@@ -20,7 +22,7 @@ class ExamEditDialog : public QDialog
 public:
     explicit ExamEditDialog(QWidget *parent = nullptr);
     ~ExamEditDialog();
-    void setData(const QJsonObject& exam);
+    void setData(const Exam& exam);
     QJsonObject getParameters();
     void setScoutImages(QList<QImage> images, double fov, QList<QVector3D> angles, QList<QVector3D> offsets);
 

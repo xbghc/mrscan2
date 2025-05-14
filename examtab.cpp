@@ -1,4 +1,5 @@
 #include "examtab.h"
+#include "examresponse.h"
 #include "exameditdialog.h"
 #include "patient.h"
 #include "patientinfodialog.h"
@@ -15,35 +16,66 @@
 
 namespace {} // namespace
 
-ExamTab::ExamTab(QWidget *parent) : QWidget(parent), ui(new Ui::studytab) {
-    ui->setupUi(this);
+ExamTab::ExamTab(QWidget *parent)
+    : QWidget(parent),
+    ui(new Ui::studytab),
+    m_patientDialog(new PatientInfoDialog) {
 
+    ui->setupUi(this);
     loadPatients();
 
-    examModel = std::make_unique<ExamModel>();
-    ui->tableView->setModel(examModel.get());
-    ui->tableView->resizeColumnsToContents();
-    ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    updateExamTable();
 
     // selected index changed
-    connect(ui->tableView->selectionModel(), &QItemSelectionModel::currentRowChanged,
+    connect(ui->tableWidget->selectionModel(), &QItemSelectionModel::currentRowChanged,
             this, [this](const QModelIndex &current, const QModelIndex &previous){
         int curRow = current.row();
 
-        int scanningRow = examModel->getScanningRow();
-        if(scanningRow == curRow){
+        switch(m_exams[curRow].status()){
+        case Exam::Status::Ready:
+            ui->scanButton->setText(tr("start"));
+            ui->scanButton->setEnabled(true);
+            break;
+        case Exam::Status::Processing:
             ui->scanButton->setText(tr("stop"));
             ui->scanButton->setEnabled(true);
-            return;
+            break;
+        case Exam::Status::Done:
+            ui->scanButton->setText(tr("start"));
+            ui->scanButton->setEnabled(false);
+            break;
         }
-
-        ui->scanButton->setText(tr("start"));
-        bool enable = (scanningRow == -1 && getStatus(curRow) == "Ready");
-        ui->scanButton->setEnabled(enable);
     });
 
     connect(ui->editPatientButton, &QToolButton::clicked, this, &ExamTab::openEditPatientDialog);
     connect(ui->newPatientButton, &QToolButton::clicked, this, &ExamTab::openNewPatientDialog);
+    connect(m_patientDialog.get(), &PatientInfoDialog::accepted, this,
+        [this]() {
+            auto name = m_patientDialog->name();
+            auto gender = m_patientDialog->gender();
+            auto birthday = m_patientDialog->birthday();
+            if(m_patientDialog->type() == PatientInfoDialog::Type::New){
+                addPatient(name, birthday, gender);
+            }
+            else{
+                auto id = m_patientDialog->id();
+                bool succeed = false;
+                for(auto &p:m_patients){
+                    if(p.id()==id){
+                        p.setName(name);
+                        p.setBirthday(birthday);
+                        p.setGender(gender);
+                        succeed = true;
+                        break;
+                    }
+                }
+                if(!succeed){
+                    LOG_ERROR(QString("Edit Failed: Can't find patient with id: %1").arg(id));
+                }
+            }
+            loadPatients();
+    });
+
     connect(ui->deletePatientButton, &QToolButton::clicked, this, &ExamTab::deletePatient);
 
     connect(ui->shiftUpButton, &QPushButton::clicked, this, &ExamTab::shiftUp);
@@ -57,17 +89,14 @@ ExamTab::ExamTab(QWidget *parent) : QWidget(parent), ui(new Ui::studytab) {
 ExamTab::~ExamTab() {
 }
 
-int ExamTab::currentExamIndex()
-{
-    return ui->tableView->currentIndex().row();
-}
-
+// TODO 移动到Patient Config
 void ExamTab::loadPatients() {
     ui->comboBox->clear();
-    Patient::loadPatients();
-    for (auto p : Patient::patientsList) {
-        QString label = QString::number(p.getId()) + "-" + p.getName();
-        ui->comboBox->addItem(label, p.getId());
+    m_patients = JsonPatient::loadPatients();
+
+    for (auto& p : m_patients) {
+        QString label = QString("%1 - %2").arg(p.id(), p.name());
+        ui->comboBox->addItem(label, p.id());
     }
 }
 
@@ -80,61 +109,68 @@ void ExamTab::enablePatientSelection(bool enable) {
     ui->comboBox->setEnabled(enable);
 }
 
-int ExamTab::getCurrentPatientId() const {
-    return ui->comboBox->currentData().toInt();
+QString ExamTab::getCurrentPatientId() const {
+    return ui->comboBox->currentData().toString();
 }
 
-QJsonObject ExamTab::getCurrentExam() const {
-    int curRow = ui->tableView->currentIndex().row();
+const Exam& ExamTab::getCurrentExam() const {
+    auto curRow = ui->tableWidget->currentRow();
     if(curRow >= 0) {
-        return examModel->getExamData(curRow);
+        throw std::runtime_error("ExamTab::getCurrentExam: No Current Exam");
     }
-    return QJsonObject();
+
+    return m_exams[curRow];
 }
 
-void ExamTab::onScanStarted(int id)
+void ExamTab::onScanStarted(QString id)
 {
-    int curRow = currentExamIndex();
-    if(id < 0){
-        LOG_ERROR("Scan failed");
-        return;
-    }
+    int curRow = ui->tableWidget->currentRow();
 
     ui->scanButton->setText(tr("stop"));
     ui->comboBox->setEnabled(false);
-    examModel->examStarted(curRow, id);
+    m_exams[curRow].setStartTime();
+    m_exams[curRow].setStatus(Exam::Status::Processing);
 }
 
-void ExamTab::onScanEnd(QByteArray response)
+const Exam& ExamTab::onResponseReceived(QByteArray response)
 {
     // Now we only handle UI updates here, not data saving
+
+
     this->ui->comboBox->setEnabled(true);
     this->ui->scanButton->setText("start");
     this->ui->scanButton->setEnabled(false);
-    examModel->examDone();
+
+    auto row = currentRow();
+    m_exams[row].setResponse(new MrdResponse(response));
+    m_exams[row].setEndTime();
+
+    auto patient = getPatient(getCurrentPatientId());
+    m_exams[row].setPatient(reinterpret_cast<IPatient*>(&patient));
+    m_exams[row].save("./"); /// @todo
+
+    return m_exams[row];
 }
 
 void ExamTab::openEditPatientDialog()
 {
-    PatientInfoDialog dialog(this);
-    int id = ui->comboBox->currentData().toInt();
-    Patient patient = Patient::getPatient(id);
-    dialog.setPatient(&patient);
+    auto id = ui->comboBox->currentData().toString();
+    auto patient = getPatient(id);
+    m_patientDialog->setId(id);
+    m_patientDialog->setName(patient.name());
+    m_patientDialog->setBithDay(patient.birthday());
+    m_patientDialog->setGender(patient.gender());
 
-    dialog.setModal(true);
-    connect(&dialog, &PatientInfoDialog::accepted, this,
-            [this]() { loadPatients(); });
-    dialog.exec();
+    m_patientDialog->setModal(true);
+    m_patientDialog->exec();
+
 }
 
 void ExamTab::openNewPatientDialog() {
-    PatientInfoDialog dialog(this);
-    dialog.setPatient(nullptr);
-    dialog.setModal(true);
+    m_patientDialog->clear();
+    m_patientDialog->setModal(true);
 
-    connect(&dialog, &PatientInfoDialog::accepted, this,
-            [this]() { loadPatients(); });
-    dialog.exec();
+    m_patientDialog->exec();
 }
 
 void ExamTab::deletePatient() {
@@ -142,75 +178,59 @@ void ExamTab::deletePatient() {
                               QMessageBox::Yes | QMessageBox::No) ==
         QMessageBox::Yes) {
         PatientInfoDialog dialog(this);
-        int id = ui->comboBox->currentData().toInt();
-        Patient::removePatient(id);
+        auto id = ui->comboBox->currentData().toString();
+        removePatient(id);
         loadPatients();
     }
 }
 
 void ExamTab::shiftUp() {
-    int curRow = currentExamIndex();
-    if (curRow == -1) {
-        LOG_WARNING("No exam selected");
-        return;
-    }
+    int curRow = currentRow();
 
-    if (curRow == 0) {
-        LOG_WARNING("Already the first exam");
-        return;
-    }
-
-    examModel->swapRows(curRow, curRow - 1);
+    swap(curRow, curRow-1);
 }
 
 void ExamTab::shiftDown() {
-    int curRow = currentExamIndex();
-    if (curRow == -1) {
-        LOG_WARNING("No exam selected");
-        return;
-    }
+    int curRow = currentRow();
 
-    if (curRow == examModel->rowCount() - 1) {
-        LOG_WARNING("Already the last exam");
-        return;
-    }
-
-    examModel->swapRows(curRow, curRow + 1);
+    swap(curRow, curRow+1);
 }
 
 void ExamTab::removeExam() {
-    int curRow = currentExamIndex();
+    int curRow = currentRow();
     if (curRow == -1) {
         LOG_WARNING("No exam selected");
         return;
     }
 
-    examModel->removeRow(curRow);
+    m_exams.removeAt(curRow);
 }
 
 void ExamTab::copyExam() {
-    int curRow = currentExamIndex();
+    int curRow = currentRow();
     if (curRow == -1) {
         LOG_WARNING("No exam selected");
         return;
     }
 
-    examModel->copyRow(curRow);
+    m_exams.insert(curRow+1, Exam());
+    m_exams[curRow+1].setRequest(m_exams[curRow].request());
 }
 
 void ExamTab::editExam() {
-    int curRow = currentExamIndex();
+    int curRow = currentRow();
     if (curRow == -1) {
         LOG_WARNING("No exam selected");
         return;
     }
 
     ExamEditDialog dlg(this);
-    QJsonObject data = examModel->getExamData(curRow);
-    dlg.setData(data);
+    dlg.setData(m_exams[curRow]);
     connect(&dlg, &QDialog::accepted, this, [&]() {
         QJsonObject parameters = dlg.getParameters();
-        this->examModel->setExamParams(curRow, parameters);
+        auto request = this->m_exams[curRow].request();
+        request.setParams(parameters);
+        this->m_exams[curRow].setRequest(request);
     });
 
     // TODO The readability of examModel code is poor, after adjustment, determine whether to scan scout, if so, call dlg.setScoutImages
@@ -231,27 +251,173 @@ void ExamTab::editExam() {
 
 void ExamTab::onScanButtonClicked()
 {
-    int curRow = currentExamIndex();
+    int curRow = currentRow();
     if (curRow == -1) {
         LOG_WARNING("No exam selected");
         return;
     }
 
     // stop
-    if(examModel->getScanningRow() == curRow){
-        int id = examModel->getScanningId();
-        emit onStopButtonClicked(id);
+    if(processingRow() == curRow){
+        auto id = m_exams[curRow].id();
+        emit stopButtonClicked(id);
         return;
     }
 
     // start
-    QJsonObject exam = examModel->getExamData(curRow);
-    emit onStartButtonClicked(exam);
+    auto request = m_exams[curRow].request();
+    emit startButtonClicked(request);
 }
 
-QString ExamTab::getStatus(int row)
+JsonPatient ExamTab::getPatient(QString id)
 {
-    QModelIndex index = examModel->index(row, 2);
-    return examModel->data(index).toString();
+    for(auto& p:m_patients){
+        if(p.id() == id){
+            return p;
+        }
+    }
+
+    LOG_ERROR(QString("Can't find patient with id: %1").arg(id));
+    return {};
 }
 
+void ExamTab::addPatient(QString name, QDate birthday, IPatient::Gender gender)
+{
+    QString id = QString::number(nextPatientId());
+
+    JsonPatient patient;
+    patient.setId(id);
+    patient.setName(name);
+    patient.setBirthday(birthday);
+    patient.setGender(gender);
+    m_patients.push_back(patient);
+
+    setNextId(id.toInt() + 1);
+    savePatients();
+}
+
+void ExamTab::savePatients()
+{
+    /**
+     * @todo JsonPatient不应该管理文件读写
+     */
+    JsonPatient::savePatients(m_patients);
+}
+
+void ExamTab::removePatient(QString id)
+{
+    for(int i = 0; i < m_patients.size(); i++){
+        if(m_patients[i].id() == id){
+            m_patients.removeAt(i);
+            savePatients(); /// @todo 分析将之转移到ExamTab的析构函数的可能性
+            return;
+        }
+    }
+    LOG_ERROR(QString("Remove failed. Can't find patient with id: %1").arg(id));
+}
+
+int ExamTab::nextPatientId()
+{
+    const static QString kFilePath = "./patients/nextId";
+    auto kDirPath = "./patients";
+    QDir dir(kDirPath);
+    if (!dir.exists() && dir.mkpath(".")) {
+        qDebug() << "failed to mkdir: " << kDirPath;
+        return -1;
+    }
+
+    QFile file(kFilePath);
+    if (!file.exists()) {
+        if (!file.open(QIODevice::WriteOnly)) {
+            qDebug() << "failed to open file: " << kFilePath;
+            return -1;
+        } else {
+            file.write("1");
+            return 0;
+        }
+    }
+
+    if (!file.open(QIODevice::ReadOnly)) {
+        qDebug() << "failed to open file: " << kFilePath;
+        return -1;
+    }
+    return file.readAll().toInt();
+}
+
+void ExamTab::setNextId(int id)
+{
+    const static QString kFilePath = "./patients/nextId";
+    QFile file(kFilePath);
+
+    if (!file.open(QIODevice::WriteOnly)) {
+        LOG_ERROR(QString("failed to write to: %1").arg(kFilePath));
+        return;
+    }
+
+    file.write(QByteArray::number(id));
+    return;
+}
+
+void ExamTab::swap(int row1, int row2)
+{
+    if(row1 < 0 || row2 < 0 || row1 >= m_exams.size() || row2 >= m_exams.size()){
+        LOG_WARNING(QString("Can't swap between row %1 and %2").arg(row1, row2));
+        return;
+    }
+
+    m_exams.swapItemsAt(row1, row2);
+    updateExamTable();
+}
+
+void ExamTab::updateExamTable()
+{
+    ui->tableWidget->clear();
+    ui->tableWidget->setColumnCount(3);
+    ui->tableWidget->setRowCount(m_exams.size());
+
+    QStringList headers;
+    headers << "Name" << "Time" << "Status";
+
+    for(int i=0;i<m_exams.size();i++){
+        const auto& exam = m_exams[i];
+        const auto& request = exam.request();
+
+        auto name = request.name();
+        ui->tableWidget->setItem(i, 0, new QTableWidgetItem(name));
+
+        auto time = exam.time();
+        auto timeStr = QString("%1:%2").arg(time/60, time%60);
+        ui->tableWidget->setItem(i, 1, new QTableWidgetItem(timeStr));
+
+        auto status = exam.status();
+        QString statusStr;
+        switch(status){
+        case Exam::Status::Ready:
+            statusStr = "Ready";
+            break;
+        case Exam::Status::Processing:
+            statusStr = "Processing";
+            break;
+        case Exam::Status::Done:
+            statusStr = "Done";
+            break;
+        }
+        ui->tableWidget->setItem(i, 2, new QTableWidgetItem(statusStr));
+    }
+}
+
+int ExamTab::currentRow() const
+{
+    return ui->tableWidget->currentRow();
+}
+
+int ExamTab::processingRow() const
+{
+    for(int i=0;i<m_exams.size();i++){
+        const auto& exam = m_exams[i];
+        if(exam.status() == Exam::Status::Processing){
+            return i;
+        }
+    }
+    return -1;
+}

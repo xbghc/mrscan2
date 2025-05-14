@@ -63,9 +63,9 @@ ExamEditDialog::~ExamEditDialog()
 {
 }
 
-void ExamEditDialog::setData(const QJsonObject &exam)
+void ExamEditDialog::setData(const Exam& exam)
 {
-    QJsonObject parameters = exam["parameters"].toObject();
+    QJsonObject parameters = exam.request().params();
     for(const auto&[abstractSpinBox, jsonKey]:paramEditKeyMap.asKeyValueRange()){
         if(QSpinBox* spinBox = qobject_cast<QSpinBox*>(abstractSpinBox)){
             spinBox->setValue(parameters[jsonKey].toInt());

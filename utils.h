@@ -5,6 +5,8 @@
 #include <QString>
 #include <QFile>
 #include <QDateTime>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QDebug>
 #include <fftw3.h>
 
@@ -46,7 +48,7 @@ public:
 
 
 
-/*
+/**
  * @brief 对fftw库的一些封装，也包括相关结构，如数组等的封装
  * @todo 封装确保fftw_complex的内存自动释放
  * @detail 这里的vector使用标准库，没有使用QVector因为方便以后在非Qt的C++项目中使用
@@ -58,7 +60,7 @@ std::vector<double> abs(fftw_complex* array, size_t len);
 
 fftw_complex* exec_fft_3d(fftw_complex* in, std::vector<int> n);
 
-/*
+/**
  * @brief 用于逻辑上的多维数组，但是使用一维数组表示，根据数组形状和每个维度的索引给出数组索引
  * @param shape 数组的形状
  * @param indices 各个维度的下标
@@ -68,8 +70,31 @@ int getIndex(std::vector<int> shape, std::vector<int> indices);
 void fftshift3d(fftw_complex* data, std::vector<int> shape);
 } // namespace FFTW
 
+namespace FileUtils{
 
-QByteArray read(QString filepath);
+QByteArray read(const QString& fpath);
+void save(const QString& fpath, QByteArray content);
+
+int loadMrdFiles();
+
+/**
+ * @brief 获取与目标文件同一目录下的所有通道的文件列表
+ * @param path 目标文件路径
+ * @return 所有相关的各通道文件的路径
+ * @todo 这个函数不应该作为utils的部分
+ */
+QStringList getAllChannelsFile(const QString& path);
+}
+
+namespace QJson{
+QString get(const QJsonObject& obj, const QString key, QString d);
+int get(const QJsonObject& obj, const QString key, int d);
+
+QJsonDocument readFromFile(const QString& fpath);
+void saveToFile(const QString& fpath, QJsonObject obj);
+void saveToFile(const QString& fpath, QJsonArray array);
+}
+
 void newEmptyFile(QFile &file);
 
 #endif // UTILS_H

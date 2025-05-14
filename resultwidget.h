@@ -1,6 +1,8 @@
 #ifndef RESULTWIDGET_H
 #define RESULTWIDGET_H
 
+#include "exam.h"
+
 #include <QGraphicsScene>
 #include <QGridLayout>
 #include <QImage>
@@ -13,6 +15,11 @@ namespace Ui{
 class ResultWidget;
 }
 
+/**
+ * @class ResultWidget
+ * @brief 内置QImagesWidget，提供了可交互的接口
+ * @details 接收一个Exam对象，展示Exam的相关数据(目前只实现了简单接口)
+ */
 class ResultWidget : public QWidget
 {
     Q_OBJECT
@@ -21,7 +28,7 @@ public:
     explicit ResultWidget(QWidget *parent = nullptr);
     ~ResultWidget();
 
-    int loadMrdFiles(QString fpath); // path is any channel file path, but all files need to be in the same folder
+    void setData(const Exam& exam);
     void clear();
 
 public slots:

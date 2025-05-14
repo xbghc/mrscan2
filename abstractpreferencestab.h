@@ -9,6 +9,7 @@ class AbstractPreferencesTab : public QWidget
     Q_OBJECT
 public:
     explicit AbstractPreferencesTab(QWidget *parent = nullptr);
+    virtual ~AbstractPreferencesTab()=default;
     virtual void set(QJsonObject pref)=0;
     virtual QJsonObject get()=0;
 

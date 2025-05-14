@@ -12,7 +12,7 @@ VirtualScanner::~VirtualScanner() {
 }
 
 void VirtualScanner::loadTestData() {
-    QByteArray fileContent = ::read("D:\\Projects\\QImagesWidget\\data\\20230528103740-T2_TSE-T-3k#1.mrd");
+    QByteArray fileContent = FileUtils::read("D:\\Projects\\QImagesWidget\\data\\20230528103740-T2_TSE-T-3k#1.mrd");
     if (!fileContent.isEmpty()) {
         auto len = fileContent.length();
         auto buffer = std::make_unique<unsigned char[]>(len);

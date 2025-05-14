@@ -8,7 +8,6 @@
 #include <QString>
 #include <QVariant>
 #include <QMutex>
-#include <memory>
 
 // 配置管理器 - 单例模式
 class ConfigManager : public QObject
@@ -72,5 +71,7 @@ private:
     // 互斥锁，确保线程安全
     QMutex m_mutex;
 };
+
+
 
 #endif // CONFIGMANAGER_H 

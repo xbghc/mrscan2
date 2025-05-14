@@ -42,14 +42,17 @@ int ScannerAdapter::open() {
     return status;
 }
 
-void ScannerAdapter::scan(QJsonObject sequence) {
+void ScannerAdapter::scan(ExamRequest request) {
+    auto sequence = request.params();
     if (!SequenceValidator::validate(sequence)) {
         LOG_ERROR("Invalid scan sequence");
         return;
     }
 
     int size;
-    auto code = SequenceEncoder::encode(sequence, size);
+    /// @todo 由于request被重构，encode无法使用
+    // auto code = SequenceEncoder::encode(sequence, size);
+    std::unique_ptr<unsigned char[]> code{new unsigned char[5]};
     if (code == nullptr) {
         LOG_ERROR("Sequence encoding failed");
         return;
@@ -67,7 +70,7 @@ void ScannerAdapter::scan(QJsonObject sequence) {
         return;
     }
 
-    emit scanStarted(id);
+    emit scanStarted(QString::number(id));
 
     int dataSize = scanner->read(nullptr, 0);
     QByteArray buffer;
@@ -86,19 +89,19 @@ void ScannerAdapter::scan(QJsonObject sequence) {
     emit scanEnded(buffer);
 }
 
-int ScannerAdapter::stop(int id)
+QString ScannerAdapter::stop(QString id)
 {
     LOG_INFO(QString("Stopping scan, ID: %1").arg(id));
     int size;
-    auto code = SequenceEncoder::encodeStop(id, size);
+    auto code = SequenceEncoder::encodeStop(id.toInt(), size);
     
-    if (writeCodeToScanner(scanner.get(), code, size, id)) {
+    if (writeCodeToScanner(scanner.get(), code, size, id.toInt())) {
         emit stoped(id);
         return id;
     }
     
     LOG_ERROR(QString("Failed to stop scan, ID: %1").arg(id));
-    return -1;
+    return "-1";
 }
 
 int ScannerAdapter::close() { 

@@ -5,7 +5,6 @@
 #include <QDir>
 #include <QMessageBox>
 #include <QTextStream>
-#include <memory>
 
 // Initialize static members
 bool Logger::s_logToFile = false;
@@ -122,13 +121,6 @@ bool ErrorHandler::showErrorDialog(const QString& message, const QString& detail
     return msgBox.exec() == QMessageBox::Ok;
 }
 
-QByteArray read(QString fpath){
-    QFile file(fpath);
-    file.open(QIODevice::ReadOnly);
-    auto data = file.readAll();
-    file.close();
-    return data;
-}
 
 void newEmptyFile(QFile &file)
 {
@@ -138,4 +130,33 @@ void newEmptyFile(QFile &file)
     QDataStream out(&file);
     out << (qint32)0;
     file.close();
+}
+
+QString QJson::get(const QJsonObject &obj, const QString key, QString d)
+{
+    if(obj.contains(key)) {
+        return obj[key].toString();
+    }
+    return d;
+}
+
+int QJson::get(const QJsonObject &obj, const QString key, int d)
+{
+    if(obj.contains(key)){
+        return obj[key].toInt();
+    }
+    return d;
+}
+
+QJsonDocument QJson::readFromFile(const QString &fpath)
+{
+    auto bytes = FileUtils::read(fpath);
+    return QJsonDocument::fromJson(bytes);
+}
+
+
+void QJson::saveToFile(const QString &fpath, QJsonObject obj)
+{
+    auto doc = QJsonDocument(obj);
+    FileUtils::save(fpath, doc.toJson());
 }

@@ -10,6 +10,7 @@
 #include <memory>
 
 #include "virtualscanner.h"
+#include "exam.h"
 
 // Define scanner adapter interface
 class IScannerAdapter : public QObject
@@ -21,14 +22,14 @@ public:
 
     virtual bool isConnected() const = 0;
     virtual int open() = 0;
-    virtual void scan(QJsonObject sequence) = 0;
-    virtual int stop(int id) = 0;
+    virtual void scan(ExamRequest request) = 0;
+    virtual QString stop(QString id) = 0;
     virtual int close() = 0;
 
 signals:
-    void scanStarted(int id);
+    void scanStarted(QString id);
     void scanEnded(QByteArray response);
-    void stoped(int id);
+    void stoped(QString id);
 };
 
 // Concrete implementation class
@@ -41,8 +42,8 @@ public:
 
     bool isConnected() const override { return m_isConnected; }
     int open() override;
-    void scan(QJsonObject sequence) override;
-    int stop(int id) override;
+    void scan(ExamRequest request) override;
+    QString stop(QString id) override;
     int close() override;
 
 private:

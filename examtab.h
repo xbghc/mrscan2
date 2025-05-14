@@ -4,14 +4,18 @@
 #include <QJsonObject>
 #include <QModelIndex>
 #include <QWidget>
-#include "exammodel.h"
-#include "examhistory.h"
+#include "exam.h"
+#include "patientinfodialog.h"
 #include <memory>
 
 namespace Ui {
 class studytab;
 }
 
+/**
+ * @todo 移除对JsonPatient的依赖，使用统一的IPatient接口
+ * @brief The ExamTab class
+ */
 class ExamTab : public QWidget
 {
     Q_OBJECT
@@ -20,17 +24,21 @@ public:
     explicit ExamTab(QWidget *parent = nullptr);
     ~ExamTab();
 
-    int currentExamIndex();
+    // exam related
+    int currentRow() const;
+    int processingRow() const;
+
+    // patient related
     void loadPatients();
     void updateScanButtonState(bool isScanning);
     void enablePatientSelection(bool enable);
-    QString getStatus(int row);
-    int getCurrentPatientId() const;
-    QJsonObject getCurrentExam() const;
+    QString getCurrentPatientId() const;
+    const Exam& getCurrentExam() const;
 
+    JsonPatient getPatient(QString id);
+    const Exam& onResponseReceived(QByteArray response);
 public slots:
-    void onScanStarted(int id);
-    void onScanEnd(QByteArray response);
+    void onScanStarted(QString id);
 
 private slots:
     void openEditPatientDialog();
@@ -44,13 +52,26 @@ private slots:
     void onScanButtonClicked();
 
 signals:
-    void onStartButtonClicked(QJsonObject sequence);
-    void onStopButtonClicked(int id);
-    void fileSaved(ExamHistory history);
+    void startButtonClicked(ExamRequest exam);
+    void stopButtonClicked(QString id);
 
 private:
     std::unique_ptr<Ui::studytab> ui;
-    std::unique_ptr<ExamModel> examModel;
+
+    QList<Exam> m_exams;
+    QVector<JsonPatient> m_patients; /// @todo 应该使用IPatient接口
+
+    void addPatient(QString name, QDate birthday, IPatient::Gender gender);
+    void savePatients();
+    void removePatient(QString id);
+    /// 如果是正规dicom格式的病人数据，不至于在核磁软件中创建病人，所以这里放个生成新id的函数就够了
+    int nextPatientId();
+    void setNextId(int id);
+
+    std::unique_ptr<PatientInfoDialog> m_patientDialog;
+
+    void swap(int row1, int row2);
+    void updateExamTable();
 };
 
 #endif // EXAMTAB_H

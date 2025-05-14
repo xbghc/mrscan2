@@ -100,7 +100,7 @@ std::unique_ptr<MrdData> MrdParser::parseFile(QString fpath)
     //   url: https://github.com/hongmingjian/mrscan/blob/master/smisscanner.py
     //   function: SmisScanner.parseMrd
 
-    auto content = read(fpath);
+    auto content = FileUtils::read(fpath);
     return parse(content);
 }
 

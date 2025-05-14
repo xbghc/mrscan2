@@ -1,0 +1,75 @@
+#ifndef EXAM_H
+#define EXAM_H
+
+#include "examresponse.h"
+#include "patient.h"
+
+#include <QJsonObject>
+
+class ExamRequest{
+public:
+    struct Keys{
+        const static QString Name;
+        const static QString Params;
+    };
+
+    ExamRequest() = default;
+    ExamRequest(QJsonObject data);
+
+    QString name() const;
+    void setName(QString other);
+
+    QJsonObject params()const;
+    void setParams(QJsonObject other, bool remainOld=true);
+
+    QByteArray bytes() const;
+private:
+    QJsonObject m_data;
+};
+
+class Exam
+{
+public:
+    enum class Status{
+        Ready = 0,
+        Processing,
+        Done
+    };
+    Exam();
+    Exam(const Exam& other); /// @todo 完善Exam, IPatient, IResponse的Rule of Five
+    ~Exam();
+    Exam& operator=(const Exam& other);
+
+    ExamRequest request() const;
+    void setRequest(ExamRequest other);
+
+    IExamResponse* response() const;
+    void setResponse(IExamResponse* other);
+
+    IPatient* patient() const;
+    void setPatient(IPatient* other);
+
+    int time()const;
+    void setStartTime(QDateTime other=QDateTime::currentDateTime());
+    void setEndTime(QDateTime other=QDateTime::currentDateTime());
+
+    QString id()const;
+    void setId(QString other);
+
+    Status status()const;
+    void setStatus(Status other);
+
+    QVector<QVector<QImage>> images()const;
+    void save(const QString& path) const;
+private:
+    ExamRequest m_request;
+    std::unique_ptr<IExamResponse> m_response;
+    std::shared_ptr<IPatient> m_patient;
+
+    QDateTime m_startTime;
+    QDateTime m_endTime;
+    QString m_id;
+    Status m_status;
+};
+
+#endif // EXAM_H
