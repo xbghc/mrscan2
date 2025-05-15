@@ -61,7 +61,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         scanneradapter.h scanneradapter.cpp
         virtualscanner.h virtualscanner.cpp
         sequenceencoder.h sequenceencoder.cpp
-        sequencevalidator.h sequencevalidator.cpp
         
         # Configuration and utility classes
         configmanager.h configmanager.cpp

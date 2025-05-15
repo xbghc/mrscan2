@@ -32,6 +32,9 @@ ExamTab::ExamTab(QWidget *parent)
     connect(ui->tableWidget->selectionModel(), &QItemSelectionModel::currentRowChanged,
             this, [this](const QModelIndex &current, const QModelIndex &previous){
         int curRow = current.row();
+        if(curRow < 0){
+            return;
+        }
 
         switch(m_exams[curRow].status()){
         case Exam::Status::Ready:
@@ -111,11 +114,11 @@ void ExamTab::enablePatientSelection(bool enable) {
     ui->comboBox->setEnabled(enable);
 }
 
-QString ExamTab::getCurrentPatientId() const {
+QString ExamTab::currentPatientId() const {
     return ui->comboBox->currentData().toString();
 }
 
-const Exam& ExamTab::getCurrentExam() const {
+const Exam& ExamTab::currentExam() const {
     auto curRow = ui->tableWidget->currentRow();
     if(curRow >= 0) {
         throw std::runtime_error("ExamTab::getCurrentExam: No Current Exam");
@@ -126,15 +129,17 @@ const Exam& ExamTab::getCurrentExam() const {
 
 void ExamTab::onScanStarted(QString id)
 {
-    int curRow = ui->tableWidget->currentRow();
+    int row = processingRow();
 
-    ui->scanButton->setText(tr("stop"));
-    ui->comboBox->setEnabled(false);
-    m_exams[curRow].setStartTime();
-    m_exams[curRow].setStatus(Exam::Status::Processing);
+    ui->comboBox->setEnabled(false); // 扫描开始后不能重新选择病人
+
+    m_exams[row].setStartTime();
+    m_exams[row].setId(id);
+
+    updateExamTable();
 }
 
-const Exam& ExamTab::onResponseReceived(QByteArray response)
+const Exam& ExamTab::onResponseReceived(IExamResponse* response)
 {
     // Now we only handle UI updates here, not data saving
 
@@ -143,11 +148,11 @@ const Exam& ExamTab::onResponseReceived(QByteArray response)
     this->ui->scanButton->setText("start");
     this->ui->scanButton->setEnabled(false);
 
-    auto row = currentRow();
-    m_exams[row].setResponse(new MrdResponse(response));
+    auto row = processingRow();
+    m_exams[row].setResponse(response);
     m_exams[row].setEndTime();
 
-    auto patient = getPatient(getCurrentPatientId());
+    auto patient = getPatient(currentPatientId());
     m_exams[row].setPatient(reinterpret_cast<IPatient*>(&patient));
     m_exams[row].save("./"); /// @todo
 
@@ -266,7 +271,13 @@ void ExamTab::onScanButtonClicked()
         return;
     }
 
-    // start
+    /**
+     * @brief start
+     * @details 流程为：
+     * startButtonClicked->scanner::scan->scanner::started
+     */
+    m_exams[curRow].setStatus(Exam::Status::Processing);
+
     auto request = m_exams[curRow].request();
     emit startButtonClicked(request);
 }
@@ -373,6 +384,8 @@ void ExamTab::swap(int row1, int row2)
 
 void ExamTab::updateExamTable()
 {
+    auto row = ui->tableWidget->currentRow();
+
     ui->tableWidget->clear();
     ui->tableWidget->setColumnCount(3);
     ui->tableWidget->setRowCount(m_exams.size());
@@ -409,6 +422,10 @@ void ExamTab::updateExamTable()
 
     ui->tableWidget->resizeColumnsToContents();
     ui->tableWidget->resizeRowsToContents();
+
+    if(row >= 0 && row < ui->tableWidget->rowCount()){
+        ui->tableWidget->selectRow(row);
+    }
 }
 
 int ExamTab::currentRow() const
@@ -424,5 +441,6 @@ int ExamTab::processingRow() const
             return i;
         }
     }
+
     return -1;
 }

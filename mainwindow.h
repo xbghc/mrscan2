@@ -17,16 +17,16 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr, IScannerAdapter* scannerAdapter = nullptr);
+    MainWindow(QWidget *parent = nullptr, IScanner* scannerAdapter = nullptr);
     ~MainWindow();
 
 private slots:
     void handleScanStop(QString id);
-    void handleScanComplete(QByteArray response);
+    void onScanCompleted(IExamResponse* response);
 
 private:
     std::unique_ptr<Ui::MainWindow> ui;
-    std::unique_ptr<IScannerAdapter> adapter;
+    std::unique_ptr<IScanner> adapter;
     std::unique_ptr<QThread> workerThread;
 
 };

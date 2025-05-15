@@ -1,34 +1,17 @@
 #include "scanneradapter.h"
 #include "virtualscanner.h"
 #include "sequenceencoder.h"
-#include "sequencevalidator.h"
 #include "configmanager.h"
 
 #include <QFile>
 #include "utils.h"
-#include <memory>
+#include <random>
 
 namespace {
-// 提取通用的写入编码序列逻辑到一个函数中
-bool writeCodeToScanner(VirtualScanner* scanner, std::unique_ptr<unsigned char[]>& code, int size, int id) {
-    if (code == nullptr) {
-        LOG_ERROR("Code is null");
-        return false;
-    }
-    
-    memcpy(code.get() + 4, &id, 4);
-    
-    if (scanner->write(code.get(), size) != size) {
-        LOG_ERROR(QString("Failed to write data to scanner, ID: %1").arg(id));
-        return false;
-    }
-    
-    return true;
-}
 }
 
 ScannerAdapter::ScannerAdapter(QObject *parent)
-    : IScannerAdapter(parent), m_isConnected(false), scanner(std::make_unique<VirtualScanner>())
+    : IScanner(parent), m_isConnected(false)
 {
 
 }
@@ -37,56 +20,27 @@ ScannerAdapter::~ScannerAdapter() {
 }
 
 int ScannerAdapter::open() {
-    int status = scanner->open();
-    m_isConnected = (status == 0);
-    return status;
+    m_isConnected = true;
+    return 0;
 }
 
-void ScannerAdapter::scan(ExamRequest request) {
+void ScannerAdapter::scan(const ExamRequest& request) {
     auto sequence = request.params();
-    if (!SequenceValidator::validate(sequence)) {
-        LOG_ERROR("Invalid scan sequence");
-        return;
-    }
-
-    int size;
-    /// @todo 由于request被重构，encode无法使用
-    // auto code = SequenceEncoder::encode(sequence, size);
-    std::unique_ptr<unsigned char[]> code{new unsigned char[5]};
-    if (code == nullptr) {
-        LOG_ERROR("Sequence encoding failed");
-        return;
-    }
 
     // Use ConfigManager to generate ID
-    int id = ConfigManager::instance()->generateId();
-    if (id < 0) {
-        LOG_ERROR("Failed to generate ID");
-        return;
-    }
+    auto id = newId();
     LOG_INFO(QString("Scan started, ID: %1").arg(id));
-    
-    if (!writeCodeToScanner(scanner.get(), code, size, id)) {
-        return;
-    }
 
-    emit scanStarted(QString::number(id));
+    emit started(id);
 
-    int dataSize = scanner->read(nullptr, 0);
-    QByteArray buffer;
-    buffer.resize(dataSize);
+    // 等待扫描结果
+    QThread::sleep(5);
 
-    int totalReceived=0, curReceived=0;
-    while(totalReceived<dataSize){
-        curReceived = scanner->read(reinterpret_cast<unsigned char*>(buffer.data()), dataSize-totalReceived);
-        if(curReceived == 0){
-            LOG_ERROR(QString("Expected size (%1) does not match actual size (%2)").arg(dataSize).arg(totalReceived));
-            break;
-        }
-        totalReceived += curReceived;
-    }
-    LOG_INFO(QString("Scan completed, ID: %1, Data size: %2").arg(id).arg(totalReceived));
-    emit scanEnded(buffer);
+    // 返回扫描结果
+    /// @todo mock文件的路径应该是可配置项
+    QByteArray fileContent = FileUtils::read("D:\\Projects\\QImagesWidget\\data\\20230528103740-T2_TSE-T-3k#1.mrd");
+
+    emit completed(new MrdResponse(fileContent));
 }
 
 QString ScannerAdapter::stop(QString id)
@@ -95,18 +49,22 @@ QString ScannerAdapter::stop(QString id)
     int size;
     auto code = SequenceEncoder::encodeStop(id.toInt(), size);
     
-    if (writeCodeToScanner(scanner.get(), code, size, id.toInt())) {
-        emit stoped(id);
-        return id;
-    }
-    
     LOG_ERROR(QString("Failed to stop scan, ID: %1").arg(id));
     return "-1";
 }
 
-int ScannerAdapter::close() { 
+int ScannerAdapter::close() {
+    LOG_INFO(QString("Scanner closed"));
+
     m_isConnected = false;
-    LOG_INFO("Closing scanner connection");
-    return scanner->close(); 
+    return 0;
+}
+
+QString ScannerAdapter::newId()
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(1000, 9999);
+    return QString::number(dist(gen));
 }
 

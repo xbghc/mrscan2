@@ -25,9 +25,6 @@ public:
     
     QJsonValue get(const QString& cname, const QString& key);
     void set(const QString& cname, const QString& key, QJsonValue value);
-
-    // 创建新的ID
-    int generateId();
     
 signals:
     // 配置变更信号

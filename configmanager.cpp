@@ -253,13 +253,6 @@ void ConfigManager::set(const QString &cname, const QString &key,
     save(cname);
 }
 
-int ConfigManager::generateId() {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(1000, 9999);
-    return dist(gen);
-}
-
 QString ConfigManager::fpath(const QString &fname) {
     return QString("%1/%2.json").arg(kConfigDir, fname);
 }

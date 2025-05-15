@@ -6,7 +6,7 @@
 #include "tuningshimming.h"
 #include "utils.h"
 
-MainWindow::MainWindow(QWidget *parent, IScannerAdapter* scannerAdapter)
+MainWindow::MainWindow(QWidget *parent, IScanner* scannerAdapter)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , workerThread(new QThread)
@@ -42,12 +42,12 @@ MainWindow::MainWindow(QWidget *parent, IScannerAdapter* scannerAdapter)
     adapter->open();
 
     // Connect scan signals to ExamTab
-    connect(adapter.get(), &IScannerAdapter::scanStarted, ui->examTab, &ExamTab::onScanStarted);
-    connect(adapter.get(), &IScannerAdapter::scanEnded, this, &MainWindow::handleScanComplete);
+    connect(adapter.get(), &IScanner::started, ui->examTab, &ExamTab::onScanStarted);
+    connect(adapter.get(), &IScanner::completed, this, &MainWindow::onScanCompleted);
     
     // Receive scan operation signals from ExamTab
     connect(ui->examTab, &ExamTab::stopButtonClicked, this, &MainWindow::handleScanStop);
-    connect(ui->examTab, &ExamTab::startButtonClicked, adapter.get(), &IScannerAdapter::scan);
+    connect(ui->examTab, &ExamTab::startButtonClicked, adapter.get(), &IScanner::scan);
 
     // preference
     connect(ui->actionPreferences, &QAction::triggered, this, [this]() {
@@ -100,7 +100,7 @@ void MainWindow::handleScanStop(QString id)
     ui->examTab->enablePatientSelection(true);
 }
 
-void MainWindow::handleScanComplete(QByteArray response)
+void MainWindow::onScanCompleted(IExamResponse* response)
 {
 
     LOG_INFO("Scan completed, saving data");

@@ -27,16 +27,16 @@ public:
     // exam related
     int currentRow() const;
     int processingRow() const;
+    const Exam& currentExam() const;
 
     // patient related
     void loadPatients();
     void updateScanButtonState(bool isScanning);
     void enablePatientSelection(bool enable);
-    QString getCurrentPatientId() const;
-    const Exam& getCurrentExam() const;
+    QString currentPatientId() const;
 
     JsonPatient getPatient(QString id);
-    const Exam& onResponseReceived(QByteArray response);
+    const Exam& onResponseReceived(IExamResponse* response);
 public slots:
     void onScanStarted(QString id);
 

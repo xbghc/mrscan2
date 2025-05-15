@@ -12,16 +12,7 @@ VirtualScanner::~VirtualScanner() {
 }
 
 void VirtualScanner::loadTestData() {
-    QByteArray fileContent = FileUtils::read("D:\\Projects\\QImagesWidget\\data\\20230528103740-T2_TSE-T-3k#1.mrd");
-    if (!fileContent.isEmpty()) {
-        auto len = fileContent.length();
-        auto buffer = std::make_unique<unsigned char[]>(len);
-        memcpy(buffer.get(), fileContent.constData(), len);
-        setResult(buffer.release(), len);
-        LOG_INFO(QString("VirtualScanner: Successfully loaded test data, size: %1").arg(len));
-    } else {
-        LOG_WARNING("VirtualScanner: Failed to load test data");
-    }
+
 }
 
 int VirtualScanner::open() {
