@@ -85,15 +85,3 @@ void HistoryModel::loadHistoryList()
     }
     endResetModel();
 }
-
-ExamHistory HistoryModel::getHistoryObj(int row)
-{
-    if(row < 0 || row > m_historyList.count()){
-        LOG_ERROR("Index out of history list range");
-        return ExamHistory();
-    }
-
-    int patientId = m_historyList[row].patientId;
-    int examId = m_historyList[row].examId;
-    return ExamHistory(patientId, examId);
-}

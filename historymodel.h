@@ -5,8 +5,6 @@
 #include <QJsonObject>
 #include <QList>
 
-#include "examhistory.h"
-
 class HistoryModel : public QAbstractTableModel
 {
     Q_OBJECT
@@ -21,8 +19,6 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
     void loadHistoryList();
-    ExamHistory getHistoryObj(int row);
-
 private:
     QStringList m_headers;
     struct HistoryItem{

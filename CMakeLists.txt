@@ -55,7 +55,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
 
         historymodel.h historymodel.cpp
-        examhistory.h examhistory.cpp
+
         
         # Scanner related files
         scanner.h scanner.cpp
