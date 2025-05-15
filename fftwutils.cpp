@@ -1,6 +1,6 @@
 #include "utils.h"
 
-namespace FFTW{
+namespace fftw_utils{
 fftw_complex* createArray(size_t size){
     return static_cast<fftw_complex*>(fftw_alloc_complex(size));
 }
@@ -25,7 +25,7 @@ fftw_complex* exec_fft_3d(fftw_complex* in, std::vector<int> n){
         return nullptr;
     }
 
-    auto out = FFTW::createArray(noPixels);
+    auto out = fftw_utils::createArray(noPixels);
     if (!out) {
         LOG_ERROR("Failed to allocate memory for FFT output");
         return nullptr;
@@ -51,7 +51,7 @@ void fftshift3d(fftw_complex* data, std::vector<int> shape) {
     const size_t sy = ny / 2;
     const size_t sz = nz / 2;
 
-    auto temp = FFTW::createArray(nx * ny * nz);
+    auto temp = fftw_utils::createArray(nx * ny * nz);
     if (!temp) {
         LOG_ERROR("Failed to allocate memory for fftshift");
         return;

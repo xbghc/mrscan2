@@ -13,13 +13,13 @@ QString examPath(const QString& pid, const QString& eid){
 const static QString kRequestFileName = "request.json";
 ExamRequest loadExamRequest(const QString& pid, const QString& eid){
     auto fpath = QString("%1/%2").arg(examPath(pid, eid), kRequestFileName);
-    auto obj = QJson::readFromFile(fpath).object();
+    auto obj = json_utils::readFromFile(fpath).object();
     return ExamRequest(obj);
 }
 
 void saveExamRequest(const QString& pid, const QString& eid, ExamRequest request){
     auto fpath = QString("%1/%2").arg(examPath(pid, eid), kRequestFileName);
-    QJson::saveToFile(fpath, request.data());
+    json_utils::saveToFile(fpath, request.data());
 }
 
 

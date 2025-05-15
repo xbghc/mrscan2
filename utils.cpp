@@ -132,7 +132,7 @@ void newEmptyFile(QFile &file)
     file.close();
 }
 
-QString QJson::get(const QJsonObject &obj, const QString key, QString d)
+QString json_utils::get(const QJsonObject &obj, const QString key, QString d)
 {
     if(obj.contains(key)) {
         return obj[key].toString();
@@ -140,7 +140,7 @@ QString QJson::get(const QJsonObject &obj, const QString key, QString d)
     return d;
 }
 
-int QJson::get(const QJsonObject &obj, const QString key, int d)
+int json_utils::get(const QJsonObject &obj, const QString key, int d)
 {
     if(obj.contains(key)){
         return obj[key].toInt();
@@ -148,15 +148,21 @@ int QJson::get(const QJsonObject &obj, const QString key, int d)
     return d;
 }
 
-QJsonDocument QJson::readFromFile(const QString &fpath)
+QJsonDocument json_utils::readFromFile(const QString &fpath)
 {
-    auto bytes = FileUtils::read(fpath);
+    auto bytes = file_utils::read(fpath);
     return QJsonDocument::fromJson(bytes);
 }
 
 
-void QJson::saveToFile(const QString &fpath, QJsonObject obj)
+void json_utils::saveToFile(const QString &fpath, QJsonObject obj)
 {
     auto doc = QJsonDocument(obj);
-    FileUtils::save(fpath, doc.toJson());
+    file_utils::save(fpath, doc.toJson());
+}
+
+void json_utils::saveToFile(const QString &fpath, QJsonArray array)
+{
+    auto doc = QJsonDocument(array);
+    file_utils::save(fpath, doc.toJson());
 }

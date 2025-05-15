@@ -35,7 +35,7 @@ void VScanner::scan(const ExamRequest& request) {
 
     // 返回扫描结果
     /// @todo mock文件的路径应该是可配置项
-    QByteArray fileContent = FileUtils::read("D:\\Projects\\QImagesWidget\\data\\20230528103740-T2_TSE-T-3k#1.mrd");
+    QByteArray fileContent = file_utils::read("D:\\Projects\\QImagesWidget\\data\\20230528103740-T2_TSE-T-3k#1.mrd");
 
     emit completed(new MrdResponse(fileContent));
 }

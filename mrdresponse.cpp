@@ -23,10 +23,10 @@ QVector<QVector<QImage>> MrdResponse::images() const{
 
 void MrdResponse::load(const QString &fpath)
 {
-    m_data = FileUtils::read(fpath);
+    m_data = file_utils::read(fpath);
 }
 
 void MrdResponse::save(const QString &fpath) const
 {
-    FileUtils::save(fpath, m_data);
+    file_utils::save(fpath, m_data);
 }

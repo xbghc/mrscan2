@@ -163,7 +163,7 @@ ExamRequest::ExamRequest(QJsonObject data)
 
 QString ExamRequest::name() const
 {
-    return QJson::get(m_data, Keys::Name, "unnamed");
+    return json_utils::get(m_data, Keys::Name, "unnamed");
 }
 
 void ExamRequest::setName(QString other)

@@ -10,7 +10,7 @@ namespace {
 
 template <typename T>
 fftw_complex* parseKData(QByteArray content, int length, bool isComplex){
-    auto out = FFTW::createArray(length);
+    auto out = fftw_utils::createArray(length);
     if (!out) {
         LOG_WARNING("Failed to allocate memory for kdata");
         return nullptr;
@@ -100,7 +100,7 @@ std::unique_ptr<MrdData> MrdParser::parseFile(QString fpath)
     //   url: https://github.com/hongmingjian/mrscan/blob/master/smisscanner.py
     //   function: SmisScanner.parseMrd
 
-    auto content = FileUtils::read(fpath);
+    auto content = file_utils::read(fpath);
     return parse(content);
 }
 
@@ -128,17 +128,17 @@ QVector<QVector<QImage>> MrdParser::reconImages(const MrdData* mrd)
         shape[2] = mrd->samples;
     }
 
-    auto outPtr = FFTW::exec_fft_3d(mrd->kdata, shape);
+    auto outPtr = fftw_utils::exec_fft_3d(mrd->kdata, shape);
     if (!outPtr) {
         LOG_ERROR("Failed to execute FFT");
         return ans;
     }
     
-    FFTW::fftshift3d(outPtr, shape);
+    fftw_utils::fftshift3d(outPtr, shape);
 
     // Take absolute values
     size_t noPixels = shape[0] * shape[1] * shape[2];
-    auto absValues = FFTW::abs(outPtr, noPixels);
+    auto absValues = fftw_utils::abs(outPtr, noPixels);
 
     double max_val = 0;
     for(size_t i=0; i<noPixels; i++){
@@ -157,7 +157,7 @@ QVector<QVector<QImage>> MrdParser::reconImages(const MrdData* mrd)
                 uchar* scanLine = img.scanLine(j);
                 for(int k=0;k<shape[2];k++){
                     indexes[2] = k;
-                    auto index = FFTW::getIndex(shape, indexes);
+                    auto index = fftw_utils::getIndex(shape, indexes);
                     double val = absValues[index];
                     scanLine[k] = static_cast<uchar>(val * 255 / max_val);
                 }
@@ -173,7 +173,7 @@ QVector<QVector<QImage>> MrdParser::reconImages(const MrdData* mrd)
                 uchar* scanLine = img.scanLine(j);
                 for(int k=0;k<shape[2];k++){
                     indexes[2] = k;
-                    auto index = FFTW::getIndex(shape, indexes);
+                    auto index = fftw_utils::getIndex(shape, indexes);
                     double val = absValues[index];
                     scanLine[k] = static_cast<uchar>(val * 255 / max_val);
                 }

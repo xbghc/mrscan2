@@ -4,7 +4,7 @@
 #include <QDir>
 #include <QRegularExpression>
 
-namespace FileUtils{
+namespace file_utils{
 /// @todo
 int loadMrdFiles(){
     return 0;
@@ -67,4 +67,5 @@ QStringList getAllChannelsFile(const QString& path) {
 
     return result;
 }
-}
+
+} // namespace file_utils

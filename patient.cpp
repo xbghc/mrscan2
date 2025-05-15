@@ -130,24 +130,24 @@ void JsonPatient::savePatients(QVector<JsonPatient> patients)
 
 QString JsonPatient::id()
 {
-    auto v = QJson::get(m_data, Keys::Id, -1);
+    auto v = json_utils::get(m_data, Keys::Id, -1);
     return QString::number(v);
 }
 
 QString JsonPatient::name()
 {
-    return QJson::get(m_data, Keys::Name, "unnamed");
+    return json_utils::get(m_data, Keys::Name, "unnamed");
 }
 
 JsonPatient::Gender JsonPatient::gender()
 {
-    auto g = QJson::get(m_data, Keys::Gender, static_cast<int>(Gender::Male));
+    auto g = json_utils::get(m_data, Keys::Gender, static_cast<int>(Gender::Male));
     return static_cast<Gender>(g);
 }
 
 QDate JsonPatient::birthday()
 {
-    auto dateStr = QJson::get(m_data, Keys::Birthday, "");
+    auto dateStr = json_utils::get(m_data, Keys::Birthday, "");
     if(dateStr.isEmpty()){
         return QDate::currentDate();
     }

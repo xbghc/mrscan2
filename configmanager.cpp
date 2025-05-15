@@ -232,11 +232,11 @@ ConfigManager::ConfigManager(QObject *parent) : QObject(parent) {
 ConfigManager::~ConfigManager() {}
 
 void ConfigManager::load(const QString &cname) {
-    m_configs[cname] = QJson::readFromFile(fpath(cname)).object();
+    m_configs[cname] = json_utils::readFromFile(fpath(cname)).object();
 }
 
 void ConfigManager::save(const QString &cname) {
-    QJson::saveToFile(fpath(cname), m_configs[cname].toObject());
+    json_utils::saveToFile(fpath(cname), m_configs[cname].toObject());
 }
 
 QJsonValue ConfigManager::get(const QString &cname, const QString &key) {
