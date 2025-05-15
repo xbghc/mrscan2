@@ -90,6 +90,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         fileutils.cpp
         exam.h exam.cpp
         store.h store.cpp
+        mrdutils.h mrdutils.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET mrscan2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
