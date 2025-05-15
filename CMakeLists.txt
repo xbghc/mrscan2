@@ -58,7 +58,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         examhistory.h examhistory.cpp
         
         # Scanner related files
-        scanneradapter.h scanneradapter.cpp
+        scanner.h scanner.cpp
 
         sequenceencoder.h sequenceencoder.cpp
         

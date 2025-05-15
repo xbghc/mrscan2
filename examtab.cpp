@@ -398,7 +398,7 @@ void ExamTab::updateExamTable()
         ui->tableWidget->setItem(i, 0, new QTableWidgetItem(name));
 
         auto time = exam.time();
-        auto timeStr = QString("%1:%2").arg(time/60).arg(time%60, 2, 10, QChar(u'0'));
+        auto timeStr = QString("%1:%2").arg(time/60).arg(time%60, 2, 10, 0, QChar(u'0'));
         ui->tableWidget->setItem(i, 1, new QTableWidgetItem(timeStr));
 
         auto status = exam.status();

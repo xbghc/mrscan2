@@ -1,4 +1,4 @@
-#include "scanneradapter.h"
+#include "scanner.h"
 
 #include <QFile>
 #include "utils.h"
@@ -7,21 +7,21 @@
 namespace {
 }
 
-ScannerAdapter::ScannerAdapter(QObject *parent)
+VScanner::VScanner(QObject *parent)
     : IScanner(parent), m_isConnected(false)
 {
 
 }
 
-ScannerAdapter::~ScannerAdapter() {
+VScanner::~VScanner() {
 }
 
-int ScannerAdapter::open() {
+int VScanner::open() {
     m_isConnected = true;
     return 0;
 }
 
-void ScannerAdapter::scan(const ExamRequest& request) {
+void VScanner::scan(const ExamRequest& request) {
     auto sequence = request.params();
 
     // Use ConfigManager to generate ID
@@ -41,7 +41,7 @@ void ScannerAdapter::scan(const ExamRequest& request) {
 }
 
 /// @todo
-QString ScannerAdapter::stop(QString id)
+QString VScanner::stop(QString id)
 {
     LOG_INFO(QString("Stopping scan, ID: %1").arg(id));
     int size;
@@ -50,14 +50,14 @@ QString ScannerAdapter::stop(QString id)
     return "-1";
 }
 
-int ScannerAdapter::close() {
+int VScanner::close() {
     LOG_INFO(QString("Scanner closed"));
 
     m_isConnected = false;
     return 0;
 }
 
-QString ScannerAdapter::newId()
+QString VScanner::newId()
 {
     std::random_device rd;
     std::mt19937 gen(rd());

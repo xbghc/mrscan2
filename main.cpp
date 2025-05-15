@@ -37,10 +37,6 @@ int main(int argc, char *argv[])
     CustomPreferences::setupApp();
     LOG_INFO("Custom preferences setup completed");
 
-    // You can create a custom scanner adapter here or use the default implementation
-    // IScannerAdapter* customAdapter = new CustomScannerAdapter();
-    // MainWindow w(nullptr, customAdapter);
-    
     MainWindow w;
     w.show();
     LOG_INFO("Main window displayed");

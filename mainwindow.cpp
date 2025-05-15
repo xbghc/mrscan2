@@ -6,7 +6,7 @@
 #include "tuningshimming.h"
 #include "utils.h"
 
-MainWindow::MainWindow(QWidget *parent, IScanner* scannerAdapter)
+MainWindow::MainWindow(QWidget *parent, IScanner* scanner)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , workerThread(new QThread)
@@ -30,24 +30,24 @@ MainWindow::MainWindow(QWidget *parent, IScanner* scannerAdapter)
     LOG_INFO("Main window initialized");
     // end： Attempt to fix default height issue
 
-    // If no scanner adapter is provided, create a default one
-    if (scannerAdapter == nullptr) {
-        adapter = std::make_unique<ScannerAdapter>();
+    // If no scanner is provided, create a default one
+    if (scanner == nullptr) {
+        m_scanner = std::make_unique<VScanner>();
     } else {
-        adapter.reset(scannerAdapter);
+        m_scanner.reset(scanner);
     }
     
-    adapter->moveToThread(workerThread.get());
+    m_scanner->moveToThread(workerThread.get());
     workerThread->start();
-    adapter->open();
+    m_scanner->open();
 
     // Connect scan signals to ExamTab
-    connect(adapter.get(), &IScanner::started, ui->examTab, &ExamTab::onScanStarted);
-    connect(adapter.get(), &IScanner::completed, this, &MainWindow::onScanCompleted);
+    connect(m_scanner.get(), &IScanner::started, ui->examTab, &ExamTab::onScanStarted);
+    connect(m_scanner.get(), &IScanner::completed, this, &MainWindow::onScanCompleted);
     
     // Receive scan operation signals from ExamTab
     connect(ui->examTab, &ExamTab::stopButtonClicked, this, &MainWindow::handleScanStop);
-    connect(ui->examTab, &ExamTab::startButtonClicked, adapter.get(), &IScanner::scan);
+    connect(ui->examTab, &ExamTab::startButtonClicked, m_scanner.get(), &IScanner::scan);
 
     // preference
     connect(ui->actionPreferences, &QAction::triggered, this, [this]() {
@@ -78,8 +78,8 @@ MainWindow::~MainWindow()
 {
     LOG_INFO("Main window destroyed");
     
-    if (adapter) {
-        adapter->close();
+    if (m_scanner) {
+        m_scanner->close();
     }
     
     workerThread->quit();
@@ -89,10 +89,10 @@ MainWindow::~MainWindow()
 void MainWindow::handleScanStop(QString id)
 {
     LOG_INFO(QString("Stop scanning ID: %1").arg(id));
-    auto stoppedId = adapter->stop(id);
+    auto stoppedId = m_scanner->stop(id);
     
     if (stoppedId != id) {
-        LOG_ERROR(QString("Stopped scan ID does not match, expected: %1, actual: %2").arg(id).arg(stoppedId));
+        LOG_ERROR(QString("Stopped scan ID does not match, expected: %1, actual: %2").arg(id, stoppedId));
     }
     
     // Update UI

@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QThread>
 #include <memory>
-#include "scanneradapter.h"
+#include "scanner.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -17,7 +17,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr, IScanner* scannerAdapter = nullptr);
+    MainWindow(QWidget *parent = nullptr, IScanner* scanner = nullptr);
     ~MainWindow();
 
 private slots:
@@ -26,7 +26,7 @@ private slots:
 
 private:
     std::unique_ptr<Ui::MainWindow> ui;
-    std::unique_ptr<IScanner> adapter;
+    std::unique_ptr<IScanner> m_scanner;
     std::unique_ptr<QThread> workerThread;
 
 };

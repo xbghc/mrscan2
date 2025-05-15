@@ -1,5 +1,5 @@
-#ifndef SCANNERADAPTER_H
-#define SCANNERADAPTER_H
+#ifndef SCANNER_H
+#define SCANNER_H
 
 #include <QByteArray>
 #include <QImage>
@@ -11,7 +11,7 @@
 #include "exam.h"
 #include "examresponse.h"
 
-// Define scanner adapter interface
+// Define scanner interface
 class IScanner : public QObject
 {
     Q_OBJECT
@@ -44,12 +44,12 @@ signals:
 };
 
 // Concrete implementation class
-class ScannerAdapter: public IScanner
+class VScanner: public IScanner
 {
     Q_OBJECT
 public:
-    ScannerAdapter(QObject* parent=nullptr);
-    ~ScannerAdapter();
+    VScanner(QObject* parent=nullptr);
+    ~VScanner();
 
     bool isConnected() const override { return m_isConnected; }
     int open() override;
@@ -63,4 +63,4 @@ private:
     QString newId();
 };
 
-#endif // SCANNERADAPTER_H
+#endif // SCANNER_H
