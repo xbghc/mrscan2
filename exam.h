@@ -22,7 +22,7 @@ public:
     QJsonObject params()const;
     void setParams(QJsonObject other, bool remainOld=true);
 
-    QByteArray bytes() const;
+    QJsonObject data() const;
 private:
     QJsonObject m_data;
 };
@@ -62,7 +62,6 @@ public:
     void setStatus(Status other);
 
     QVector<QVector<QImage>> images()const;
-    void save(const QString& path) const;
 private:
     ExamRequest m_request;
     std::unique_ptr<IExamResponse> m_response;

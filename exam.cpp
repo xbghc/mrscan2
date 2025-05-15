@@ -155,11 +155,6 @@ QVector<QVector<QImage> > Exam::images() const
     return m_response->images();
 }
 
-void Exam::save(const QString& path) const
-{
-
-}
-
 ExamRequest::ExamRequest(QJsonObject data)
     :m_data(data)
 {
@@ -196,8 +191,9 @@ void ExamRequest::setParams(QJsonObject other, bool remainOld)
     m_data[Keys::Params] = obj;
 }
 
-QByteArray ExamRequest::bytes() const
+QJsonObject ExamRequest::data() const
 {
-    QJsonDocument doc(m_data);
-    return doc.toJson();
+    return m_data;
 }
+
+
