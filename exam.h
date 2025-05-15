@@ -36,12 +36,14 @@ public:
         Done
     };
     Exam();
+    ~Exam()=default;
     Exam(const Exam& other); /// @todo 完善Exam, IPatient, IResponse的Rule of Five
-    ~Exam();
     Exam& operator=(const Exam& other);
+    Exam(Exam&& other)noexcept;
+    Exam& operator=(Exam&& other)noexcept;
 
     ExamRequest request() const;
-    void setRequest(ExamRequest other);
+    void setRequest(const ExamRequest& other);
 
     IExamResponse* response() const;
     void setResponse(IExamResponse* other);
@@ -54,7 +56,7 @@ public:
     void setEndTime(QDateTime other=QDateTime::currentDateTime());
 
     QString id()const;
-    void setId(QString other);
+    void setId(const QString& other);
 
     Status status()const;
     void setStatus(Status other);

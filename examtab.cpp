@@ -5,6 +5,7 @@
 #include "patientinfodialog.h"
 #include "ui_examtab.h"
 #include "utils.h"
+#include "configmanager.h"
 
 #include <QDir>
 #include <QJsonArray>
@@ -18,12 +19,13 @@ namespace {} // namespace
 
 ExamTab::ExamTab(QWidget *parent)
     : QWidget(parent),
-    ui(new Ui::studytab),
+    ui(new Ui::examtab),
     m_patientDialog(new PatientInfoDialog) {
 
     ui->setupUi(this);
     loadPatients();
 
+    m_exams = ExamConfig::initialExams();
     updateExamTable();
 
     // selected index changed
@@ -386,7 +388,7 @@ void ExamTab::updateExamTable()
         ui->tableWidget->setItem(i, 0, new QTableWidgetItem(name));
 
         auto time = exam.time();
-        auto timeStr = QString("%1:%2").arg(time/60, time%60);
+        auto timeStr = QString("%1:%2").arg(time/60, 1).arg(time%60, 2);
         ui->tableWidget->setItem(i, 1, new QTableWidgetItem(timeStr));
 
         auto status = exam.status();
@@ -404,6 +406,9 @@ void ExamTab::updateExamTable()
         }
         ui->tableWidget->setItem(i, 2, new QTableWidgetItem(statusStr));
     }
+
+    ui->tableWidget->resizeColumnsToContents();
+    ui->tableWidget->resizeRowsToContents();
 }
 
 int ExamTab::currentRow() const

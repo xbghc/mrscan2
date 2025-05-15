@@ -9,7 +9,7 @@
 #include <memory>
 
 namespace Ui {
-class studytab;
+class examtab;
 }
 
 /**
@@ -56,7 +56,7 @@ signals:
     void stopButtonClicked(QString id);
 
 private:
-    std::unique_ptr<Ui::studytab> ui;
+    std::unique_ptr<Ui::examtab> ui;
 
     QList<Exam> m_exams;
     QVector<JsonPatient> m_patients; /// @todo 应该使用IPatient接口
@@ -64,7 +64,7 @@ private:
     void addPatient(QString name, QDate birthday, IPatient::Gender gender);
     void savePatients();
     void removePatient(QString id);
-    /// 如果是正规dicom格式的病人数据，不至于在核磁软件中创建病人，所以这里放个生成新id的函数就够了
+    /// @note 如果是正规dicom格式的病人数据，不至于在核磁软件中创建病人，所以这里放个生成新id的函数就够了
     int nextPatientId();
     void setNextId(int id);
 

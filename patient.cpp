@@ -159,7 +159,7 @@ QJsonObject JsonPatient::json()
     return m_data;
 }
 
-void JsonPatient::setId(QString other)
+void JsonPatient::setId(const QString& other)
 {
     auto old = id();
     if(old.toInt() >= 0 && old != other){
@@ -168,7 +168,7 @@ void JsonPatient::setId(QString other)
     m_data[Keys::Id] = other.toInt();
 }
 
-void JsonPatient::setName(QString other)
+void JsonPatient::setName(const QString& other)
 {
     m_data[Keys::Name] = other;
 }

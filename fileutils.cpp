@@ -7,7 +7,7 @@
 namespace FileUtils{
 /// @todo
 int loadMrdFiles(){
-
+    return 0;
 }
 
 QByteArray read(const QString& fpath){

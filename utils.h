@@ -90,6 +90,7 @@ namespace QJson{
 QString get(const QJsonObject& obj, const QString key, QString d);
 int get(const QJsonObject& obj, const QString key, int d);
 
+
 QJsonDocument readFromFile(const QString& fpath);
 void saveToFile(const QString& fpath, QJsonObject obj);
 void saveToFile(const QString& fpath, QJsonArray array);

@@ -14,13 +14,25 @@ Exam::Exam()
 
 Exam::Exam(const Exam &other)
     : m_request(other.m_request),
-    m_response(other.m_response->clone()),
-    m_patient(other.m_patient->clone()),
+    m_response(other.m_response?other.m_response->clone():nullptr),
+    m_patient(other.m_patient?other.m_patient->clone():nullptr),
     m_status(other.m_status),
     m_startTime(other.m_startTime),
     m_endTime(other.m_endTime),
     m_id(other.m_id)
 {
+}
+
+Exam::Exam(Exam &&other) noexcept
+    :m_request(other.m_request),
+    m_response(std::move(other.m_response)),
+    m_patient(std::move(other.m_patient)),
+    m_status(other.m_status),
+    m_startTime(other.m_startTime),
+    m_endTime(other.m_endTime),
+    m_id(other.m_id)
+{
+
 }
 
 Exam& Exam::operator=(const Exam& other){
@@ -42,7 +54,6 @@ Exam& Exam::operator=(const Exam& other){
         m_patient.reset();
     }
 
-    m_patient.reset(other.m_patient->clone());
     m_status = other.m_status;
     m_startTime = other.m_startTime;
     m_endTime = other.m_endTime;
@@ -51,18 +62,35 @@ Exam& Exam::operator=(const Exam& other){
     return *this;
 }
 
-Exam::~Exam()
-{
+Exam& Exam::operator=(Exam&& other) noexcept{
+    if(this==&other){
+        return *this;
+    }
 
+    m_request = other.m_request;
+
+    if(other.m_response){
+        m_response = std::move(other.m_response);
+    }
+
+    if(other.m_patient){
+        m_patient = std::move(other.m_patient);
+    }
+
+    m_status = other.m_status;
+    m_startTime = other.m_startTime;
+    m_endTime = other.m_endTime;
+    m_id = other.m_id;
+
+    return *this;
 }
-
 
 ExamRequest Exam::request() const
 {
     return m_request;
 }
 
-void Exam::setRequest(ExamRequest other)
+void Exam::setRequest(const ExamRequest& other)
 {
     m_request = other;
 }
@@ -107,7 +135,7 @@ QString Exam::id() const
     return m_id;
 }
 
-void Exam::setId(QString other)
+void Exam::setId(const QString& other)
 {
     m_id = other;
 }

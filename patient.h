@@ -21,8 +21,8 @@ public:
     virtual Gender gender() = 0;
     virtual QDate birthday() = 0;
 
-    virtual void setId(QString other) = 0;
-    virtual void setName(QString other) = 0;
+    virtual void setId(const QString& other) = 0;
+    virtual void setName(const QString& other) = 0;
     virtual void setGender(Gender other) = 0;
     virtual void setBirthday(int year, int month, int day) = 0;
 
@@ -30,7 +30,6 @@ public:
 protected:
     IPatient() = default;
 };
-
 
 /**
  * @brief QJsonObject版本的临时使用的Patient
@@ -70,8 +69,8 @@ public:
     QJsonObject json();
 
     void setId(int other);
-    void setId(QString other) override;
-    void setName(QString other) override;
+    void setId(const QString& other) override;
+    void setName(const QString& other) override;
     void setGender(Gender other) override;
     void setBirthday(int year, int month, int day) override;
     void setBirthday(QDate other);
