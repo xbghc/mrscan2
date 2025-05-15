@@ -33,7 +33,7 @@ fftw_complex* parseKData(QByteArray content, int length, bool isComplex){
 
 } // namespace
 
-std::unique_ptr<MrdData> MrdParser::parse(const QByteArray &content)
+std::unique_ptr<mrd_utils::Mrd> MrdParser::parse(const QByteArray &content)
 {
     // header
     int samples = qFromLittleEndian<qint32>(content.constData());
@@ -82,7 +82,7 @@ std::unique_ptr<MrdData> MrdParser::parse(const QByteArray &content)
         return nullptr;
     }
 
-    auto mrdData = std::make_unique<MrdData>();
+    auto mrdData = std::make_unique<mrd_utils::Mrd>();
     mrdData->kdata = std::move(dataPtr);
     mrdData->echoes = echoes;
     mrdData->experiments = experiments;
@@ -94,7 +94,7 @@ std::unique_ptr<MrdData> MrdParser::parse(const QByteArray &content)
     return mrdData;
 }
 
-std::unique_ptr<MrdData> MrdParser::parseFile(QString fpath)
+std::unique_ptr<mrd_utils::Mrd> MrdParser::parseFile(QString fpath)
 {
     // ref:
     //   url: https://github.com/hongmingjian/mrscan/blob/master/smisscanner.py
@@ -105,7 +105,7 @@ std::unique_ptr<MrdData> MrdParser::parseFile(QString fpath)
 }
 
 
-QVector<QVector<QImage>> MrdParser::reconImages(const MrdData* mrd)
+QVector<QVector<QImage>> MrdParser::reconImages(const mrd_utils::Mrd* mrd)
 {
     QVector<QVector<QImage>> ans;
     if (!mrd || !mrd->kdata) {
