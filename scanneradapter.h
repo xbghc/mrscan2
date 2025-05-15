@@ -7,9 +7,7 @@
 #include <QList>
 #include <QThread>
 #include <QObject>
-#include <memory>
 
-#include "virtualscanner.h"
 #include "exam.h"
 #include "examresponse.h"
 

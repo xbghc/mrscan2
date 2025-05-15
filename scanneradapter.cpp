@@ -1,7 +1,4 @@
 #include "scanneradapter.h"
-#include "virtualscanner.h"
-#include "sequenceencoder.h"
-#include "configmanager.h"
 
 #include <QFile>
 #include "utils.h"
@@ -43,11 +40,11 @@ void ScannerAdapter::scan(const ExamRequest& request) {
     emit completed(new MrdResponse(fileContent));
 }
 
+/// @todo
 QString ScannerAdapter::stop(QString id)
 {
     LOG_INFO(QString("Stopping scan, ID: %1").arg(id));
     int size;
-    auto code = SequenceEncoder::encodeStop(id.toInt(), size);
     
     LOG_ERROR(QString("Failed to stop scan, ID: %1").arg(id));
     return "-1";

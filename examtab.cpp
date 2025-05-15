@@ -143,19 +143,16 @@ const Exam& ExamTab::onResponseReceived(IExamResponse* response)
 {
     // Now we only handle UI updates here, not data saving
 
-
-    this->ui->comboBox->setEnabled(true);
-    this->ui->scanButton->setText("start");
-    this->ui->scanButton->setEnabled(false);
-
     auto row = processingRow();
     m_exams[row].setResponse(response);
     m_exams[row].setEndTime();
+    m_exams[row].setStatus(Exam::Status::Done);
 
     auto patient = getPatient(currentPatientId());
     m_exams[row].setPatient(reinterpret_cast<IPatient*>(&patient));
     m_exams[row].save("./"); /// @todo
 
+    updateExamTable();
     return m_exams[row];
 }
 
@@ -401,7 +398,7 @@ void ExamTab::updateExamTable()
         ui->tableWidget->setItem(i, 0, new QTableWidgetItem(name));
 
         auto time = exam.time();
-        auto timeStr = QString("%1:%2").arg(time/60, 1).arg(time%60, 2);
+        auto timeStr = QString("%1:%2").arg(time/60).arg(time%60, 2, 10, QChar(u'0'));
         ui->tableWidget->setItem(i, 1, new QTableWidgetItem(timeStr));
 
         auto status = exam.status();

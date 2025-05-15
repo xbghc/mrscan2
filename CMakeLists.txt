@@ -59,7 +59,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         
         # Scanner related files
         scanneradapter.h scanneradapter.cpp
-        virtualscanner.h virtualscanner.cpp
+
         sequenceencoder.h sequenceencoder.cpp
         
         # Configuration and utility classes
