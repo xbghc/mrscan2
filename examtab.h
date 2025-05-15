@@ -14,6 +14,7 @@ class examtab;
 
 /**
  * @todo 移除对JsonPatient的依赖，使用统一的IPatient接口
+ * @todo 调整patient的存储结构
  * @brief The ExamTab class
  */
 class ExamTab : public QWidget

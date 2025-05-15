@@ -6,6 +6,7 @@
 #include "ui_examtab.h"
 #include "utils.h"
 #include "configmanager.h"
+#include "store.h"
 
 #include <QDir>
 #include <QJsonArray>
@@ -150,7 +151,7 @@ const Exam& ExamTab::onResponseReceived(IExamResponse* response)
 
     auto patient = getPatient(currentPatientId());
     m_exams[row].setPatient(reinterpret_cast<IPatient*>(&patient));
-    m_exams[row].save("./"); /// @todo
+    store::saveExam(m_exams[row]);
 
     updateExamTable();
     return m_exams[row];

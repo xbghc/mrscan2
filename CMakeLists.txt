@@ -55,7 +55,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
 
         historymodel.h historymodel.cpp
-
         
         # Scanner related files
         scanner.h scanner.cpp
@@ -90,6 +89,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         fftwutils.cpp
         fileutils.cpp
         exam.h exam.cpp
+        store.h store.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET mrscan2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
