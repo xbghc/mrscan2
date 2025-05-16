@@ -11,9 +11,7 @@ public:
 
     virtual QVector<QVector<QImage>> images() const = 0;
 
-    virtual void load(const QString &fpath) = 0;
-    virtual void save(const QString &fpath) const = 0;
-
+    virtual QByteArray bytes() const = 0;
 protected:
     IExamResponse() = default;
 };

@@ -22,8 +22,6 @@ public:
     virtual void setGender(Gender other) = 0;
     virtual void setBirthday(int year, int month, int day) = 0;
 
-    const static QString kDirPath;
-
 protected:
     IPatient() = default;
 };
@@ -33,7 +31,8 @@ protected:
  * @details 病人数据将来会从外部获取，并重新实现IPatient
  * id底层是int
  * @todo JsonPatient的内部是用QJsonObject存储的，
- * 一不注意就会被复制，导致修改无法同步，应该设法规避
+一不注意就会被复制，导致修改无法同步，应该设法规避
+ * @todo 成员初始化
  */
 class JsonPatient : public IPatient {
 public:
@@ -49,11 +48,6 @@ public:
     explicit JsonPatient(QJsonObject data);
     explicit JsonPatient(QJsonObject &&data);
     IPatient *clone() const override;
-
-    static int nextId();
-    /// @todo 下面这些函数都会被清除
-    static QVector<JsonPatient> loadPatients();
-    static void savePatients(QVector<JsonPatient> patients);
 
     /**
    * @brief 返回id，若返回负数，表示没有id

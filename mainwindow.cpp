@@ -95,9 +95,7 @@ void MainWindow::handleScanStop(QString id)
         LOG_ERROR(QString("Stopped scan ID does not match, expected: %1, actual: %2").arg(id, stoppedId));
     }
     
-    // Update UI
-    ui->examTab->updateScanButtonState(false);
-    ui->examTab->enablePatientSelection(true);
+    ui->examTab->onScanStoped();
 }
 
 void MainWindow::onScanCompleted(IExamResponse* response)
