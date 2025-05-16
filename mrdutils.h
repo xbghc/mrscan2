@@ -6,7 +6,7 @@
 
 namespace mrd_utils {
 struct Mrd {
-    fftw_complex *kdata=nullptr;
+    fftw_complex *kdata = nullptr;
     int experiments = 0;
     int echoes = 0;
     int slices = 0;
@@ -24,9 +24,11 @@ struct Mrd {
     Mrd(Mrd &&other) noexcept;
     Mrd &operator=(Mrd &&other) noexcept;
     void swap(Mrd &other) noexcept;
+
+    static QVector<Mrd> fromBytes(const QByteArray &bytes);
 };
 
-void swap(Mrd& lhs, Mrd& rhs) noexcept;
+void swap(Mrd &lhs, Mrd &rhs) noexcept;
 
 } // namespace mrd_utils
 
