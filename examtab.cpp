@@ -101,18 +101,17 @@ void ExamTab::onScanStoped() {
     ui->comboBox->setEnabled(true);
 }
 
-const Exam &ExamTab::onResponseReceived(IExamResponse *response) {
-    auto row = processingRow();
-    m_exams[row].setResponse(response);
-    m_exams[row].setEndTime();
-    m_exams[row].setStatus(Exam::Status::Done);
+const Exam &ExamTab::setResponse(IExamResponse *response) {
+    auto& exam = m_exams[processingRow()];
+    exam.setResponse(response);
+    exam.setEndTime();
+    exam.setStatus(Exam::Status::Done);
 
     auto patient = getPatient(currentPatientId());
-    m_exams[row].setPatient(reinterpret_cast<IPatient *>(&patient));
-    store::saveExam(m_exams[row]);
+    exam.setPatient(reinterpret_cast<IPatient *>(&patient));
 
     updateExamTable();
-    return m_exams[row];
+    return exam;
 }
 
 void ExamTab::onEditPatientButtonClicked() {

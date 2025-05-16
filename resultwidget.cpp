@@ -56,8 +56,6 @@ void ResultWidget::setupConnections()
 
 void ResultWidget::setData(const Exam& exam)
 {
-    /// @todo 或许exam中的response应该有一个提供标签的方法，
-    /// 毕竟可能是通道1，2，4而不是按顺序
     clear();
     m_channels = exam.images();
     ui->ChannelBox->setItems(QStringList(m_channels.size()));
@@ -76,12 +74,12 @@ QString ResultWidget::extractChannelLabel(const QString& filePath)
     return subParts[0];
 }
 
+/// @todo 信号断开再连接是否是必要的
 void ResultWidget::updateImageList()
 {
     // Disconnect signals first to avoid unnecessary updates when updating the list
     disconnect(ui->ImageBox, &QCheckComboBox::itemStatusChanged, this, &ResultWidget::updateMarkers);
     
-    // Clear list
     ui->ImageBox->removeAllItems();
     
     if (!m_channels.isEmpty()) {

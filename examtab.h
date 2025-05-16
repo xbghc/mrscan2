@@ -34,7 +34,7 @@ public:
     JsonPatient getPatient(QString id);
     QString currentPatientId() const;
 
-    const Exam &onResponseReceived(IExamResponse *response);
+    const Exam &setResponse(IExamResponse *response);
 public slots:
     void onScanStarted(QString id);
     void onScanStoped(); /// 用户手动停止

@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "preferencesdialog.h"
+#include "store.h"
 #include "tuningcentralfrequency.h"
 #include "tuningradiofrequencypower.h"
 #include "tuningshimming.h"
@@ -103,10 +104,12 @@ void MainWindow::onScanCompleted(IExamResponse* response)
 
     LOG_INFO("Scan completed, saving data");
 
-    const auto& exam = ui->examTab->onResponseReceived(response);
+    const auto& exam = ui->examTab->setResponse(response);
 
+    store::saveExam(exam);
     ui->imagesWidget->setData(exam);
-    ui->historyTab->loadHistoryList();
+
+    ui->historyTab->loadHistoryList(); /// @todo 这个不太好
 
     LOG_INFO("History record updated");
 }
