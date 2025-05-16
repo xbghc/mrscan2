@@ -49,7 +49,6 @@ QVector<fftw_complex *> readKdatas(const char *ptr, int nele, bool isComplex,
     }
     return kdatas;
 }
-
 } // namespace
 
 namespace mrd_utils {
@@ -69,8 +68,7 @@ size_t Mrd::size() const {
            static_cast<size_t>(views2) * static_cast<size_t>(samples);
 }
 
-QVector<QImage> Mrd::images() const
-{
+QVector<QImage> Mrd::images() const {
     if (!kdata) {
         return {};
     }

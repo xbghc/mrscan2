@@ -85,7 +85,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         configs/tunings.json
         configs/preferences.json
         mrscan2_zh_CN.qm
-        examresponse.h mrdresponse.cpp
+        examresponse.h
+        mrdresponse.h mrdresponse.cpp
         fftwutils.cpp
         fileutils.cpp
         exam.h exam.cpp

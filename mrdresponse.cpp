@@ -1,32 +1,23 @@
-#include "examresponse.h"
+#include "mrdresponse.h"
+
 #include "mrdutils.h"
+#include "utils.h"
 
-MrdResponse::MrdResponse(){
+MrdResponse::MrdResponse() {}
 
-}
+MrdResponse::MrdResponse(QByteArray data) : m_data(data) {}
 
-MrdResponse::MrdResponse(QByteArray data)
-    :m_data(data)
-{
+IExamResponse *MrdResponse::clone() const { return new MrdResponse(m_data); }
 
-}
-
-IExamResponse *MrdResponse::clone() const
-{
-    return new MrdResponse(m_data);
-}
-
-QVector<QVector<QImage>> MrdResponse::images() const{
+QVector<QVector<QImage>> MrdResponse::images() const {
     auto mrd = mrd_utils::Mrd::fromBytes(m_data).at(0);
     return {mrd.images()};
 }
 
-void MrdResponse::load(const QString &fpath)
-{
+void MrdResponse::load(const QString &fpath) {
     m_data = file_utils::read(fpath);
 }
 
-void MrdResponse::save(const QString &fpath) const
-{
+void MrdResponse::save(const QString &fpath) const {
     file_utils::save(fpath, m_data);
 }

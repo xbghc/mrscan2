@@ -1,8 +1,10 @@
 #include "scanner.h"
 
 #include <QFile>
-#include "utils.h"
 #include <random>
+
+#include "utils.h"
+#include "mrdresponse.h"
 
 namespace {
 }
