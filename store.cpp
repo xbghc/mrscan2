@@ -2,6 +2,7 @@
 
 #include <QDir>
 
+#include "mrdresponse.h"
 #include "utils.h"
 
 namespace {
@@ -51,6 +52,54 @@ void saveExamRequest(const QString &pid, const QString &eid,
     json_utils::saveToFile(fpath, request.data());
 }
 
+IExamResponse* loadResponse(const QString &pid, const QString &eid){
+    auto fpath = respFilePath(pid, eid);
+
+    /// @note 这里将来需要判断文件内容决定返回哪一种实现
+    return new MrdResponse(file_utils::read(fpath));
+}
+
+void saveResponse(const QString &pid, const QString &eid, IExamResponse* resp){
+    auto fpath = respFilePath(pid, eid);
+
+    file_utils::save(fpath, resp->bytes());
+}
+
+void loadExamInfo(Exam& exam, const QString &pid, const QString &eid){
+    if(!(exam.id() == eid)){
+        exam.setId(eid);
+    }
+
+    auto fpath = examInfoFilePath(pid, eid);
+    auto infoObj = json_utils::readFromFile(fpath).object();
+
+    auto startTime = QDateTime::fromString(infoObj["startTime"].toString());
+    exam.setStartTime(startTime);
+    auto endTime = QDateTime::fromString(infoObj["endTime"].toString());
+    exam.setEndTime(endTime);
+
+    auto patient = store::loadPatient(pid);
+    exam.setPatient(&patient);
+}
+
+void saveExamInfo(const Exam& exam){
+    auto pid = exam.patient()->id();
+    auto eid = exam.id();
+
+    QJsonObject infoObj;
+
+    /// @note 本来应该存储病人所有信息，但是这些后面反正要改
+    /// save只保存id，在load中调用loadPatient，外部感知是一样的
+    infoObj["patient"] = pid;
+
+    infoObj["id"] = eid;
+    infoObj["startTime"] = exam.startTime().toString();
+    infoObj["endTime"] = exam.endTime().toString();
+
+    auto fpath = examInfoFilePath(pid, eid);
+    json_utils::saveToFile(fpath, infoObj);
+}
+
 } // namespace
 
 namespace store {
@@ -67,10 +116,19 @@ void savePatient(const JsonPatient &patient) {
     json_utils::saveToFile(path, jsonObj);
 }
 
-/// @todo
-Exam loadExam(const QString &pid, const QString &eid) { return Exam(); }
+Exam loadExam(const QString &pid, const QString &eid) {
+    Exam exam;
 
-/// @todo
+    auto request = loadExamRequest(pid, eid);
+    auto response = loadResponse(pid, eid);
+    loadExamInfo(exam, pid, eid);
+
+    exam.setRequest(request);
+    exam.setResponse(response);
+
+    return exam;
+}
+
 void saveExam(const Exam &exam) {
     auto pid = exam.patient()->id();
     auto eid = exam.id();
@@ -85,7 +143,9 @@ void saveExam(const Exam &exam) {
 
     saveExamRequest(pid, eid, exam.request());
 
-    // 存储response
+    saveResponse(pid, eid, exam.response());
+
+    saveExamInfo(exam);
 }
 
 /**

@@ -52,6 +52,8 @@ public:
     void setPatient(IPatient* other);
 
     int time()const;
+    QDateTime startTime() const;
+    QDateTime endTime() const;
     void setStartTime(QDateTime other=QDateTime::currentDateTime());
     void setEndTime(QDateTime other=QDateTime::currentDateTime());
 

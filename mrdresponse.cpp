@@ -1,7 +1,6 @@
 #include "mrdresponse.h"
 
 #include "mrdutils.h"
-#include "utils.h"
 
 MrdResponse::MrdResponse() {}
 
@@ -14,10 +13,8 @@ QVector<QVector<QImage>> MrdResponse::images() const {
     return {mrd.images()};
 }
 
-void MrdResponse::load(const QString &fpath) {
-    m_data = file_utils::read(fpath);
+QByteArray MrdResponse::bytes() const
+{
+    return m_data;
 }
 
-void MrdResponse::save(const QString &fpath) const {
-    file_utils::save(fpath, m_data);
-}

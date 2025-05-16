@@ -120,6 +120,16 @@ int Exam::time() const
     return m_startTime.secsTo(m_endTime);
 }
 
+QDateTime Exam::startTime() const
+{
+    return m_startTime;
+}
+
+QDateTime Exam::endTime() const
+{
+    return m_endTime;
+}
+
 void Exam::setStartTime(QDateTime other)
 {
     m_startTime = other;

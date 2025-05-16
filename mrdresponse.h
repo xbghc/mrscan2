@@ -11,8 +11,8 @@ public:
     IExamResponse *clone() const override;
 
     QVector<QVector<QImage>> images() const override;
-    void load(const QString &fpath) override;
-    void save(const QString &fpath) const override;
+
+    QByteArray bytes() const override;
 
 private:
     QByteArray m_data;
