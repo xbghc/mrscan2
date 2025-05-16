@@ -13,38 +13,20 @@ const QString JsonPatient::Keys::Gender = "gender";
 const QString JsonPatient::Keys::Id = "id";
 const QString JsonPatient::Keys::Name = "name";
 
-namespace{
-
-} // namespace
+namespace {} // namespace
 
 // TODO 路径从config中获取
 const QString IPatient::kDirPath = "./patients";
 
-JsonPatient::JsonPatient()
-    :m_data(QJsonObject())
-{
+JsonPatient::JsonPatient() : m_data(QJsonObject()) {}
 
-}
+JsonPatient::JsonPatient(QJsonObject data) : m_data(data) {}
 
-JsonPatient::JsonPatient(QJsonObject data)
-    :m_data(data)
-{
+JsonPatient::JsonPatient(QJsonObject &&data) : m_data(data) {}
 
-}
+IPatient *JsonPatient::clone() const { return new JsonPatient(m_data); }
 
-JsonPatient::JsonPatient(QJsonObject &&data)
-    :m_data(data)
-{
-
-}
-
-IPatient *JsonPatient::clone() const
-{
-    return new JsonPatient(m_data);
-}
-
-int JsonPatient::nextId()
-{
+int JsonPatient::nextId() {
     const static QString kFilePath = "./patients/nextId";
     QDir dir(kDirPath);
     if (!dir.exists() && dir.mkpath(".")) {
@@ -101,8 +83,7 @@ QVector<JsonPatient> JsonPatient::loadPatients() {
     return list;
 }
 
-void JsonPatient::savePatients(QVector<JsonPatient> patients)
-{
+void JsonPatient::savePatients(QVector<JsonPatient> patients) {
     QJsonArray array;
     for (auto &patient : patients) {
         array.push_back(patient.json());
@@ -127,65 +108,50 @@ void JsonPatient::savePatients(QVector<JsonPatient> patients)
     file.write(doc.toJson());
 }
 
-
-QString JsonPatient::id()
-{
+QString JsonPatient::id() const {
     auto v = json_utils::get(m_data, Keys::Id, -1);
     return QString::number(v);
 }
 
-QString JsonPatient::name()
-{
+QString JsonPatient::name() const {
     return json_utils::get(m_data, Keys::Name, "unnamed");
 }
 
-JsonPatient::Gender JsonPatient::gender()
-{
-    auto g = json_utils::get(m_data, Keys::Gender, static_cast<int>(Gender::Male));
+JsonPatient::Gender JsonPatient::gender() const {
+    auto g =
+        json_utils::get(m_data, Keys::Gender, static_cast<int>(Gender::Male));
     return static_cast<Gender>(g);
 }
 
-QDate JsonPatient::birthday()
-{
+QDate JsonPatient::birthday() const {
     auto dateStr = json_utils::get(m_data, Keys::Birthday, "");
-    if(dateStr.isEmpty()){
+    if (dateStr.isEmpty()) {
         return QDate::currentDate();
     }
     return QDate::fromString(dateStr, kDateFormat);
 }
 
-QJsonObject JsonPatient::json()
-{
-    return m_data;
-}
+QJsonObject JsonPatient::json() const { return m_data; }
 
-void JsonPatient::setId(const QString& other)
-{
+void JsonPatient::setId(const QString &other) {
     auto old = id();
-    if(old.toInt() >= 0 && old != other){
+    if (old.toInt() >= 0 && old != other) {
         LOG_WARNING("一个有效id被覆盖");
     }
     m_data[Keys::Id] = other.toInt();
 }
 
-void JsonPatient::setName(const QString& other)
-{
-    m_data[Keys::Name] = other;
-}
+void JsonPatient::setName(const QString &other) { m_data[Keys::Name] = other; }
 
-void JsonPatient::setGender(Gender other)
-{
+void JsonPatient::setGender(Gender other) {
     m_data[Keys::Gender] = static_cast<int>(other);
 }
 
-void JsonPatient::setBirthday(int year, int month, int day)
-{
+void JsonPatient::setBirthday(int year, int month, int day) {
     auto date = QDate(year, month, day);
     setBirthday(date);
 }
 
-void JsonPatient::setBirthday(QDate other)
-{
+void JsonPatient::setBirthday(QDate other) {
     m_data[Keys::Birthday] = other.toString(kDateFormat);
 }
-
