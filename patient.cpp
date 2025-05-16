@@ -15,9 +15,6 @@ const QString JsonPatient::Keys::Name = "name";
 
 namespace {} // namespace
 
-// TODO 路径从config中获取
-const QString IPatient::kDirPath = "./patients";
-
 JsonPatient::JsonPatient() : m_data(QJsonObject()) {}
 
 JsonPatient::JsonPatient(QJsonObject data) : m_data(data) {}
@@ -25,62 +22,6 @@ JsonPatient::JsonPatient(QJsonObject data) : m_data(data) {}
 JsonPatient::JsonPatient(QJsonObject &&data) : m_data(data) {}
 
 IPatient *JsonPatient::clone() const { return new JsonPatient(m_data); }
-
-QVector<JsonPatient> JsonPatient::loadPatients() {
-    const static QString kFilePath = "./patients/info.json";
-
-    QDir dir(kDirPath);
-    if (!dir.exists() && !dir.mkpath(".")) {
-        qDebug() << "failed to mkdir: " << kDirPath;
-        return {};
-    }
-
-    QFile file(kFilePath);
-    if (!file.exists()) {
-        savePatients({});
-        return {};
-    }
-
-    if (!file.open(QIODevice::ReadOnly)) {
-        qDebug() << "failed to open file: " << kFilePath;
-        return {};
-    }
-
-    QByteArray data = file.readAll();
-    QJsonArray jsonArray = QJsonDocument::fromJson(data).array();
-    QVector<JsonPatient> list;
-    for (auto &&qjv : jsonArray) {
-        auto obj = qjv.toObject();
-        auto p = JsonPatient(obj);
-        list.append(p);
-    }
-    return list;
-}
-
-void JsonPatient::savePatients(QVector<JsonPatient> patients) {
-    QJsonArray array;
-    for (auto &patient : patients) {
-        array.push_back(patient.json());
-    }
-
-    /// @todo 路径从config中读取
-    const static QString kFilePath = "./patients/info.json";
-
-    QDir dir(kDirPath);
-    if (!dir.exists() && dir.mkpath(".")) {
-        LOG_ERROR(QString("failed to mkdir: %1").arg(kDirPath));
-        return;
-    }
-
-    QFile file(kFilePath);
-    if (!file.open(QIODevice::WriteOnly)) {
-        LOG_ERROR(QString("failed to open file: %1").arg(kFilePath));
-    }
-
-    QJsonDocument doc = QJsonDocument();
-    doc.setArray(array);
-    file.write(doc.toJson());
-}
 
 QString JsonPatient::id() const {
     auto v = json_utils::get(m_data, Keys::Id, -1);

@@ -98,7 +98,7 @@ ExamTab::~ExamTab() {
 // TODO 移动到Patient Config
 void ExamTab::loadPatients() {
     ui->comboBox->clear();
-    m_patients = JsonPatient::loadPatients();
+    m_patients = store::loadAllPatients();
 
     for (auto& p : m_patients) {
         QString label = QString("%1 - %2").arg(p.id(), p.name());
@@ -166,6 +166,8 @@ void ExamTab::openEditPatientDialog()
     m_patientDialog->setBithDay(patient.birthday());
     m_patientDialog->setGender(patient.gender());
 
+    m_patientDialog->setType(PatientInfoDialog::Type::Edit);
+
     m_patientDialog->setModal(true);
     m_patientDialog->exec();
 
@@ -173,8 +175,10 @@ void ExamTab::openEditPatientDialog()
 
 void ExamTab::openNewPatientDialog() {
     m_patientDialog->clear();
-    m_patientDialog->setModal(true);
 
+    m_patientDialog->setType(PatientInfoDialog::Type::New);
+
+    m_patientDialog->setModal(true);
     m_patientDialog->exec();
 }
 
@@ -304,23 +308,15 @@ void ExamTab::addPatient(QString name, QDate birthday, IPatient::Gender gender)
     m_patients.push_back(patient);
 
     setNextId(id.toInt() + 1);
-    savePatients();
-}
-
-void ExamTab::savePatients()
-{
-    /**
-     * @todo JsonPatient不应该管理文件读写
-     */
-    JsonPatient::savePatients(m_patients);
+    store::addPatient(patient);
 }
 
 void ExamTab::removePatient(QString id)
 {
+    store::removePatient(id);
     for(int i = 0; i < m_patients.size(); i++){
         if(m_patients[i].id() == id){
             m_patients.removeAt(i);
-            savePatients(); /// @todo 分析将之转移到ExamTab的析构函数的可能性
             return;
         }
     }
@@ -329,6 +325,8 @@ void ExamTab::removePatient(QString id)
 
 int ExamTab::nextPatientId()
 {
+
+
     const static QString kFilePath = "./patients/nextId";
     auto kDirPath = "./patients";
     QDir dir(kDirPath);

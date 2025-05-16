@@ -36,7 +36,7 @@ public:
     void enablePatientSelection(bool enable);
     QString currentPatientId() const;
 
-    JsonPatient getPatient(QString id);
+    JsonPatient getPatient(QString id); /// @todo 使用map加快查找
     const Exam& onResponseReceived(IExamResponse* response);
 public slots:
     void onScanStarted(QString id);
@@ -63,9 +63,10 @@ private:
     QVector<JsonPatient> m_patients; /// @todo 应该使用IPatient接口
 
     void addPatient(QString name, QDate birthday, IPatient::Gender gender);
-    void savePatients();
     void removePatient(QString id);
     /// @note 如果是正规dicom格式的病人数据，不至于在核磁软件中创建病人，所以这里放个生成新id的函数就够了
+
+    /// @todo 调整id生成的逻辑。uitls中添加生成随机数的函数，随机生成再+1遍历没有被使用的id作为新id
     int nextPatientId();
     void setNextId(int id);
 
