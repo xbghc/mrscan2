@@ -10,25 +10,44 @@ const auto kRootDir = "./patients";
 
 const auto kRequestFileName = "request.json";
 const auto kResponseFileName = "response.mrd";
+const auto kExamInfoFileName = "info.json";
 const auto kPatientInfoFileName = "patient.json";
 
-QString patientInfoPath(const QString &pid) {
-    return QString("%1/%2/%3").arg(kRootDir, pid, kPatientInfoFileName);
+/// 病人目录
+QString pdir(const QString &pid){
+    return QString("%1/%2").arg(kRootDir, pid);
 }
 
-QString examPath(const QString &pid, const QString &eid) {
-    return QString("%1/%2/%3").arg(kRootDir, pid, eid);
+QString patientInfoPath(const QString &pid) {
+    return QString("%1/%2").arg(pdir(pid), kPatientInfoFileName);
+}
+
+/// 扫描目录
+QString edir(const QString &pid, const QString &eid) {
+    return QString("%1/%2").arg(pdir(pid), eid);
+}
+
+QString reqFilePath(const QString& pid, const QString& eid){
+    return QString("%1/%2").arg(edir(pid, eid), kRequestFileName);
+}
+
+QString respFilePath(const QString& pid, const QString& eid){
+    return QString("%1/%2").arg(edir(pid, eid), kResponseFileName);
+}
+
+QString examInfoFilePath(const QString& pid, const QString& eid){
+    return QString("%1/%2").arg(edir(pid, eid), kExamInfoFileName);
 }
 
 ExamRequest loadExamRequest(const QString &pid, const QString &eid) {
-    auto fpath = QString("%1/%2").arg(examPath(pid, eid), kRequestFileName);
+    auto fpath = reqFilePath(pid, eid);
     auto obj = json_utils::readFromFile(fpath).object();
     return ExamRequest(obj);
 }
 
 void saveExamRequest(const QString &pid, const QString &eid,
                      ExamRequest request) {
-    auto fpath = QString("%1/%2").arg(examPath(pid, eid), kRequestFileName);
+    auto fpath = reqFilePath(pid, eid);
     json_utils::saveToFile(fpath, request.data());
 }
 
@@ -55,7 +74,7 @@ Exam loadExam(const QString &pid, const QString &eid) { return Exam(); }
 void saveExam(const Exam &exam) {
     auto pid = exam.patient()->id();
     auto eid = exam.id();
-    auto dpath = examPath(pid, eid);
+    auto dpath = edir(pid, eid);
 
     QDir dir(dpath);
     if (dir.exists()) {
@@ -92,7 +111,7 @@ void removePatient(const QString &pid)
 
 void addPatient(const JsonPatient &patient)
 {
-    QDir dir(QString("%1/%2").arg(kRootDir, patient.id()));
+    QDir dir(pdir(patient.id()));
     if(dir.exists()){
         LOG_WARNING(QString("病人信息被意外的覆盖了, pid: %1").arg(patient.id()));
     }
