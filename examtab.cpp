@@ -1,5 +1,4 @@
 #include "examtab.h"
-#include "mrdresponse.h"
 #include "exameditdialog.h"
 #include "patient.h"
 #include "patientinfodialog.h"
@@ -24,7 +23,7 @@ ExamTab::ExamTab(QWidget *parent)
     m_patientDialog(new PatientInfoDialog) {
 
     ui->setupUi(this);
-    loadPatients();
+    updatePatientList(true);
 
     m_exams = ExamConfig::initialExams();
     updateExamTable();
@@ -72,6 +71,7 @@ ExamTab::ExamTab(QWidget *parent)
                         p.setBirthday(birthday);
                         p.setGender(gender);
                         succeed = true;
+                        store::savePatient(p);
                         break;
                     }
                 }
@@ -79,7 +79,7 @@ ExamTab::ExamTab(QWidget *parent)
                     LOG_ERROR(QString("Edit Failed: Can't find patient with id: %1").arg(id));
                 }
             }
-            loadPatients();
+            updatePatientList();
     });
 
     connect(ui->deletePatientButton, &QToolButton::clicked, this, &ExamTab::deletePatient);
@@ -95,11 +95,12 @@ ExamTab::ExamTab(QWidget *parent)
 ExamTab::~ExamTab() {
 }
 
-// TODO 移动到Patient Config
-void ExamTab::loadPatients() {
-    ui->comboBox->clear();
-    m_patients = store::loadAllPatients();
+void ExamTab::updatePatientList(bool reload) {
+    if(reload){
+        m_patients = store::loadAllPatients();
+    }
 
+    ui->comboBox->clear();
     for (auto& p : m_patients) {
         QString label = QString("%1 - %2").arg(p.id(), p.name());
         ui->comboBox->addItem(label, p.id());
@@ -189,7 +190,7 @@ void ExamTab::deletePatient() {
         PatientInfoDialog dialog(this);
         auto id = ui->comboBox->currentData().toString();
         removePatient(id);
-        loadPatients();
+        updatePatientList();
     }
 }
 

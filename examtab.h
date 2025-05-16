@@ -31,7 +31,7 @@ public:
     const Exam& currentExam() const;
 
     // patient related
-    void loadPatients();
+    void updatePatientList(bool reload = false);
     void updateScanButtonState(bool isScanning);
     void enablePatientSelection(bool enable);
     QString currentPatientId() const;
