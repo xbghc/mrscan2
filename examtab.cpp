@@ -56,17 +56,24 @@ ExamTab::ExamTab(QWidget *parent)
             &ExamTab::onScanStopButtonClicked);
 }
 
-ExamTab::~ExamTab() {}
+ExamTab::~ExamTab() {
+    for(auto p:m_patients){
+        delete p;
+    }
+}
 
 void ExamTab::updatePatientList(bool reload) {
     if (reload) {
-        m_patients = store::loadAllPatients();
+        m_patients.clear();
+        for(const auto &p:store::loadAllPatients()){
+            m_patients.push_back(p);
+        }
     }
 
     ui->comboBox->clear();
-    for (auto &p : m_patients) {
-        QString label = QString("%1 - %2").arg(p.id(), p.name());
-        ui->comboBox->addItem(label, p.id());
+    for (const auto& p:m_patients) {
+        QString label = QString("%1 - %2").arg(p->id(), p->name());
+        ui->comboBox->addItem(label, p->id());
     }
 }
 
@@ -108,16 +115,16 @@ const Exam &ExamTab::setResponse(IExamResponse *response) {
     exam.setStatus(Exam::Status::Done);
 
     auto patient = getPatient(currentPatientId());
-    exam.setPatient(reinterpret_cast<IPatient *>(&patient));
+    exam.setPatient(patient);
 
     updateExamTable();
     return exam;
 }
 
 void ExamTab::onEditPatientButtonClicked() {
-    auto patient = m_patients[ui->comboBox->currentIndex()];
+    const auto& patient = m_patients[ui->comboBox->currentIndex()];
 
-    m_patientDialog->setPatient(&patient);
+    m_patientDialog->setPatient(patient);
     m_patientDialog->setType(PatientInfoDialog::Type::Edit);
 
     m_patientDialog->setModal(true);
@@ -147,11 +154,11 @@ void ExamTab::onPatientDialogAccepted() {
     // m_patientDialog->type() == PatientInfoDialog::Type::Edit
     auto id = m_patientDialog->id();
 
-    for (auto &p : m_patients) {
-        if (p.id() == id) {
-            p.setName(name);
-            p.setBirthday(birthday);
-            p.setGender(gender);
+    for (const auto& p:m_patients) {
+        if (p->id() == id) {
+            p->setName(name);
+            p->setBirthday(birthday);
+            p->setGender(gender);
             store::savePatient(p);
             updatePatientList();
             return;
@@ -171,7 +178,8 @@ void ExamTab::onDeletePatientButtonClicked() {
     auto id = ui->comboBox->currentData().toString();
     store::deletePatient(id);
     for (int i = 0; i < m_patients.size(); i++) {
-        if (m_patients[i].id() == id) {
+        if (m_patients[i]->id() == id) {
+            delete m_patients[i];
             m_patients.removeAt(i);
             updatePatientList();
             return;
@@ -294,26 +302,26 @@ void ExamTab::onCurrentExamChanged() {
     }
 }
 
-JsonPatient ExamTab::getPatient(QString id) {
-    for (auto &p : m_patients) {
-        if (p.id() == id) {
+IPatient* ExamTab::getPatient(QString id) {
+    for (const auto& p : m_patients) {
+        if (p->id() == id) {
             return p;
         }
     }
 
     LOG_ERROR(QString("Can't find patient with id: %1").arg(id));
-    return {};
+    return nullptr;
 }
 
 void ExamTab::addPatient(QString name, QDate birthday,
                          IPatient::Gender gender) {
     QString id = QString::number(nextPatientId());
 
-    JsonPatient patient;
-    patient.setId(id);
-    patient.setName(name);
-    patient.setBirthday(birthday);
-    patient.setGender(gender);
+    auto patient = new JsonPatient();
+    patient->setId(id);
+    patient->setName(name);
+    patient->setBirthday(birthday);
+    patient->setGender(gender);
     m_patients.push_back(patient);
 
     setNextId(id.toInt() + 1);

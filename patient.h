@@ -20,7 +20,10 @@ public:
     virtual void setId(const QString &other) = 0;
     virtual void setName(const QString &other) = 0;
     virtual void setGender(Gender other) = 0;
+    virtual void setBirthday(QDate other) = 0;
     virtual void setBirthday(int year, int month, int day) = 0;
+
+    virtual QByteArray bytes() const = 0;
 
 protected:
     IPatient() = default;
@@ -28,11 +31,7 @@ protected:
 
 /**
  * @brief QJsonObject版本的临时使用的Patient
- * @details 病人数据将来会从外部获取，并重新实现IPatient
- * id底层是int
- * @todo JsonPatient的内部是用QJsonObject存储的，
-一不注意就会被复制，导致修改无法同步，应该设法规避
- * @todo 成员初始化
+ * @note 病人数据将来会从外部获取，并重新实现IPatient
  */
 class JsonPatient : public IPatient {
 public:
@@ -44,9 +43,9 @@ public:
     };
     static constexpr auto kDateFormat = "yyyy-MM-dd";
 
-    JsonPatient();
-    explicit JsonPatient(QJsonObject data);
-    explicit JsonPatient(QJsonObject &&data);
+    JsonPatient() = default;
+    ~JsonPatient() override = default;
+    JsonPatient(QJsonObject m_data);
     IPatient *clone() const override;
 
     /**
@@ -57,15 +56,13 @@ public:
     Gender gender() const override;
     QDate birthday() const override;
 
-    QJsonObject json() const;
-
-    void setId(int other);
     void setId(const QString &other) override;
     void setName(const QString &other) override;
     void setGender(Gender other) override;
     void setBirthday(int year, int month, int day) override;
-    void setBirthday(QDate other);
+    void setBirthday(QDate other) override;
 
+    QByteArray bytes() const override;
 private:
     QJsonObject m_data;
 };

@@ -31,7 +31,7 @@ public:
 
     // patient related
     void updatePatientList(bool reload = false);
-    JsonPatient getPatient(QString id);
+    IPatient* getPatient(QString id);
     QString currentPatientId() const;
 
     const Exam &setResponse(IExamResponse *response);
@@ -61,7 +61,7 @@ private:
     std::unique_ptr<Ui::examtab> ui;
 
     QList<Exam> m_exams;
-    QVector<JsonPatient> m_patients; /// @todo 应该使用IPatient接口
+    QVector<IPatient*> m_patients;
     std::unique_ptr<PatientInfoDialog> m_patientDialog;
 
     /// @note

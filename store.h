@@ -28,16 +28,16 @@ QString pdir(const QString &pid);
 /// 扫描目录
 QString edir(const QString &pid, const QString &eid);
 
-QVector<JsonPatient> loadAllPatients();
+QVector<IPatient*> loadAllPatients();
 
-void addPatient(const JsonPatient &patient);
+void addPatient(IPatient* patient);
 
 void deletePatient(const QString &pid);
 
 /// 加载病人信息
-JsonPatient loadPatient(const QString &pid);
+IPatient* loadPatient(const QString &pid);
 /// 保存病人信息
-void savePatient(const JsonPatient &patient);
+void savePatient(IPatient* patient);
 
 /// 加载扫描记录
 Exam loadExam(const QString &pid, const QString &eid);
