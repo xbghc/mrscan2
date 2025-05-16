@@ -22,8 +22,6 @@ public:
     virtual void setGender(Gender other) = 0;
     virtual void setBirthday(int year, int month, int day) = 0;
 
-    const static QString kDirPath;
-
 protected:
     IPatient() = default;
 };

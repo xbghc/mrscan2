@@ -26,32 +26,6 @@ JsonPatient::JsonPatient(QJsonObject &&data) : m_data(data) {}
 
 IPatient *JsonPatient::clone() const { return new JsonPatient(m_data); }
 
-int JsonPatient::nextId() {
-    const static QString kFilePath = "./patients/nextId";
-    QDir dir(kDirPath);
-    if (!dir.exists() && dir.mkpath(".")) {
-        qDebug() << "failed to mkdir: " << kDirPath;
-        return -1;
-    }
-
-    QFile file(kFilePath);
-    if (!file.exists()) {
-        if (!file.open(QIODevice::WriteOnly)) {
-            qDebug() << "failed to open file: " << kFilePath;
-            return -1;
-        } else {
-            file.write("1");
-            return 0;
-        }
-    }
-
-    if (!file.open(QIODevice::ReadOnly)) {
-        qDebug() << "failed to open file: " << kFilePath;
-        return -1;
-    }
-    return file.readAll().toInt();
-}
-
 QVector<JsonPatient> JsonPatient::loadPatients() {
     const static QString kFilePath = "./patients/info.json";
 
