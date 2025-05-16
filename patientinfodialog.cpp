@@ -63,6 +63,11 @@ void PatientInfoDialog::setGender(IPatient::Gender gender)
     ui->isFemaleRadioButton->setChecked(!isMale);
 }
 
+void PatientInfoDialog::setPatient(const IPatient *patient)
+{
+
+}
+
 void PatientInfoDialog::clear()
 {
     setId("");

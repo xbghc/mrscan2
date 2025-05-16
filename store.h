@@ -26,7 +26,7 @@ QVector<JsonPatient> loadAllPatients();
 
 void addPatient(const JsonPatient &patient);
 
-void removePatient(const QString &pid);
+void deletePatient(const QString &pid);
 
 /// 加载病人信息
 JsonPatient loadPatient(const QString &pid);

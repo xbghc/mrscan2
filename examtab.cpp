@@ -30,71 +30,30 @@ ExamTab::ExamTab(QWidget *parent)
     // selected index changed
     connect(ui->tableWidget->selectionModel(),
             &QItemSelectionModel::currentRowChanged, this,
-            [this](const QModelIndex &current, const QModelIndex &previous) {
-                int curRow = current.row();
-                if (curRow < 0) {
-                    return;
-                }
-
-                switch (m_exams[curRow].status()) {
-                case Exam::Status::Ready:
-                    ui->scanButton->setText(tr("start"));
-                    ui->scanButton->setEnabled(true);
-                    break;
-                case Exam::Status::Processing:
-                    ui->scanButton->setText(tr("stop"));
-                    ui->scanButton->setEnabled(true);
-                    break;
-                case Exam::Status::Done:
-                    ui->scanButton->setText(tr("start"));
-                    ui->scanButton->setEnabled(false);
-                    break;
-                }
-            });
+            &ExamTab::onCurrentExamChanged);
 
     connect(ui->editPatientButton, &QToolButton::clicked, this,
-            &ExamTab::openEditPatientDialog);
+            &ExamTab::onEditPatientButtonClicked);
     connect(ui->newPatientButton, &QToolButton::clicked, this,
-            &ExamTab::openNewPatientDialog);
-    connect(m_patientDialog.get(), &PatientInfoDialog::accepted, this, [this]() {
-        auto name = m_patientDialog->name();
-        auto gender = m_patientDialog->gender();
-        auto birthday = m_patientDialog->birthday();
-        if (m_patientDialog->type() == PatientInfoDialog::Type::New) {
-            addPatient(name, birthday, gender);
-        } else {
-            auto id = m_patientDialog->id();
-            bool succeed = false;
-            for (auto &p : m_patients) {
-                if (p.id() == id) {
-                    p.setName(name);
-                    p.setBirthday(birthday);
-                    p.setGender(gender);
-                    succeed = true;
-                    store::savePatient(p);
-                    break;
-                }
-            }
-            if (!succeed) {
-                LOG_ERROR(
-                    QString("Edit Failed: Can't find patient with id: %1").arg(id));
-            }
-        }
-        updatePatientList();
-    });
+            &ExamTab::onNewPatientButtonClicked);
+    connect(m_patientDialog.get(), &PatientInfoDialog::accepted, this,
+            &ExamTab::onPatientDialogAccepted);
 
     connect(ui->deletePatientButton, &QToolButton::clicked, this,
-            &ExamTab::deletePatient);
+            &ExamTab::onDeletePatientButtonClicked);
 
-    connect(ui->shiftUpButton, &QPushButton::clicked, this, &ExamTab::shiftUp);
+    connect(ui->shiftUpButton, &QPushButton::clicked, this,
+            &ExamTab::onShiftUpButtonClicked);
     connect(ui->shiftDownButton, &QPushButton::clicked, this,
-            &ExamTab::shiftDown);
+            &ExamTab::onShiftDownButtonClicked);
     connect(ui->removeExamButton, &QPushButton::clicked, this,
-            &ExamTab::removeExam);
-    connect(ui->copyButton, &QPushButton::clicked, this, &ExamTab::copyExam);
-    connect(ui->editExamButton, &QPushButton::clicked, this, &ExamTab::editExam);
+            &ExamTab::onRemoveExamButtonClicked);
+    connect(ui->copyButton, &QPushButton::clicked, this,
+            &ExamTab::onCopyExamButtonClicked);
+    connect(ui->editExamButton, &QPushButton::clicked, this,
+            &ExamTab::onEditExamButtonClicked);
     connect(ui->scanButton, &QPushButton::clicked, this,
-            &ExamTab::onScanButtonClicked);
+            &ExamTab::onScanStopButtonClicked);
 }
 
 ExamTab::~ExamTab() {}
@@ -109,15 +68,6 @@ void ExamTab::updatePatientList(bool reload) {
         QString label = QString("%1 - %2").arg(p.id(), p.name());
         ui->comboBox->addItem(label, p.id());
     }
-}
-
-void ExamTab::updateScanButtonState(bool isScanning) {
-    ui->scanButton->setText(isScanning ? tr("stop") : tr("start"));
-    ui->scanButton->setEnabled(true);
-}
-
-void ExamTab::enablePatientSelection(bool enable) {
-    ui->comboBox->setEnabled(enable);
 }
 
 QString ExamTab::currentPatientId() const {
@@ -144,6 +94,13 @@ void ExamTab::onScanStarted(QString id) {
     updateExamTable();
 }
 
+void ExamTab::onScanStoped() {
+    ui->scanButton->setText(tr("start"));
+    ui->scanButton->setEnabled(true);
+
+    ui->comboBox->setEnabled(true);
+}
+
 const Exam &ExamTab::onResponseReceived(IExamResponse *response) {
     // Now we only handle UI updates here, not data saving
 
@@ -160,21 +117,17 @@ const Exam &ExamTab::onResponseReceived(IExamResponse *response) {
     return m_exams[row];
 }
 
-void ExamTab::openEditPatientDialog() {
-    auto id = ui->comboBox->currentData().toString();
-    auto patient = getPatient(id);
-    m_patientDialog->setId(id);
-    m_patientDialog->setName(patient.name());
-    m_patientDialog->setBithDay(patient.birthday());
-    m_patientDialog->setGender(patient.gender());
+void ExamTab::onEditPatientButtonClicked() {
+    auto patient = m_patients[ui->comboBox->currentIndex()];
 
+    m_patientDialog->setPatient(&patient);
     m_patientDialog->setType(PatientInfoDialog::Type::Edit);
 
     m_patientDialog->setModal(true);
     m_patientDialog->exec();
 }
 
-void ExamTab::openNewPatientDialog() {
+void ExamTab::onNewPatientButtonClicked() {
     m_patientDialog->clear();
 
     m_patientDialog->setType(PatientInfoDialog::Type::New);
@@ -183,30 +136,67 @@ void ExamTab::openNewPatientDialog() {
     m_patientDialog->exec();
 }
 
-void ExamTab::deletePatient() {
-    if (QMessageBox::question(
-            this, tr("Delete?"), tr("Confirm delete this patient?"),
-            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-        PatientInfoDialog dialog(this);
-        auto id = ui->comboBox->currentData().toString();
-        removePatient(id);
-        updatePatientList();
+void ExamTab::onPatientDialogAccepted() {
+
+    auto name = m_patientDialog->name();
+    auto gender = m_patientDialog->gender();
+    auto birthday = m_patientDialog->birthday();
+
+    if (m_patientDialog->type() == PatientInfoDialog::Type::New) {
+        addPatient(name, birthday, gender);
+        return;
     }
+
+    // m_patientDialog->type() == PatientInfoDialog::Type::Edit
+    auto id = m_patientDialog->id();
+
+    for (auto &p : m_patients) {
+        if (p.id() == id) {
+            p.setName(name);
+            p.setBirthday(birthday);
+            p.setGender(gender);
+            store::savePatient(p);
+            updatePatientList();
+            return;
+        }
+    }
+
+    LOG_ERROR(QString("Edit Failed: Can't find patient with id: %1").arg(id));
 }
 
-void ExamTab::shiftUp() {
+void ExamTab::onDeletePatientButtonClicked() {
+    if (QMessageBox::question(
+            this, tr("Delete?"), tr("Confirm delete this patient?"),
+            QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
+        return;
+    }
+
+    auto id = ui->comboBox->currentData().toString();
+    store::deletePatient(id);
+    for (int i = 0; i < m_patients.size(); i++) {
+        if (m_patients[i].id() == id) {
+            m_patients.removeAt(i);
+            updatePatientList();
+            return;
+        }
+    }
+
+    LOG_ERROR(QString("Remove failed. Can't find patient with id: %1").arg(id));
+}
+
+void ExamTab::onShiftUpButtonClicked() {
     int curRow = currentRow();
 
     swap(curRow, curRow - 1);
 }
 
-void ExamTab::shiftDown() {
+void ExamTab::onShiftDownButtonClicked() {
     int curRow = currentRow();
 
     swap(curRow, curRow + 1);
 }
 
-void ExamTab::removeExam() {
+void ExamTab::onRemoveExamButtonClicked() {
     int curRow = currentRow();
     if (curRow == -1) {
         LOG_WARNING("No exam selected");
@@ -216,7 +206,7 @@ void ExamTab::removeExam() {
     m_exams.removeAt(curRow);
 }
 
-void ExamTab::copyExam() {
+void ExamTab::onCopyExamButtonClicked() {
     int curRow = currentRow();
     if (curRow == -1) {
         LOG_WARNING("No exam selected");
@@ -227,7 +217,7 @@ void ExamTab::copyExam() {
     m_exams[curRow + 1].setRequest(m_exams[curRow].request());
 }
 
-void ExamTab::editExam() {
+void ExamTab::onEditExamButtonClicked() {
     int curRow = currentRow();
     if (curRow == -1) {
         LOG_WARNING("No exam selected");
@@ -259,7 +249,7 @@ void ExamTab::editExam() {
     dlg.exec();
 }
 
-void ExamTab::onScanButtonClicked() {
+void ExamTab::onScanStopButtonClicked() {
     int curRow = currentRow();
     if (curRow == -1) {
         LOG_WARNING("No exam selected");
@@ -282,6 +272,29 @@ void ExamTab::onScanButtonClicked() {
 
     auto request = m_exams[curRow].request();
     emit startButtonClicked(request);
+}
+
+void ExamTab::onCurrentExamChanged() {
+    int curRow = currentRow();
+
+    if (curRow < 0) {
+        return;
+    }
+
+    switch (m_exams[curRow].status()) {
+    case Exam::Status::Ready:
+        ui->scanButton->setText(tr("start"));
+        ui->scanButton->setEnabled(true);
+        break;
+    case Exam::Status::Processing:
+        ui->scanButton->setText(tr("stop"));
+        ui->scanButton->setEnabled(true);
+        break;
+    case Exam::Status::Done:
+        ui->scanButton->setText(tr("start"));
+        ui->scanButton->setEnabled(false);
+        break;
+    }
 }
 
 JsonPatient ExamTab::getPatient(QString id) {
@@ -308,17 +321,6 @@ void ExamTab::addPatient(QString name, QDate birthday,
 
     setNextId(id.toInt() + 1);
     store::addPatient(patient);
-}
-
-void ExamTab::removePatient(QString id) {
-    store::removePatient(id);
-    for (int i = 0; i < m_patients.size(); i++) {
-        if (m_patients[i].id() == id) {
-            m_patients.removeAt(i);
-            return;
-        }
-    }
-    LOG_ERROR(QString("Remove failed. Can't find patient with id: %1").arg(id));
 }
 
 int ExamTab::nextPatientId() {

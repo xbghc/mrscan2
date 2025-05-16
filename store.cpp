@@ -161,7 +161,7 @@ QVector<JsonPatient> loadAllPatients() {
     return patients;
 }
 
-void removePatient(const QString &pid) {
+void deletePatient(const QString &pid) {
     auto dpath = pdir(pid);
     QDir dir(dpath);
     dir.removeRecursively();
