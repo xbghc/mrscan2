@@ -15,9 +15,7 @@ const auto kExamInfoFileName = "info.json";
 const auto kPatientInfoFileName = "patient.json";
 
 /// 病人目录
-QString pdir(const QString &pid){
-    return QString("%1/%2").arg(kRootDir, pid);
-}
+QString pdir(const QString &pid) { return QString("%1/%2").arg(kRootDir, pid); }
 
 QString patientInfoPath(const QString &pid) {
     return QString("%1/%2").arg(pdir(pid), kPatientInfoFileName);
@@ -28,15 +26,15 @@ QString edir(const QString &pid, const QString &eid) {
     return QString("%1/%2").arg(pdir(pid), eid);
 }
 
-QString reqFilePath(const QString& pid, const QString& eid){
+QString reqFilePath(const QString &pid, const QString &eid) {
     return QString("%1/%2").arg(edir(pid, eid), kRequestFileName);
 }
 
-QString respFilePath(const QString& pid, const QString& eid){
+QString respFilePath(const QString &pid, const QString &eid) {
     return QString("%1/%2").arg(edir(pid, eid), kResponseFileName);
 }
 
-QString examInfoFilePath(const QString& pid, const QString& eid){
+QString examInfoFilePath(const QString &pid, const QString &eid) {
     return QString("%1/%2").arg(edir(pid, eid), kExamInfoFileName);
 }
 
@@ -52,21 +50,21 @@ void saveExamRequest(const QString &pid, const QString &eid,
     json_utils::saveToFile(fpath, request.data());
 }
 
-IExamResponse* loadResponse(const QString &pid, const QString &eid){
+IExamResponse *loadResponse(const QString &pid, const QString &eid) {
     auto fpath = respFilePath(pid, eid);
 
     /// @note 这里将来需要判断文件内容决定返回哪一种实现
     return new MrdResponse(file_utils::read(fpath));
 }
 
-void saveResponse(const QString &pid, const QString &eid, IExamResponse* resp){
+void saveResponse(const QString &pid, const QString &eid, IExamResponse *resp) {
     auto fpath = respFilePath(pid, eid);
 
     file_utils::save(fpath, resp->bytes());
 }
 
-void loadExamInfo(Exam& exam, const QString &pid, const QString &eid){
-    if(!(exam.id() == eid)){
+void loadExamInfo(Exam &exam, const QString &pid, const QString &eid) {
+    if (!(exam.id() == eid)) {
         exam.setId(eid);
     }
 
@@ -82,7 +80,7 @@ void loadExamInfo(Exam& exam, const QString &pid, const QString &eid){
     exam.setPatient(&patient);
 }
 
-void saveExamInfo(const Exam& exam){
+void saveExamInfo(const Exam &exam) {
     auto pid = exam.patient()->id();
     auto eid = exam.id();
 
@@ -152,29 +150,26 @@ void saveExam(const Exam &exam) {
  * @brief 加载所有病人
  * @detial 遍历根文件夹中的文件夹列表，每一个文件夹都代表一个病人
  */
-QVector<JsonPatient> loadAllPatients()
-{
+QVector<JsonPatient> loadAllPatients() {
     QVector<JsonPatient> patients;
 
     QDir root(kRootDir);
-    for(const auto& pid:root.entryList(QDir::Dirs | QDir::NoDotAndDotDot)){
+    for (const auto &pid : root.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
         patients.push_back(loadPatient(pid));
     }
 
     return patients;
 }
 
-void removePatient(const QString &pid)
-{
+void removePatient(const QString &pid) {
     auto dpath = pdir(pid);
     QDir dir(dpath);
     dir.removeRecursively();
 }
 
-void addPatient(const JsonPatient &patient)
-{
+void addPatient(const JsonPatient &patient) {
     QDir dir(pdir(patient.id()));
-    if(dir.exists()){
+    if (dir.exists()) {
         LOG_WARNING(QString("病人信息被意外的覆盖了, pid: %1").arg(patient.id()));
     }
     dir.mkpath(".");
