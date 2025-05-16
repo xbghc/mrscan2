@@ -69,6 +69,80 @@ size_t Mrd::size() const {
            static_cast<size_t>(views2) * static_cast<size_t>(samples);
 }
 
+QVector<QImage> Mrd::images() const
+{
+    if (!kdata) {
+        return {};
+    }
+
+    size_t noImages;
+    std::vector<int> shape(3);
+    if (slices == 1) {
+        // T1
+        noImages = views2;
+        shape[0] = views;
+        shape[1] = views2;
+        shape[2] = samples;
+    } else {
+        // T2
+        noImages = slices;
+        shape[0] = slices;
+        shape[1] = views;
+        shape[2] = samples;
+    }
+
+    auto outPtr = fftw_utils::exec_fft_3d(kdata, shape);
+    fftw_utils::fftshift3d(outPtr, shape);
+
+    // Take absolute values
+    size_t noPixels = shape[0] * shape[1] * shape[2];
+    auto absValues = fftw_utils::abs(outPtr, noPixels);
+
+    double max_val = 0;
+    for (size_t i = 0; i < noPixels; i++) {
+        if (absValues[i] > max_val) {
+            max_val = absValues[i];
+        }
+    }
+
+    QVector<QImage> imageList;
+    if (slices == 1) {
+        // T1
+        for (int i = 0; i < noImages; i++) {
+            QImage img(shape[2], shape[0], QImage::Format_Grayscale8);
+            for (int j = 0; j < shape[0]; j++) {
+                std::vector<int> indexes = {j, i, 0};
+                uchar *scanLine = img.scanLine(j);
+                for (int k = 0; k < shape[2]; k++) {
+                    indexes[2] = k;
+                    auto index = fftw_utils::getIndex(shape, indexes);
+                    double val = absValues[index];
+                    scanLine[k] = static_cast<uchar>(val * 255 / max_val);
+                }
+            }
+            imageList.push_back(img);
+        }
+    } else {
+        // T2
+        for (int i = 0; i < noImages; i++) {
+            QImage img(shape[2], shape[1], QImage::Format_Grayscale8);
+            for (int j = 0; j < shape[1]; j++) {
+                std::vector<int> indexes = {i, j, 0};
+                uchar *scanLine = img.scanLine(j);
+                for (int k = 0; k < shape[2]; k++) {
+                    indexes[2] = k;
+                    auto index = fftw_utils::getIndex(shape, indexes);
+                    double val = absValues[index];
+                    scanLine[k] = static_cast<uchar>(val * 255 / max_val);
+                }
+            }
+            imageList.push_back(img);
+        }
+    }
+
+    return imageList;
+}
+
 Mrd::Mrd() {}
 
 Mrd::~Mrd() {

@@ -1,6 +1,7 @@
 #ifndef MRDUTILS_H
 #define MRDUTILS_H
 
+#include <QImage>
 #include <QVector>
 #include <fftw3.h>
 
@@ -16,6 +17,7 @@ struct Mrd {
 
     QVector<int> shape() const;
     size_t size() const;
+    QVector<QImage> images()const;
 
     Mrd();
     ~Mrd();

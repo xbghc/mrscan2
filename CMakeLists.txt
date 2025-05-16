@@ -66,7 +66,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         custompreferences.h custompreferences.cpp
         abstractpreferencestab.h abstractpreferencestab.cpp
         utils.cpp utils.h
-        mrdparser.cpp mrdparser.h
+
         pathmanager.h pathmanager.cpp
         
         # Image processing related

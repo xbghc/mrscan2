@@ -1,5 +1,4 @@
 #include "examresponse.h"
-#include "mrdparser.h"
 #include "mrdutils.h"
 
 MrdResponse::MrdResponse(){
@@ -18,11 +17,8 @@ IExamResponse *MrdResponse::clone() const
 }
 
 QVector<QVector<QImage>> MrdResponse::images() const{
-    auto mrd = MrdParser::parse(m_data);
-    return MrdParser::reconImages(mrd.get());
-
-    // auto mrd = mrd_utils::Mrd::fromBytes(m_data).at(0);
-    // return MrdParser::reconImages(&mrd);
+    auto mrd = mrd_utils::Mrd::fromBytes(m_data).at(0);
+    return {mrd.images()};
 }
 
 void MrdResponse::load(const QString &fpath)

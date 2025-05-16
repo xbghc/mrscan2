@@ -1,7 +1,6 @@
 #include "../resultwidget.h"
 #include "ui_resultwidget.h"
 #include "utils.h"
-#include "mrdparser.h"
 
 #include <QDir>
 #include <QFile>
