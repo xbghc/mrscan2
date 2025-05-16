@@ -66,7 +66,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         custompreferences.h custompreferences.cpp
         abstractpreferencestab.h abstractpreferencestab.cpp
         utils.cpp utils.h
-        mrdparser.cpp mrdparser.h
+
         pathmanager.h pathmanager.cpp
         
         # Image processing related
@@ -85,11 +85,13 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         configs/tunings.json
         configs/preferences.json
         mrscan2_zh_CN.qm
-        examresponse.h mrdresponse.cpp
+        examresponse.h
+        mrdresponse.h mrdresponse.cpp
         fftwutils.cpp
         fileutils.cpp
         exam.h exam.cpp
         store.h store.cpp
+        mrdutils.h mrdutils.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET mrscan2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

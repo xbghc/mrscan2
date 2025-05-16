@@ -1,8 +1,19 @@
 #include "utils.h"
 
 namespace fftw_utils{
+/// @todo 项目中的fftw的内存分配和释放都用统一的createArray和freeArray
 fftw_complex* createArray(size_t size){
-    return static_cast<fftw_complex*>(fftw_alloc_complex(size));
+    auto ptr = static_cast<fftw_complex*>(fftw_alloc_complex(size));
+    if(!ptr){
+        auto msg = QString("尝试创建大小为%i的fftw_complex数组时失败").arg(size);
+        LOG_ERROR(msg);
+        throw std::runtime_error(msg.toStdString());
+    }
+    return ptr;
+}
+
+void freeArray(fftw_complex* ptr){
+    fftw_free(ptr);
 }
 
 std::vector<double> abs(fftw_complex* array, size_t len){

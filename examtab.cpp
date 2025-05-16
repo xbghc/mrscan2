@@ -1,5 +1,5 @@
 #include "examtab.h"
-#include "examresponse.h"
+#include "mrdresponse.h"
 #include "exameditdialog.h"
 #include "patient.h"
 #include "patientinfodialog.h"
