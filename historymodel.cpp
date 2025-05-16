@@ -2,8 +2,7 @@
 
 #include <QDir>
 #include <QJsonDocument>
-#include "pathmanager.h"
-#include "utils.h"
+#include "store.h"
 
 HistoryModel::HistoryModel(QObject *parent)
     : QAbstractTableModel(parent)
@@ -67,21 +66,32 @@ QVariant HistoryModel::data(const QModelIndex &index, int role) const
 
 void HistoryModel::loadHistoryList()
 {
+    auto map = store::examMap();
+
     beginResetModel();
+
     m_historyList.clear();
 
-    QStringList patientIds = PathManager::getAllPatientIds();
-    for(const auto& patientIdStr : patientIds) {
-        int patientId = patientIdStr.toInt();
-        QStringList examIds = PathManager::getExamIdsForPatient(patientId);
-        
-        for(const auto &examIdStr : examIds) {
-            int examId = examIdStr.toInt();
-            QString examDirPath = PathManager::getExamDir(patientId, examId);
-            QFileInfo dirInfo(examDirPath);
-            QDateTime createTime = dirInfo.birthTime();
-            m_historyList.append(HistoryItem(examId, patientId, createTime));
+    for(const auto& [pid, eids]:map){
+        for(const auto& eid:eids){
+            auto path = store::edir(pid, eid);
+            auto btime = QFileInfo(path).birthTime();
+            m_historyList.emplace_back(eid, pid, btime);
         }
     }
+
+    // QStringList patientIds = PathManager::getAllPatientIds();
+    // for(const auto& patientIdStr : patientIds) {
+    //     int patientId = patientIdStr.toInt();
+    //     QStringList examIds = PathManager::getExamIdsForPatient(patientId);
+        
+    //     for(const auto &examIdStr : examIds) {
+    //         int examId = examIdStr.toInt();
+    //         QString examDirPath = PathManager::getExamDir(patientId, examId);
+    //         QFileInfo dirInfo(examDirPath);
+    //         QDateTime createTime = dirInfo.birthTime();
+    //         m_historyList.append(HistoryItem(examId, patientId, createTime));
+    //     }
+    // }
     endResetModel();
 }

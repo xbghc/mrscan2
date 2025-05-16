@@ -22,6 +22,12 @@
  */
 namespace store {
 
+/// 病人目录
+QString pdir(const QString &pid);
+
+/// 扫描目录
+QString edir(const QString &pid, const QString &eid);
+
 QVector<JsonPatient> loadAllPatients();
 
 void addPatient(const JsonPatient &patient);
@@ -33,12 +39,19 @@ JsonPatient loadPatient(const QString &pid);
 /// 保存病人信息
 void savePatient(const JsonPatient &patient);
 
-
-
 /// 加载扫描记录
 Exam loadExam(const QString &pid, const QString &eid);
 /// 保存扫描记录
 void saveExam(const Exam &exam);
+
+/// 返回病人的id列表
+QStringList patientEntries();
+
+/// 获取pid: QVector<eid>的字典
+std::unordered_map<QString, QStringList> examMap();
+
+/// 返回病人的eid列表
+QStringList examEntries(const QString& pid);
 
 } // namespace store
 

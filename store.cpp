@@ -14,28 +14,21 @@ const auto kResponseFileName = "response.mrd";
 const auto kExamInfoFileName = "info.json";
 const auto kPatientInfoFileName = "patient.json";
 
-/// 病人目录
-QString pdir(const QString &pid) { return QString("%1/%2").arg(kRootDir, pid); }
 
 QString patientInfoPath(const QString &pid) {
-    return QString("%1/%2").arg(pdir(pid), kPatientInfoFileName);
-}
-
-/// 扫描目录
-QString edir(const QString &pid, const QString &eid) {
-    return QString("%1/%2").arg(pdir(pid), eid);
+    return QString("%1/%2").arg(store::pdir(pid), kPatientInfoFileName);
 }
 
 QString reqFilePath(const QString &pid, const QString &eid) {
-    return QString("%1/%2").arg(edir(pid, eid), kRequestFileName);
+    return QString("%1/%2").arg(store::edir(pid, eid), kRequestFileName);
 }
 
 QString respFilePath(const QString &pid, const QString &eid) {
-    return QString("%1/%2").arg(edir(pid, eid), kResponseFileName);
+    return QString("%1/%2").arg(store::edir(pid, eid), kResponseFileName);
 }
 
 QString examInfoFilePath(const QString &pid, const QString &eid) {
-    return QString("%1/%2").arg(edir(pid, eid), kExamInfoFileName);
+    return QString("%1/%2").arg(store::edir(pid, eid), kExamInfoFileName);
 }
 
 ExamRequest loadExamRequest(const QString &pid, const QString &eid) {
@@ -102,6 +95,12 @@ void saveExamInfo(const Exam &exam) {
 
 namespace store {
 
+QString pdir(const QString &pid) { return QString("%1/%2").arg(kRootDir, pid); }
+
+QString edir(const QString &pid, const QString &eid) {
+    return QString("%1/%2").arg(pdir(pid), eid);
+}
+
 JsonPatient loadPatient(const QString &pid) {
     auto path = patientInfoPath(pid);
     auto jsonObj = json_utils::readFromFile(path).object();
@@ -146,6 +145,20 @@ void saveExam(const Exam &exam) {
     saveExamInfo(exam);
 }
 
+QStringList patientEntries(){
+    QDir root(kRootDir);
+    return root.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+}
+
+QStringList examEntries(const QString& pid){
+    QDir dir(pdir(pid));
+    QStringList eids;
+    for(const auto& fname:dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)){
+        eids << fname;
+    }
+    return eids;
+}
+
 /**
  * @brief 加载所有病人
  * @detial 遍历根文件夹中的文件夹列表，每一个文件夹都代表一个病人
@@ -153,8 +166,7 @@ void saveExam(const Exam &exam) {
 QVector<JsonPatient> loadAllPatients() {
     QVector<JsonPatient> patients;
 
-    QDir root(kRootDir);
-    for (const auto &pid : root.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+    for (const auto &pid : patientEntries()) {
         patients.push_back(loadPatient(pid));
     }
 
@@ -175,6 +187,17 @@ void addPatient(const JsonPatient &patient) {
     dir.mkpath(".");
 
     savePatient(patient);
+}
+
+
+std::unordered_map<QString, QStringList> examMap(){
+    std::unordered_map<QString, QStringList> map;
+
+    for(const auto& pid:patientEntries()){
+        map[pid] = examEntries(pid);
+    }
+
+    return map;
 }
 
 } // namespace store

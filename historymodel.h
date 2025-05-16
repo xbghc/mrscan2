@@ -22,11 +22,12 @@ public:
 private:
     QStringList m_headers;
     struct HistoryItem{
-        int examId;
-        int patientId;
+        QString examId;
+        QString patientId;
         QDateTime createTime;
     };
     QVector<HistoryItem> m_historyList;
+
 };
 
 #endif // HISTORYMODEL_H

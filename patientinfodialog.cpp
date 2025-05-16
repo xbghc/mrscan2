@@ -65,7 +65,10 @@ void PatientInfoDialog::setGender(IPatient::Gender gender)
 
 void PatientInfoDialog::setPatient(const IPatient *patient)
 {
-
+    setId(patient->id());
+    setName(patient->name());
+    setBithDay(patient->birthday());
+    setGender(patient->gender());
 }
 
 void PatientInfoDialog::clear()

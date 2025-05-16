@@ -32,6 +32,7 @@ public:
     void setName(QString name);
     void setBithDay(QDate birthday);
     void setGender(IPatient::Gender gender);
+    void setPatient(const IPatient* patient);
 
     void clear();
     Type type();

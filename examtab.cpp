@@ -102,8 +102,6 @@ void ExamTab::onScanStoped() {
 }
 
 const Exam &ExamTab::onResponseReceived(IExamResponse *response) {
-    // Now we only handle UI updates here, not data saving
-
     auto row = processingRow();
     m_exams[row].setResponse(response);
     m_exams[row].setEndTime();
