@@ -113,8 +113,8 @@ void MainWindow::onScanCompleted(IExamResponse* response)
     const auto& exam = ui->examTab->setResponse(response);
 
     store::saveExam(exam);
-    ui->imagesWidget->setData(exam);
 
+    ui->imagesWidget->setData(exam);
     ui->historyTab->loadHistoryList(); /// @todo 这个不太好
 
     LOG_INFO("History record updated");

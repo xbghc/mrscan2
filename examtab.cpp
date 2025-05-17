@@ -1,6 +1,5 @@
 #include "examtab.h"
 #include "configmanager.h"
-#include "exameditdialog.h"
 #include "patient.h"
 #include "patientinfodialog.h"
 #include "store.h"
@@ -19,7 +18,8 @@ namespace {} // namespace
 
 ExamTab::ExamTab(QWidget *parent)
     : QWidget(parent), ui(new Ui::examtab),
-    m_patientDialog(new PatientInfoDialog) {
+    m_patientDialog(new PatientInfoDialog),
+    m_examDialog(nullptr){
 
     ui->setupUi(this);
     updatePatientList(true);
@@ -107,6 +107,7 @@ void ExamTab::onScanStoped() {
 
 const Exam &ExamTab::setResponse(IExamResponse *response) {
     auto& exam = m_exams[processingRow()];
+
     exam.setResponse(response);
     exam.setEndTime();
     exam.setStatus(Exam::Status::Done);
@@ -115,6 +116,13 @@ const Exam &ExamTab::setResponse(IExamResponse *response) {
     exam.setPatient(patient);
 
     updateExamTable();
+
+    /// @note 这是判断scout的方式
+    if(exam.request().name().toLower() == "scout"){
+        LOG_INFO("Scout result received");
+        m_examDialog->setScout(exam);
+    }
+
     return exam;
 }
 
@@ -222,33 +230,19 @@ void ExamTab::onCopyExamButtonClicked() {
 void ExamTab::onEditExamButtonClicked() {
     int curRow = currentRow();
     if (curRow == -1) {
-        LOG_WARNING("No exam selected");
+        LOG_INFO("Edit button: No exam selected");
         return;
     }
 
-    ExamEditDialog dlg(this);
-    dlg.setData(m_exams[curRow]);
-    connect(&dlg, &QDialog::accepted, this, [&]() {
-        QJsonObject parameters = dlg.getParameters();
-        auto request = this->m_exams[curRow].request();
-        request.setParams(parameters);
-        this->m_exams[curRow].setRequest(request);
-    });
-
-    // TODO The readability of examModel code is poor, after adjustment, determine
-    // whether to scan scout, if so, call dlg.setScoutImages Below is mock data
-    QList<QImage> images;
-    QList<QVector3D> angles;
-    QList<QVector3D> offsets;
-    for (int i = 0; i < 9; i++) {
-        images.push_back(QImage(256, 256, QImage::Format_Grayscale8));
-        angles.push_back(QVector3D(90, 0, 0));
-        offsets.push_back(QVector3D(0, -40 + 10 * i, 0));
+    if(!m_examDialog){
+        m_examDialog = std::make_unique<ExamEditDialog>();
+        connect(m_examDialog.get(), &ExamEditDialog::accepted, this, &ExamTab::onExamDialogAccept);
     }
-    dlg.setScoutImages(images, 256, angles, offsets);
 
-    dlg.setModal(true);
-    dlg.exec();
+    m_examDialog->setData(m_exams[curRow]);
+
+    m_examDialog->setModal(true);
+    m_examDialog->exec();
 }
 
 void ExamTab::onScanStopButtonClicked() {
@@ -274,6 +268,15 @@ void ExamTab::onScanStopButtonClicked() {
 
     auto request = m_exams[curRow].request();
     emit startButtonClicked(request);
+}
+
+void ExamTab::onExamDialogAccept()
+{
+    QJsonObject parameters = m_examDialog->getParameters();
+    auto curRow = currentRow();
+    auto request = this->m_exams[curRow].request();
+    request.setParams(parameters);
+    this->m_exams[curRow].setRequest(request);
 }
 
 void ExamTab::onCurrentExamChanged() {

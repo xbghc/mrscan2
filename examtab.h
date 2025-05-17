@@ -3,6 +3,8 @@
 
 #include "exam.h"
 #include "patientinfodialog.h"
+#include "exameditdialog.h"
+
 #include <QJsonObject>
 #include <QModelIndex>
 #include <QWidget>
@@ -25,7 +27,7 @@ public:
     ~ExamTab();
 
     // exam related
-    int currentRow() const;
+    int currentRow() const; /// 当前exam所在行
     int processingRow() const;
     const Exam &currentExam() const;
 
@@ -51,6 +53,7 @@ private slots:
     void onCopyExamButtonClicked();      /// 按钮： 复制序列
     void onEditExamButtonClicked();      /// 按钮： 编辑序列
     void onScanStopButtonClicked();      /// 按钮： 开始扫描/停止扫描
+    void onExamDialogAccept(); /// Exam窗口点击确定
 
     void onCurrentExamChanged();
 signals:
@@ -63,6 +66,8 @@ private:
     QList<Exam> m_exams;
     QVector<std::shared_ptr<IPatient>> m_patients;
     std::unique_ptr<PatientInfoDialog> m_patientDialog;
+
+    std::unique_ptr<ExamEditDialog> m_examDialog;
 
     /// @note
     /// 如果是正规dicom格式的病人数据，不至于在核磁软件中创建病人，所以这里放个生成新id的函数就够了

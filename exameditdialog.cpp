@@ -1,4 +1,5 @@
 #include <QMessageBox>
+#include <QVector>
 
 #include "exameditdialog.h"
 #include "ui_exameditdialog.h"
@@ -83,6 +84,8 @@ void ExamEditDialog::setData(const Exam& exam)
         ui->checkGroupMode->setChecked(true);
         ui->editSliceSeparation->setValue(parameters["sliceSeparation"].toDouble());
     }
+
+    preview();
 }
 
 QJsonObject ExamEditDialog::getParameters()
@@ -107,11 +110,36 @@ QJsonObject ExamEditDialog::getParameters()
     return out;
 }
 
-void ExamEditDialog::setScoutImages(QList<QImage> images, double fov, QList<QVector3D> angles, QList<QVector3D> offsets)
+/// @warning 这段代码非常死板，只要scout不是T2或者长度不够9就会导致程序崩溃
+void ExamEditDialog::setScout(const Exam &exam)
 {
-    ui->scoutWidget->setScoutImages(images, fov, angles, offsets);
+    try{
+        auto images = exam.images();
 
-    preview();
+        /// @todo 创建类读取params，这样容易出错
+        auto params = exam.request().params();
+        auto fov = params["fov"].toDouble();
+        auto slices = params["slices"].toArray();
+
+        QList<QVector3D> angles;
+        QList<QVector3D> offsets;
+        for (const auto &slice : slices) {
+            auto sliceObj = slice.toObject();
+            auto xOffset = sliceObj["xOffset"].toDouble();
+            auto yOffset = sliceObj["yOffset"].toDouble();
+            auto zOffset = sliceObj["zOffset"].toDouble();
+            auto xAngle = sliceObj["xAngle"].toDouble();
+            auto yAngle = sliceObj["yAngle"].toDouble();
+            auto zAngle = sliceObj["zAngle"].toDouble();
+
+            offsets.push_back(QVector3D(xOffset, yOffset, zOffset));
+            angles.push_back(QVector3D(xAngle, yAngle, zAngle));
+        }
+
+        ui->scoutWidget->setScoutImages(images[0].sliced(0, 9), fov, angles, offsets);
+    }catch(...){
+        return;
+    }
 }
 
 void ExamEditDialog::setSlices(QJsonArray slicesArray)

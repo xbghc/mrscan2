@@ -123,6 +123,10 @@ void ScoutWidget::updateMarkers()
 
 void ScoutWidget::preview(double fov, double thickness, double sliceSeparation, int noSlices, QVector3D angles, QVector3D offsets)
 {
+    if(m_angles.empty()){
+        return;
+    }
+
     auto angleList = QList<QVector3D>();
     auto offsetList = QList<QVector3D>();
     auto v = getVector(angles);
@@ -138,6 +142,9 @@ void ScoutWidget::preview(double fov, double thickness, double sliceSeparation, 
 
 void ScoutWidget::preview(double fov, double thickness, int noSlices, QList<QVector3D> angles, QList<QVector3D> offsets)
 {
+    if(m_angles.empty()){
+        return;
+    }
     for(int i=0;i<noSlices;i++){
         previewSlice(fov, angles[i], offsets[i]);
     }
@@ -164,6 +171,10 @@ bool ScoutWidget::eventFilter(QObject *obj, QEvent *event)
     }
 
     auto [row, col] = viewPosition(view);
+    if(row < 0 || col < 0){
+        return false;
+    }
+
     switch(event->type()){
     case QEvent::MouseButtonPress:
         onViewMousePress(row, col, static_cast<QMouseEvent*>(event));
