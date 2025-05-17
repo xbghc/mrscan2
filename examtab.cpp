@@ -205,6 +205,7 @@ void ExamTab::onRemoveExamButtonClicked() {
     }
 
     m_exams.removeAt(curRow);
+    updateExamTable();
 }
 
 void ExamTab::onCopyExamButtonClicked() {
