@@ -61,7 +61,7 @@ private:
     std::unique_ptr<Ui::examtab> ui;
 
     QList<Exam> m_exams;
-    QVector<IPatient*> m_patients;
+    QVector<std::shared_ptr<IPatient>> m_patients;
     std::unique_ptr<PatientInfoDialog> m_patientDialog;
 
     /// @note

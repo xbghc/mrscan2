@@ -57,16 +57,13 @@ ExamTab::ExamTab(QWidget *parent)
 }
 
 ExamTab::~ExamTab() {
-    for(auto p:m_patients){
-        delete p;
-    }
 }
 
 void ExamTab::updatePatientList(bool reload) {
     if (reload) {
         m_patients.clear();
         for(const auto &p:store::loadAllPatients()){
-            m_patients.push_back(p);
+            m_patients.push_back(std::shared_ptr<IPatient>(p));
         }
     }
 
@@ -124,7 +121,7 @@ const Exam &ExamTab::setResponse(IExamResponse *response) {
 void ExamTab::onEditPatientButtonClicked() {
     const auto& patient = m_patients[ui->comboBox->currentIndex()];
 
-    m_patientDialog->setPatient(patient);
+    m_patientDialog->setPatient(patient.get());
     m_patientDialog->setType(PatientInfoDialog::Type::Edit);
 
     m_patientDialog->setModal(true);
@@ -159,7 +156,7 @@ void ExamTab::onPatientDialogAccepted() {
             p->setName(name);
             p->setBirthday(birthday);
             p->setGender(gender);
-            store::savePatient(p);
+            store::savePatient(p.get());
             updatePatientList();
             return;
         }
@@ -179,7 +176,6 @@ void ExamTab::onDeletePatientButtonClicked() {
     store::deletePatient(id);
     for (int i = 0; i < m_patients.size(); i++) {
         if (m_patients[i]->id() == id) {
-            delete m_patients[i];
             m_patients.removeAt(i);
             updatePatientList();
             return;
@@ -305,7 +301,7 @@ void ExamTab::onCurrentExamChanged() {
 IPatient* ExamTab::getPatient(QString id) {
     for (const auto& p : m_patients) {
         if (p->id() == id) {
-            return p;
+            return p.get();
         }
     }
 
@@ -322,7 +318,7 @@ void ExamTab::addPatient(QString name, QDate birthday,
     patient->setName(name);
     patient->setBirthday(birthday);
     patient->setGender(gender);
-    m_patients.push_back(patient);
+    m_patients.push_back(std::shared_ptr<IPatient>(patient));
 
     setNextId(id.toInt() + 1);
     store::addPatient(patient);
