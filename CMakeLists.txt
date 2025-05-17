@@ -58,8 +58,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         
         # Scanner related files
         scanner.h scanner.cpp
-
-        sequenceencoder.h sequenceencoder.cpp
         
         # Configuration and utility classes
         configmanager.h configmanager.cpp
