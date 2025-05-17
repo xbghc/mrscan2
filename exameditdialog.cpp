@@ -142,6 +142,27 @@ void ExamEditDialog::setScout(const Exam &exam)
     }
 }
 
+QVector3D ExamEditDialog::offset() const
+{
+    auto xOffset = ui->editXOffset->value();
+    auto yOffset = ui->editYOffset->value();
+    auto zOffset = ui->editZOffset->value();
+    return QVector3D(xOffset, yOffset, zOffset);
+}
+
+void ExamEditDialog::setOffset(QVector3D offset)
+{
+    if(offset == this->offset()){
+        return;
+    }
+
+    ui->editXOffset->setValue(offset.x());
+    ui->editYOffset->setValue(offset.y());
+    ui->editZOffset->setValue(offset.z());
+
+    preview();
+}
+
 void ExamEditDialog::setSlices(QJsonArray slicesArray)
 {
     if(ui->checkGroupMode->isChecked()){
@@ -226,7 +247,7 @@ void ExamEditDialog::preview()
         auto separation = ui->editSliceSeparation->value();
 
         auto angles = QVector3D(ui->editXAngle->value(), ui->editYAngle->value(), ui->editZAngle->value());
-        auto offsets = QVector3D(ui->editXOffset->value(), ui->editYOffset->value(), ui->editZOffset->value());
+        auto offsets = this->offset();
         ui->scoutWidget->preview(fov, thickness, separation, noSlices, angles, offsets);
     }else{
         QList<QVector3D> angles;

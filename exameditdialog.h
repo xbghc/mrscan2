@@ -26,6 +26,9 @@ public:
     QJsonObject getParameters();
 
     void setScout(const Exam& exam);
+
+    QVector3D offset() const;
+    void setOffset(QVector3D other);
 private slots:
     void on_comboSlice_currentIndexChanged(int index);
 
