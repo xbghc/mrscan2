@@ -50,6 +50,12 @@ MainWindow::MainWindow(QWidget *parent, IScanner* scanner)
     connect(ui->examTab, &ExamTab::stopButtonClicked, this, &MainWindow::handleScanStop);
     connect(ui->examTab, &ExamTab::startButtonClicked, m_scanner.get(), &IScanner::scan);
 
+    // 查看历史记录
+    connect(ui->historyTab, &HistoryTab::currentItemChanged,
+            [this](const Exam& exam){
+        ui->imagesWidget->setData(exam);
+    });
+
     // preference
     connect(ui->actionPreferences, &QAction::triggered, this, [this]() {
         PreferencesDialog dialog(this);

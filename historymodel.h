@@ -19,6 +19,7 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
     void loadHistoryList();
+
 private:
     QStringList m_headers;
     struct HistoryItem{
