@@ -18,8 +18,7 @@ namespace {} // namespace
 
 ExamTab::ExamTab(QWidget *parent)
     : QWidget(parent), ui(new Ui::examtab),
-    m_patientDialog(new PatientInfoDialog),
-    m_examDialog(nullptr){
+    m_patientDialog(new PatientInfoDialog), m_examDialog(new ExamEditDialog) {
 
     ui->setupUi(this);
     updatePatientList(true);
@@ -54,21 +53,23 @@ ExamTab::ExamTab(QWidget *parent)
             &ExamTab::onEditExamButtonClicked);
     connect(ui->scanButton, &QPushButton::clicked, this,
             &ExamTab::onScanStopButtonClicked);
+
+    connect(m_examDialog.get(), &ExamEditDialog::accepted, this,
+            &ExamTab::onExamDialogAccept);
 }
 
-ExamTab::~ExamTab() {
-}
+ExamTab::~ExamTab() {}
 
 void ExamTab::updatePatientList(bool reload) {
     if (reload) {
         m_patients.clear();
-        for(const auto &p:store::loadAllPatients()){
+        for (const auto &p : store::loadAllPatients()) {
             m_patients.push_back(std::shared_ptr<IPatient>(p));
         }
     }
 
     ui->comboBox->clear();
-    for (const auto& p:m_patients) {
+    for (const auto &p : m_patients) {
         QString label = QString("%1 - %2").arg(p->id(), p->name());
         ui->comboBox->addItem(label, p->id());
     }
@@ -106,7 +107,7 @@ void ExamTab::onScanStoped() {
 }
 
 const Exam &ExamTab::setResponse(IExamResponse *response) {
-    auto& exam = m_exams[processingRow()];
+    auto &exam = m_exams[processingRow()];
 
     exam.setResponse(response);
     exam.setEndTime();
@@ -118,7 +119,7 @@ const Exam &ExamTab::setResponse(IExamResponse *response) {
     updateExamTable();
 
     /// @note 这是判断scout的方式
-    if(exam.request().name().toLower() == "scout"){
+    if (exam.request().name().toLower() == "scout") {
         LOG_INFO("Scout result received");
         m_examDialog->setScout(exam);
     }
@@ -127,7 +128,7 @@ const Exam &ExamTab::setResponse(IExamResponse *response) {
 }
 
 void ExamTab::onEditPatientButtonClicked() {
-    const auto& patient = m_patients[ui->comboBox->currentIndex()];
+    const auto &patient = m_patients[ui->comboBox->currentIndex()];
 
     m_patientDialog->setPatient(patient.get());
     m_patientDialog->setType(PatientInfoDialog::Type::Edit);
@@ -159,7 +160,7 @@ void ExamTab::onPatientDialogAccepted() {
     // m_patientDialog->type() == PatientInfoDialog::Type::Edit
     auto id = m_patientDialog->id();
 
-    for (const auto& p:m_patients) {
+    for (const auto &p : m_patients) {
         if (p->id() == id) {
             p->setName(name);
             p->setBirthday(birthday);
@@ -234,11 +235,6 @@ void ExamTab::onEditExamButtonClicked() {
         return;
     }
 
-    if(!m_examDialog){
-        m_examDialog = std::make_unique<ExamEditDialog>();
-        connect(m_examDialog.get(), &ExamEditDialog::accepted, this, &ExamTab::onExamDialogAccept);
-    }
-
     m_examDialog->setData(m_exams[curRow]);
 
     m_examDialog->setModal(true);
@@ -270,8 +266,7 @@ void ExamTab::onScanStopButtonClicked() {
     emit startButtonClicked(request);
 }
 
-void ExamTab::onExamDialogAccept()
-{
+void ExamTab::onExamDialogAccept() {
     QJsonObject parameters = m_examDialog->getParameters();
     auto curRow = currentRow();
     auto request = this->m_exams[curRow].request();
@@ -302,8 +297,8 @@ void ExamTab::onCurrentExamChanged() {
     }
 }
 
-IPatient* ExamTab::getPatient(QString id) {
-    for (const auto& p : m_patients) {
+IPatient *ExamTab::getPatient(QString id) {
+    for (const auto &p : m_patients) {
         if (p->id() == id) {
             return p.get();
         }
