@@ -35,8 +35,6 @@ private:
     int m_rowNum=3;
     int m_colNum=3;
 
-    /// row, col -> axis(0:x,1:y,2:y)
-    QVector<std::pair<QVector3D, QVector3D>> m_axesMap;
     QPointF m_prevMousePos;
 
     /**

@@ -19,33 +19,6 @@ QVector3D getVector(const QVector3D &angles) {
     return r.map(QVector3D(0, 0, 1));
 }
 
-// Check if vector is parallel to coordinate axes, if so return the
-// corresponding unit vector
-QVector3D getAxis(const QVector3D &angles) {
-    QVector3D v = getVector(angles);
-    QVector3D result(0, 0, 0);
-
-    // Check if parallel to x-axis
-    if (equal(std::abs(v.x()), 1.0f)) {
-        result.setX(v.x() > 0 ? 1 : -1);
-        return result;
-    }
-    // Check if parallel to y-axis
-    else if (equal(std::abs(v.y()), 1.0f)) {
-        result.setY(v.y() > 0 ? 1 : -1);
-        return result;
-    }
-    // Check if parallel to z-axis
-    else if (equal(std::abs(v.z()), 1.0f)) {
-        result.setZ(v.z() > 0 ? 1 : -1);
-        return result;
-    }
-
-    LOG_WARNING(
-        "Scout normal vector angle error, must be parallel to x, y or z axis");
-    return result;
-}
-
 } // namespace
 
 ScoutWidget::ScoutWidget(QWidget *parent) : QImagesWidget(parent) {
@@ -61,11 +34,6 @@ void ScoutWidget::setScoutImages(QList<QImage> images, double fov,
     m_scoutFov = fov;
     m_angles = angles;
     m_offsets = offsets;
-
-    m_axesMap.clear();
-    for (int i = 0; i < m_angles.size(); i++) {
-        m_axesMap.push_back(getViewAxes(m_angles[i]));
-    }
 }
 
 void ScoutWidget::updateMarkers() { QImagesWidget::updateMarkers(); }
