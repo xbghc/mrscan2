@@ -157,14 +157,6 @@ void ScoutWidget::setFov(double fov)
     m_fov = fov;
 }
 
-void ScoutWidget::clearLines()
-{
-    // Clear all previously added lines, but keep the images
-    // QImagesWidget doesn't have a direct clearLines method, but we can refresh the scene by calling updateMarkers()
-    // updateMarkers() will clear the scene (scene->clear()) and re-add the images
-    updateMarkers();
-}
-
 bool ScoutWidget::eventFilter(QObject *watched, QEvent *event)
 {
 

@@ -20,7 +20,6 @@ public:
     void preview(double fov, double thickness, int noSlices, QList<QVector3D> angles, QList<QVector3D> offsets);
 
     void setFov(double fov);
-    void clearLines();
 
 signals:
     void offsetChanged(QVector3D movement); /// 返回变化的量，单位是现实长度单位，与offset一致
