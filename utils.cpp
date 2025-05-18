@@ -121,17 +121,6 @@ bool ErrorHandler::showErrorDialog(const QString& message, const QString& detail
     return msgBox.exec() == QMessageBox::Ok;
 }
 
-
-void newEmptyFile(QFile &file)
-{
-    if (!file.open(QIODevice::WriteOnly)) {
-        LOG_ERROR(QString("Failed to create file: %1").arg(file.fileName()));
-    }
-    QDataStream out(&file);
-    out << (qint32)0;
-    file.close();
-}
-
 QString json_utils::get(const QJsonObject &obj, const QString key, QString d)
 {
     if(obj.contains(key)) {

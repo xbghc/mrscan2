@@ -3,6 +3,7 @@
 
 #include "exameditdialog.h"
 #include "ui_exameditdialog.h"
+#include "utils.h"
 
 
 ExamEditDialog::ExamEditDialog(QWidget *parent)
@@ -56,8 +57,6 @@ ExamEditDialog::ExamEditDialog(QWidget *parent)
     });
 
     initScoutWidget();
-
-    // TODO 判断是否已经进行了scout扫描，如果有，设置图片
 }
 
 ExamEditDialog::~ExamEditDialog()
@@ -156,9 +155,50 @@ void ExamEditDialog::setOffset(QVector3D offset)
         return;
     }
 
+    // 禁用信号防止多次更新
+    ui->editXOffset->blockSignals(true);
+    ui->editYOffset->blockSignals(true);
+    ui->editZOffset->blockSignals(true);
+
     ui->editXOffset->setValue(offset.x());
     ui->editYOffset->setValue(offset.y());
     ui->editZOffset->setValue(offset.z());
+
+    // 恢复信号
+    ui->editXOffset->blockSignals(false);
+    ui->editYOffset->blockSignals(false);
+    ui->editZOffset->blockSignals(false);
+
+    preview();
+}
+
+QVector3D ExamEditDialog::angle() const
+{
+    auto xAngle = ui->editXAngle->value();
+    auto yAngle = ui->editYAngle->value();
+    auto zAngle = ui->editZAngle->value();
+    return QVector3D(xAngle, yAngle, zAngle);
+}
+
+void ExamEditDialog::setAngle(QVector3D other)
+{
+    if(other == this->angle()){
+        return;
+    }
+
+    // 禁用信号防止多次更新
+    ui->editXAngle->blockSignals(true);
+    ui->editYAngle->blockSignals(true);
+    ui->editZAngle->blockSignals(true);
+
+    ui->editXAngle->setValue(other.x());
+    ui->editYAngle->setValue(other.y());
+    ui->editZAngle->setValue(other.z());
+
+    // 恢复信号
+    ui->editXAngle->blockSignals(false);
+    ui->editYAngle->blockSignals(false);
+    ui->editZAngle->blockSignals(false);
 
     preview();
 }
@@ -234,6 +274,11 @@ void ExamEditDialog::initScoutWidget()
     connect(ui->editXOffset, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
     connect(ui->editYOffset, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
     connect(ui->editZOffset, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
+
+    connect(ui->scoutWidget, &ScoutWidget::offsetChanged, this, [this](QVector3D movement){
+
+        this->setOffset(this->offset() + movement);
+    });
 }
 
 void ExamEditDialog::preview()
@@ -246,7 +291,7 @@ void ExamEditDialog::preview()
         // Group Mode
         auto separation = ui->editSliceSeparation->value();
 
-        auto angles = QVector3D(ui->editXAngle->value(), ui->editYAngle->value(), ui->editZAngle->value());
+        auto angles = this->angle();
         auto offsets = this->offset();
         ui->scoutWidget->preview(fov, thickness, separation, noSlices, angles, offsets);
     }else{

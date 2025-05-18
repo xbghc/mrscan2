@@ -29,6 +29,9 @@ public:
 
     QVector3D offset() const;
     void setOffset(QVector3D other);
+
+    QVector3D angle() const;
+    void setAngle(QVector3D other);
 private slots:
     void on_comboSlice_currentIndexChanged(int index);
 

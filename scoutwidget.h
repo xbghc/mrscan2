@@ -40,6 +40,30 @@ private:
     QPointF m_prevMousePos;
 
     /**
+     * @brief 给定角度，获取对应的旋转矩阵
+     * @details 旋转是固定的x,y,z顺序
+     * @param angle QVector3D,分别对应x,y,z轴的旋转角度
+     * @return 旋转矩阵
+     */
+    QMatrix4x4 rotateMatrix(const QVector3D angle) const;
+
+    /**
+     * @brief 获取两个平面的交线
+     * @return QPair<QVector3D point, QVector3D vector>
+     * point 交线的上的某点
+     * vector 交线的方向
+     * 如果vector长度为0，说明两平面平行，没有交线
+     */
+    QPair<QVector3D, QVector3D>
+    intersectionLine(const double A1, const double B1, const double C1,
+                     const double D1, const double A2, const double B2,
+                     const double C2, const double D2) const;
+
+    QPair<QVector3D, QVector3D>
+    intersectionLine(const QVector3D angle1, const QVector3D offset1,
+                     const QVector3D offset2, const QVector3D angle2) const;
+
+    /**
      *  @param scout扫描时传入的的角度
      *  @return [haxis, vaxis]，在图中向右和向下分别代表的空间方向
      *  @note 当谱仪的初始平面改动时，这个函数需要进行调整
