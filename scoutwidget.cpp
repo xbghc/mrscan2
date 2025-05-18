@@ -8,17 +8,6 @@ namespace {
 bool equal(float a, float b, float epsilon = 1e-6) {
     return std::abs(a - b) < epsilon;
 }
-
-// Calculate normal vector based on Euler angles
-QVector3D getVector(const QVector3D &angles) {
-    QMatrix4x4 r;
-    r.rotate(angles.x(), QVector3D(1, 0, 0));
-    r.rotate(angles.y(), QVector3D(0, 1, 0));
-    r.rotate(angles.z(), QVector3D(0, 0, 1));
-
-    return r.map(QVector3D(0, 0, 1));
-}
-
 } // namespace
 
 ScoutWidget::ScoutWidget(QWidget *parent) : QImagesWidget(parent) {
@@ -56,28 +45,31 @@ void ScoutWidget::preview(double fov, double thickness, double sliceSeparation,
         return;
     }
 
-    auto angleList = QList<QVector3D>();
-    auto offsetList = QList<QVector3D>();
-    auto v = getVector(angles);
-
+    QVector<QPair<QVector3D, QVector3D>> slices;
+    auto v = rotateMatrix(angles).map(INIT_NORMAL_VECTOR);
     for (int i = 0; i < noSlices; i++) {
-        double o = (i - static_cast<double>(noSlices) + 1) * sliceSeparation;
-        offsetList.push_back(o * v + offsets);
-        angleList.push_back(angles);
+        double o = (i - (static_cast<double>(noSlices) - 1) / 2) * sliceSeparation;
+        auto offset = o * v + offsets;
+        slices.append(qMakePair(angles, offset));
     }
-    preview(fov, thickness, noSlices, angleList, offsetList);
+    
+    preview(fov, thickness, slices);
 }
 
-void ScoutWidget::preview(double fov, double thickness, int noSlices,
-                          QList<QVector3D> angles, QList<QVector3D> offsets) {
+
+void ScoutWidget::preview(double fov, double thickness, QVector<QPair<QVector3D, QVector3D>> slices) {
     if (m_angles.empty()) {
         return;
     }
+
     updateMarkers();
 
-    for (int i = 0; i < noSlices; i++) {
-        previewSlice(fov, angles[i], offsets[i]);
+    LOG_INFO("start paint");
+    for (int i = 0; i < slices.length(); i++) {
+        previewSlice(fov, slices[i].first, slices[i].second);
     }
+
+    LOG_INFO("paint end");
 }
 
 void ScoutWidget::setScoutFov(double fov) { m_scoutFov = fov; }
@@ -211,13 +203,14 @@ void ScoutWidget::onViewMouseMoved(int row, int col, QMouseEvent *event) {
     QVector3D movement;
     movement = hMovement * haxis + vMovement * vaxis;
 
-    emit offsetChanged(movement);
-
-    m_prevMousePos = currentMousePos;
     LOG_INFO(QString("offset changed: (%1, %2, %3)")
                  .arg(movement.x())
                  .arg(movement.y())
                  .arg(movement.z()));
+    emit offsetChanged(movement);
+
+    m_prevMousePos = currentMousePos;
+
 }
 
 void ScoutWidget::onViewWheeled(int row, int col, QWheelEvent *event) {
