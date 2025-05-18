@@ -21,21 +21,30 @@ public:
 
     void setFov(double fov);
     void clearLines();
+
 signals:
-    void valueChanged(QVector3D angles, QVector3D offsets);
+    void offsetChanged(QVector3D movement); /// 返回变化的量，单位是现实长度单位，与offset一致
+    void angleChanged(QVector3D movement); /// 返回角度变化量
+
 protected:
-    bool eventFilter(QObject* obj, QEvent* event) override;
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     QList<QVector3D> m_angles;
     QList<QVector3D> m_offsets;
     double m_fov;
+    int m_rowNum=3;
+    int m_colNum=3;
+
+    /// row, col -> axis(0:x,1:y,2:y)
+    QVector<std::pair<QVector3D, QVector3D>> m_axesMap;
+    QPointF m_prevMousePos;
 
     void previewSlice(double fov, QVector3D angles, QVector3D offsets);
 
-    void onViewMousePress(int row, int col, QMouseEvent* event);
-    void onViewMouseMove(int row, int col, QMouseEvent* event);
-    void onViewWheeled(int row, int col, QWheelEvent* event);
+    void onViewMousePressd(int row, int col, QMouseEvent *event);
+    void onViewMouseMoved(int row, int col, QMouseEvent *event);
+    void onViewWheeled(int row, int col, QWheelEvent *event);
 };
 
 #endif // SCOUTWIDGET_H

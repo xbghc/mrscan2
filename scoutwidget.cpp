@@ -103,9 +103,11 @@ QList<QPointF> getLineInViewport(double a, double b, double c, double viewFov, d
 ScoutWidget::ScoutWidget(QWidget *parent)
     : QImagesWidget(parent)
 {
-    setRowNum(3);
-    setColNum(3);
+    setRowNum(m_rowNum);
+    setColNum(m_colNum);
     setImages(QList<QImage>());
+
+    setMouseTracking(true);
 }
 
 void ScoutWidget::setScoutImages(QList<QImage> images, double fov, QList<QVector3D> angles, QList<QVector3D> offsets)
@@ -131,7 +133,6 @@ void ScoutWidget::preview(double fov, double thickness, double sliceSeparation, 
     auto offsetList = QList<QVector3D>();
     auto v = getVector(angles);
 
-
     for(int i=0;i<noSlices;i++){
         double o=(i - static_cast<double>(noSlices) + 1) * sliceSeparation;
         offsetList.push_back(o * v + offsets);
@@ -145,6 +146,7 @@ void ScoutWidget::preview(double fov, double thickness, int noSlices, QList<QVec
     if(m_angles.empty()){
         return;
     }
+
     for(int i=0;i<noSlices;i++){
         previewSlice(fov, angles[i], offsets[i]);
     }
@@ -163,36 +165,36 @@ void ScoutWidget::clearLines()
     updateMarkers();
 }
 
-bool ScoutWidget::eventFilter(QObject *obj, QEvent *event)
+bool ScoutWidget::eventFilter(QObject *watched, QEvent *event)
 {
-    auto view = qobject_cast<QGraphicsView*>(obj);
-    if(!view){
-        return false;
+
+    auto viewport = qobject_cast<QWidget*>(watched);
+    if (!viewport){
+        return QWidget::eventFilter(watched, event);
     }
 
-    auto [row, col] = viewPosition(view);
-    if(row < 0 || col < 0){
-        return false;
-    }
+    auto [row, col] = viewPortPosition(viewport);
 
     switch(event->type()){
     case QEvent::MouseButtonPress:
-        onViewMousePress(row, col, static_cast<QMouseEvent*>(event));
-        return true;
+        onViewMousePressd(row, col, static_cast<QMouseEvent*>(event));
+        return false;
     case QEvent::MouseMove:
-        onViewMouseMove(row, col, static_cast<QMouseEvent*>(event));
-        return true;
+        onViewMouseMoved(row, col, static_cast<QMouseEvent*>(event));
+        return false;
     case QEvent::Wheel:
         onViewWheeled(row, col, static_cast<QWheelEvent*>(event));
-        return true;
-    default:
         return false;
+    default:
+        break;
     }
+
+    return QWidget::eventFilter(watched, event);
 }
 
 void ScoutWidget::previewSlice(double fov, QVector3D angles, QVector3D offsets)
 {
-    // TODO Function code can be optimized
+    /// @todo Function code can be optimized
 
     for(int i=0;i<m_angles.length();i++){
         /* Ignore FOV here, view the slice as a plane
@@ -225,12 +227,12 @@ void ScoutWidget::previewSlice(double fov, QVector3D angles, QVector3D offsets)
     }
 }
 
-void ScoutWidget::onViewMousePress(int row, int col, QMouseEvent *event)
+void ScoutWidget::onViewMousePressd(int row, int col, QMouseEvent *event)
 {
 
 }
 
-void ScoutWidget::onViewMouseMove(int row, int col, QMouseEvent *event)
+void ScoutWidget::onViewMouseMoved(int row, int col, QMouseEvent *event)
 {
 
 }
