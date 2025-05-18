@@ -12,40 +12,36 @@ ExamEditDialog::ExamEditDialog(QWidget *parent)
 {
     ui->setupUi(this);
 
-    sliceSpinBoxKeyMap = {
-        {ui->editXAngle, "xAngle"},
-        {ui->editYAngle, "yAngle"},
-        {ui->editZAngle, "zAngle"},
-        {ui->editXOffset, "xOffset"},
-        {ui->editYOffset, "yOffset"},
-        {ui->editZOffset, "zOffset"}
-    };
+    connect(ui->editXAngle, &QDoubleSpinBox::valueChanged, this, [this](double value){
+        int index = ui->comboSlice->currentIndex();
+        m_slices[index].first.setX(value);
+    });
 
-    sliceSpinBoxIndexMap = {
-        {ui->editXAngle, 0},
-        {ui->editYAngle, 1},
-        {ui->editZAngle, 2},
-        {ui->editXOffset, 3},
-        {ui->editYOffset, 4},
-        {ui->editZOffset, 5},
-    };
+    connect(ui->editYAngle, &QDoubleSpinBox::valueChanged, this, [this](double value){
+        int index = ui->comboSlice->currentIndex();
+        m_slices[index].first.setY(value);
+    });
 
-    for(const auto&[spinbox, keyIndex]:sliceSpinBoxIndexMap.asKeyValueRange()){
-        connect(spinbox, &QDoubleSpinBox::valueChanged, this, [this, spinbox, keyIndex](){
-            int index = ui->comboSlice->currentIndex();
-            m_slices[index][keyIndex] = spinbox->value();
-        });
-    }
+    connect(ui->editZAngle, &QDoubleSpinBox::valueChanged, this, [this](double value){
+        int index = ui->comboSlice->currentIndex();
+        m_slices[index].first.setZ(value);
+    });
+    
 
-    paramEditKeyMap = {
-        {ui->editFOV, "fov"},
-        {ui->editNoAverages, "noAverages"},
-        {ui->editNoSlices, "noSlices"},
-        {ui->editNoSamples, "noSamples"},
-        {ui->editNoViews, "noViews"},
-        {ui->editObserveFrequency, "observeFrequency"},
-        {ui->editSliceThickness, "sliceThickness"},
-    };
+    connect(ui->editXOffset, &QDoubleSpinBox::valueChanged, this, [this](double value){
+        int index = ui->comboSlice->currentIndex();
+        m_slices[index].second.setX(value);
+    });
+
+    connect(ui->editYOffset, &QDoubleSpinBox::valueChanged, this, [this](double value){
+        int index = ui->comboSlice->currentIndex();
+        m_slices[index].second.setY(value);
+    });
+
+    connect(ui->editZOffset, &QDoubleSpinBox::valueChanged, this, [this](double value){
+        int index = ui->comboSlice->currentIndex();
+        m_slices[index].second.setZ(value);
+    });
 
     connect(ui->editNoSlices, &QSpinBox::valueChanged, this, [this](int num){
         if(m_slices.count() == num){
@@ -66,15 +62,14 @@ ExamEditDialog::~ExamEditDialog()
 void ExamEditDialog::setData(const Exam& exam)
 {
     QJsonObject parameters = exam.request().params();
-    for(const auto&[abstractSpinBox, jsonKey]:paramEditKeyMap.asKeyValueRange()){
-        if(QSpinBox* spinBox = qobject_cast<QSpinBox*>(abstractSpinBox)){
-            spinBox->setValue(parameters[jsonKey].toInt());
-        }else if(QDoubleSpinBox* doubleSpinBox = qobject_cast<QDoubleSpinBox*>(abstractSpinBox)){
-            doubleSpinBox->setValue(parameters[jsonKey].toDouble());
-        }else{
-            qDebug() << "set data error";
-        }
-    }
+
+    ui->editFOV->setValue(parameters[KEY_FOV].toDouble());
+    ui->editNoAverages->setValue(parameters[KEY_NO_AVERAGES].toInt());
+    ui->editNoSlices->setValue(parameters[KEY_NO_SLICES].toInt());
+    ui->editNoSamples->setValue(parameters[KEY_NO_SAMPLES].toInt());
+    ui->editNoViews->setValue(parameters[KEY_NO_VIEWS].toInt());
+    ui->editObserveFrequency->setValue(parameters[KEY_OBSERVE_FREQUENCY].toDouble());
+    ui->editSliceThickness->setValue(parameters[KEY_SLICE_THICKNESS].toDouble());
 
     if(parameters.contains("slices")){
         ui->checkGroupMode->setChecked(false);
@@ -90,20 +85,19 @@ void ExamEditDialog::setData(const Exam& exam)
 QJsonObject ExamEditDialog::getParameters()
 {
     QJsonObject out;
-    for(const auto&[abstractSpinBox, jsonKey]:paramEditKeyMap.asKeyValueRange()){
-        if(QSpinBox* spinBox = qobject_cast<QSpinBox*>(abstractSpinBox)){
-            out.insert(jsonKey, spinBox->value());
-        }else if(QDoubleSpinBox* doubleSpinBox = qobject_cast<QDoubleSpinBox*>(abstractSpinBox)){
-            out.insert(jsonKey, doubleSpinBox->value());
-        }else{
-            qDebug() << "get data error";
-        }
-    }
+
+    out.insert(KEY_FOV, ui->editFOV->value());
+    out.insert(KEY_NO_AVERAGES, ui->editNoAverages->value());
+    out.insert(KEY_NO_SLICES, ui->editNoSlices->value());
+    out.insert(KEY_NO_SAMPLES, ui->editNoSamples->value());
+    out.insert(KEY_NO_VIEWS, ui->editNoViews->value());
+    out.insert(KEY_OBSERVE_FREQUENCY, ui->editObserveFrequency->value());
+    out.insert(KEY_SLICE_THICKNESS, ui->editSliceThickness->value());
 
     if(m_slices.empty()){
-        out.insert("sliceSeparation", ui->editSliceSeparation->value());
+        out.insert(KEY_SLICE_SEPARATION, ui->editSliceSeparation->value());
     }else{
-        out.insert("slices", getSlices());
+        out.insert(KEY_SLICES, jsonSlices());
     }
 
     return out;
@@ -155,10 +149,9 @@ void ExamEditDialog::setOffset(QVector3D offset)
         return;
     }
 
-    // 禁用信号防止多次更新
+    // 禁用信号防止多次更新，保留一个用于触发信号
     ui->editXOffset->blockSignals(true);
     ui->editYOffset->blockSignals(true);
-    ui->editZOffset->blockSignals(true);
 
     ui->editXOffset->setValue(offset.x());
     ui->editYOffset->setValue(offset.y());
@@ -167,9 +160,6 @@ void ExamEditDialog::setOffset(QVector3D offset)
     // 恢复信号
     ui->editXOffset->blockSignals(false);
     ui->editYOffset->blockSignals(false);
-    ui->editZOffset->blockSignals(false);
-
-    preview();
 }
 
 QVector3D ExamEditDialog::angle() const
@@ -186,10 +176,9 @@ void ExamEditDialog::setAngle(QVector3D other)
         return;
     }
 
-    // 禁用信号防止多次更新
+    // 禁用信号防止多次更新，保留一个用于触发信号
     ui->editXAngle->blockSignals(true);
     ui->editYAngle->blockSignals(true);
-    ui->editZAngle->blockSignals(true);
 
     ui->editXAngle->setValue(other.x());
     ui->editYAngle->setValue(other.y());
@@ -198,43 +187,49 @@ void ExamEditDialog::setAngle(QVector3D other)
     // 恢复信号
     ui->editXAngle->blockSignals(false);
     ui->editYAngle->blockSignals(false);
-    ui->editZAngle->blockSignals(false);
 
-    preview();
 }
 
 void ExamEditDialog::setSlices(QJsonArray slicesArray)
 {
-    if(ui->checkGroupMode->isChecked()){
-        qDebug() << "unexpected status: set slices at group mode";
-    }
+    auto sliceNum = slicesArray.count();
 
-    size_t sliceCount = slicesArray.count();
-    if(m_slices.count() != sliceCount){
-        m_slices.resize(slicesArray.count());
-    }
+    setSliceComboNumbers(sliceNum);
 
-    for(int sliceIndex=0;sliceIndex<slicesArray.count();sliceIndex++){
-        auto slice = slicesArray[sliceIndex].toObject();
+    m_slices.resize(sliceNum);
 
-        for(const auto& [spinbox, jsonKey]:sliceSpinBoxKeyMap.asKeyValueRange()){
-            int index = sliceSpinBoxIndexMap[spinbox];
-            m_slices[sliceIndex][index] = slice[jsonKey].toDouble();
-        }
+    for(int i=0;i<sliceNum;i++){
+        auto slice = slicesArray[i].toObject();
+
+        QVector3D angles(
+            slice[KEY_X_ANGLE].toDouble(),
+            slice[KEY_Y_ANGLE].toDouble(),
+            slice[KEY_Z_ANGLE].toDouble()
+        );
+
+        QVector3D offsets(
+            slice[KEY_X_OFFSET].toDouble(),
+            slice[KEY_Y_OFFSET].toDouble(),
+            slice[KEY_Z_OFFSET].toDouble()
+        );
+
+        m_slices[i] = qMakePair(angles, offsets);
     }
 
     setSliceComboNumbers(slicesArray.count());
 }
 
-QJsonArray ExamEditDialog::getSlices()
+QJsonArray ExamEditDialog::jsonSlices()
 {
     QJsonArray out;
     for(const auto& slice:m_slices){
         QJsonObject item;
-        for(const auto&[spinbox, jsonKey]:sliceSpinBoxKeyMap.asKeyValueRange()){
-            int index = sliceSpinBoxIndexMap[spinbox];
-            item[jsonKey] = slice[index];
-        }
+        item[KEY_X_ANGLE] = slice.first.x();
+        item[KEY_Y_ANGLE] = slice.first.y();
+        item[KEY_Z_ANGLE] = slice.first.z();
+        item[KEY_X_OFFSET] = slice.second.x();
+        item[KEY_Y_OFFSET] = slice.second.y();
+        item[KEY_Z_OFFSET] = slice.second.z();
         out.append(item);
     }
     return out;
@@ -243,7 +238,6 @@ QJsonArray ExamEditDialog::getSlices()
 void ExamEditDialog::setSliceComboNumbers(int n)
 {
     if (n < 0) return;
-
 
     const QSignalBlocker blocker(ui->comboSlice);
     ui->comboSlice->clear();
@@ -283,6 +277,8 @@ void ExamEditDialog::initScoutWidget()
 
 void ExamEditDialog::preview()
 {
+    LOG_INFO("paint");
+
     auto fov = ui->editFOV->value();
     auto noSlices = ui->editNoSlices->value();
     auto thickness = ui->editSliceThickness->value();
@@ -299,8 +295,8 @@ void ExamEditDialog::preview()
         QList<QVector3D> offsets;
 
         for(int i=0;i<m_slices.count();i++){
-            angles.push_back(QVector3D(m_slices[i][0], m_slices[i][1], m_slices[i][2]));
-            offsets.push_back(QVector3D(m_slices[i][3], m_slices[i][4], m_slices[i][5]));
+            angles.push_back(m_slices[i].first);
+            offsets.push_back(m_slices[i].second);
         }
 
         ui->scoutWidget->preview(fov, thickness, noSlices, angles, offsets);
@@ -309,27 +305,12 @@ void ExamEditDialog::preview()
 
 void ExamEditDialog::on_comboSlice_currentIndexChanged(int index)
 {
-    if(ui->checkGroupMode->isChecked()){
-        qDebug() << "unexpected status: comboBox changed at group mode";
-    }
-
     const auto& curSlice = m_slices[index];
-    for(const auto& [spinbox, i]:sliceSpinBoxIndexMap.asKeyValueRange()){
-        spinbox->setValue(curSlice[i]);
-    }
-}
-
-void ExamEditDialog::on_checkGroupMode_stateChanged(int arg1)
-{
-    if(arg1 == Qt::Unchecked){
-        ui->stackedWidget->setCurrentIndex(0);
-        return;
-    }
-
-    if(arg1 == Qt::Checked){
-        ui->stackedWidget->setCurrentIndex(1);
-        return;
-    }
-
-    qDebug() << "unexpected group mode checkbox status: " << arg1;
+    
+    ui->editXAngle->setValue(curSlice.first.x());
+    ui->editYAngle->setValue(curSlice.first.y());
+    ui->editZAngle->setValue(curSlice.first.z());
+    ui->editXOffset->setValue(curSlice.second.x());
+    ui->editYOffset->setValue(curSlice.second.y());
+    ui->editZOffset->setValue(curSlice.second.z());
 }
