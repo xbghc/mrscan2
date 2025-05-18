@@ -12,35 +12,53 @@ ExamEditDialog::ExamEditDialog(QWidget *parent)
 {
     ui->setupUi(this);
 
+    resisterEditerSignals();
+
+    connect(ui->scoutWidget, &ScoutWidget::offsetChanged, this, [this](QVector3D movement){
+        this->setOffset(this->offset() + movement);
+    });
+}
+
+ExamEditDialog::~ExamEditDialog()
+{
+}
+
+void ExamEditDialog::resisterEditerSignals()
+{
     connect(ui->editXAngle, &QDoubleSpinBox::valueChanged, this, [this](double value){
         int index = ui->comboSlice->currentIndex();
         m_slices[index].first.setX(value);
+        preview();
     });
 
     connect(ui->editYAngle, &QDoubleSpinBox::valueChanged, this, [this](double value){
         int index = ui->comboSlice->currentIndex();
         m_slices[index].first.setY(value);
+        preview();
     });
 
     connect(ui->editZAngle, &QDoubleSpinBox::valueChanged, this, [this](double value){
         int index = ui->comboSlice->currentIndex();
         m_slices[index].first.setZ(value);
+        preview();
     });
-    
 
     connect(ui->editXOffset, &QDoubleSpinBox::valueChanged, this, [this](double value){
         int index = ui->comboSlice->currentIndex();
         m_slices[index].second.setX(value);
+        preview();
     });
 
     connect(ui->editYOffset, &QDoubleSpinBox::valueChanged, this, [this](double value){
         int index = ui->comboSlice->currentIndex();
         m_slices[index].second.setY(value);
+        preview();
     });
 
     connect(ui->editZOffset, &QDoubleSpinBox::valueChanged, this, [this](double value){
         int index = ui->comboSlice->currentIndex();
         m_slices[index].second.setZ(value);
+        preview();
     });
 
     connect(ui->editNoSlices, &QSpinBox::valueChanged, this, [this](int num){
@@ -50,13 +68,9 @@ ExamEditDialog::ExamEditDialog(QWidget *parent)
 
         m_slices.resize(num);
         setSliceComboNumbers(num);
+        preview();
     });
 
-    initScoutWidget();
-}
-
-ExamEditDialog::~ExamEditDialog()
-{
 }
 
 void ExamEditDialog::setData(const Exam& exam)
@@ -149,17 +163,10 @@ void ExamEditDialog::setOffset(QVector3D offset)
         return;
     }
 
-    // 禁用信号防止多次更新，保留一个用于触发信号
-    ui->editXOffset->blockSignals(true);
-    ui->editYOffset->blockSignals(true);
-
     ui->editXOffset->setValue(offset.x());
     ui->editYOffset->setValue(offset.y());
     ui->editZOffset->setValue(offset.z());
 
-    // 恢复信号
-    ui->editXOffset->blockSignals(false);
-    ui->editYOffset->blockSignals(false);
 }
 
 QVector3D ExamEditDialog::angle() const
@@ -176,18 +183,9 @@ void ExamEditDialog::setAngle(QVector3D other)
         return;
     }
 
-    // 禁用信号防止多次更新，保留一个用于触发信号
-    ui->editXAngle->blockSignals(true);
-    ui->editYAngle->blockSignals(true);
-
     ui->editXAngle->setValue(other.x());
     ui->editYAngle->setValue(other.y());
     ui->editZAngle->setValue(other.z());
-
-    // 恢复信号
-    ui->editXAngle->blockSignals(false);
-    ui->editYAngle->blockSignals(false);
-
 }
 
 void ExamEditDialog::setSlices(QJsonArray slicesArray)
@@ -254,25 +252,6 @@ void ExamEditDialog::setSliceComboNumbers(int n)
     if (n > 0) {
         ui->comboSlice->setCurrentIndex(0);
     }
-}
-
-void ExamEditDialog::initScoutWidget()
-{
-    connect(ui->editFOV, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
-    connect(ui->editSliceThickness, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
-    connect(ui->editNoSlices, &QSpinBox::valueChanged, this, &ExamEditDialog::preview);
-    connect(ui->editSliceSeparation, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
-    connect(ui->editXAngle, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
-    connect(ui->editYAngle, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
-    connect(ui->editZAngle, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
-    connect(ui->editXOffset, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
-    connect(ui->editYOffset, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
-    connect(ui->editZOffset, &QDoubleSpinBox::valueChanged, this, &ExamEditDialog::preview);
-
-    connect(ui->scoutWidget, &ScoutWidget::offsetChanged, this, [this](QVector3D movement){
-
-        this->setOffset(this->offset() + movement);
-    });
 }
 
 void ExamEditDialog::preview()

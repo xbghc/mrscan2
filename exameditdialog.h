@@ -62,9 +62,9 @@ private:
     QJsonArray jsonSlices();
     void setSliceComboNumbers(int num);
 
-    void initScoutWidget();
-
     void preview();
+
+    void resisterEditerSignals();
 
     constexpr const static char* KEY_X_OFFSET = "xOffset";
     constexpr const static char* KEY_Y_OFFSET = "yOffset";
