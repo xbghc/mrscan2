@@ -74,10 +74,7 @@ std::pair<QVector3D, QVector3D> ScoutWidget::getViewAxes(QVector3D angle) {
     auto hAxis = INIT_HORIZONTAL_VECTOR;
     auto vAxis = INIT_VERTICAL_VECTOR;
 
-    QMatrix4x4 r;
-    r.rotate(angle.x(), QVector3D(1, 0, 0));
-    r.rotate(angle.y(), QVector3D(0, 1, 0));
-    r.rotate(angle.z(), QVector3D(0, 0, 1));
+    auto r = rotateMatrix(angle);
 
     hAxis = r.map(hAxis);
     vAxis = r.map(vAxis);
@@ -146,7 +143,7 @@ QMatrix4x4 ScoutWidget::rotateMatrix(const QVector3D angle) const {
     QMatrix4x4 r;
     r.rotate(angle.x(), QVector3D(1, 0, 0));
     r.rotate(angle.y(), QVector3D(0, 1, 0));
-    r.rotate(angle.z(), QVector3D(0, 0, 2));
+    r.rotate(angle.z(), QVector3D(0, 0, 1));
     return r;
 }
 
