@@ -79,7 +79,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         
         # Configuration files
         configs/sequences.json
-        configs/exams.json
         configs/tunings.json
         configs/preferences.json
         mrscan2_zh_CN.qm
