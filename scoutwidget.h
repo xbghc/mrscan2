@@ -29,8 +29,7 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
-    QList<QVector3D> m_angles;
-    QList<QVector3D> m_offsets;
+    QVector<QPair<QVector3D, QVector3D>> m_slices;
     double m_scoutFov;
     int m_rowNum=3;
     int m_colNum=3;

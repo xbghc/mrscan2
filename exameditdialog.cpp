@@ -16,6 +16,7 @@ ExamEditDialog::ExamEditDialog(QWidget *parent)
 
     connect(ui->scoutWidget, &ScoutWidget::offsetChanged, this, [this](QVector3D movement){
         this->shouldRepaint = false;
+
         this->setOffset(this->offset() + movement);
         this->shouldRepaint = true;
         this->preview();
@@ -276,7 +277,8 @@ void ExamEditDialog::preview()
         auto offsets = this->offset();
         ui->scoutWidget->preview(fov, thickness, separation, noSlices, angles, offsets);
     }else{
-        ui->scoutWidget->preview(fov, thickness, m_slices);
+        auto currentIndex = ui->comboSlice->currentIndex();
+        ui->scoutWidget->preview(fov, thickness, {m_slices[currentIndex]});
     }
 }
 

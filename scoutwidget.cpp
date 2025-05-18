@@ -21,8 +21,10 @@ void ScoutWidget::setScoutImages(QList<QImage> images, double fov,
                                  QList<QVector3D> offsets) {
     QImagesWidget::setImages(images);
     m_scoutFov = fov;
-    m_angles = angles;
-    m_offsets = offsets;
+    m_slices.clear();
+    for(int i=0;i<angles.length();i++){
+        m_slices.append(qMakePair(angles[i], offsets[i]));
+    }
 }
 
 void ScoutWidget::updateMarkers() { QImagesWidget::updateMarkers(); }
@@ -41,7 +43,7 @@ std::pair<QVector3D, QVector3D> ScoutWidget::getViewAxes(QVector3D angle) {
 
 void ScoutWidget::preview(double fov, double thickness, double sliceSeparation,
                           int noSlices, QVector3D angles, QVector3D offsets) {
-    if (m_angles.empty()) {
+    if (m_slices.empty()) {
         return;
     }
 
@@ -58,7 +60,7 @@ void ScoutWidget::preview(double fov, double thickness, double sliceSeparation,
 
 
 void ScoutWidget::preview(double fov, double thickness, QVector<QPair<QVector3D, QVector3D>> slices) {
-    if (m_angles.empty()) {
+    if (m_slices.empty()) {
         return;
     }
 
@@ -122,18 +124,28 @@ ScoutWidget::intersectionLine(const double A1, const double B1, const double C1,
     auto lineVector =
         QVector3D::crossProduct(plane1NormalVector, plane2NormalVector);
 
-    if (lineVector.x() != 0) {
+    if (lineVector.x() > 1e-6) {
         point.setX(0);
 
         auto det = B1 * C2 - C1 * B2;
-        point.setY((-C2 * D1 + C1 * D2) / det);
-        point.setZ((B2 * D1 - B1 * D2) / det);
+
+        if(det > 1e-6){
+            point.setY((-C2 * D1 + C1 * D2) / det);
+            point.setZ((B2 * D1 - B1 * D2) / det);
+        }else{
+            return {QVector3D(), QVector3D(0, 0, 0)};
+        }
     } else {
         point.setY(0);
 
         auto det = A1 * C2 - C1 * A2;
-        point.setX((-C2 * D1 + C1 * D2) / det);
-        point.setZ((A2 * D1 - A1 * D2) / det);
+
+        if(det > 1e-6){
+            point.setX((-C2 * D1 + C1 * D2) / det);
+            point.setZ((A2 * D1 - A1 * D2) / det);
+        }else{
+            return {QVector3D(), QVector3D(0, 0, 0)};
+        }
     }
     return {point, lineVector};
 }
@@ -150,18 +162,19 @@ ScoutWidget::intersectionLine(const QVector3D angle1, const QVector3D offset1,
                             D2);
 }
 
+
 void ScoutWidget::previewSlice(double fov, QVector3D angles,
                                QVector3D offsets) {
     /// @todo 可选择是否将slice视为无边界的平面
 
-    for (int i = 0; i < m_angles.length(); i++) {
-        auto scoutAngle = m_angles[i];
-        auto scoutOffset = m_offsets[i];
+    for (int i = 0; i < m_slices.length(); i++) {
+        auto scoutAngle = m_slices[i].first;
+        auto scoutOffset = m_slices[i].second;
 
         auto [point, vector] =
             intersectionLine(scoutAngle, scoutOffset, angles, offsets);
 
-        if (equal(vector.lengthSquared(), 0)) {
+        if (vector.lengthSquared() < 1e-6) {
             continue;
         }
 
@@ -171,7 +184,7 @@ void ScoutWidget::previewSlice(double fov, QVector3D angles,
         auto p2 = point + vector * lineSize;
 
         // 根据slice所在的平面绘制图片
-        auto [hAxis, vAxis] = getViewAxes(m_angles[i]);
+        auto [hAxis, vAxis] = getViewAxes(scoutAngle);
         auto line = new QGraphicsLineItem(
             QVector3D::dotProduct(p1, hAxis), QVector3D::dotProduct(p1, vAxis),
             QVector3D::dotProduct(p2, hAxis), QVector3D::dotProduct(p2, vAxis));
@@ -194,7 +207,7 @@ void ScoutWidget::onViewMousePressd(int row, int col, QMouseEvent *event) {
 }
 
 void ScoutWidget::onViewMouseMoved(int row, int col, QMouseEvent *event) {
-    auto [haxis, vaxis] = getViewAxes(m_angles[row * m_colNum + col]);
+    auto [haxis, vaxis] = getViewAxes(m_slices[row * m_colNum + col].first);
     auto view = this->view(row, col);
     auto currentMousePos = view->mapToScene(event->pos());
 
