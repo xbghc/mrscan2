@@ -15,7 +15,10 @@ ExamEditDialog::ExamEditDialog(QWidget *parent)
     resisterEditerSignals();
 
     connect(ui->scoutWidget, &ScoutWidget::offsetChanged, this, [this](QVector3D movement){
+        this->shouldRepaint = false;
         this->setOffset(this->offset() + movement);
+        this->shouldRepaint = true;
+        this->preview();
     });
 }
 
@@ -256,6 +259,10 @@ void ExamEditDialog::setSliceComboNumbers(int n)
 
 void ExamEditDialog::preview()
 {
+    if(!shouldRepaint){
+        return;
+    }
+
     LOG_INFO("paint");
 
     auto fov = ui->editFOV->value();

@@ -62,6 +62,8 @@ private:
     QJsonArray jsonSlices();
     void setSliceComboNumbers(int num);
 
+    bool shouldRepaint = true;
+
     void preview();
 
     void resisterEditerSignals();
