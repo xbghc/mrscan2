@@ -202,20 +202,35 @@ void ScoutWidget::previewSlice(double fov, QVector3D angles,
             continue;
         }
 
-        // 生成足够长的直线以绘制
-        const double lineSize = 500;
-        auto p1 = point - vector * lineSize;
-        auto p2 = point + vector * lineSize;
-
-        // 根据slice所在的平面绘制图片
+        // 计算与视图边缘的交点位置
         auto [hAxis, vAxis] = getViewAxes(scoutAngle);
-        auto line = new QGraphicsLineItem(
-            QVector3D::dotProduct(p1, hAxis), QVector3D::dotProduct(p1, vAxis),
-            QVector3D::dotProduct(p2, hAxis), QVector3D::dotProduct(p2, vAxis));
+
+        // point在视图中的投影
+        auto pointOnViewX = QVector3D::dotProduct(point, hAxis);
+        auto pointOnViewY = QVector3D::dotProduct(point, vAxis);
+
+        // vector在视图中的投影
+        auto vectorOnViewX = QVector3D::dotProduct(vector, hAxis);
+        auto vectorOnViewY = QVector3D::dotProduct(vector, vAxis);
+
+        auto lineEdge = m_scoutFov;
+        double x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+        if (std::abs(vectorOnViewX) > std::abs(vectorOnViewY)) {
+            x1 = -lineEdge / 2;
+            x2 = lineEdge / 2;
+            y1 = (x1 - pointOnViewX) * vectorOnViewY / vectorOnViewX + pointOnViewY;
+            y2 = (x2 - pointOnViewX) * vectorOnViewY / vectorOnViewX + pointOnViewY;
+        } else {
+            y1 = -lineEdge / 2;
+            y2 = lineEdge / 2;
+            x1 = (y1 - pointOnViewY) * vectorOnViewX / vectorOnViewY + pointOnViewX;
+            x2 = (y2 - pointOnViewY) * vectorOnViewX / vectorOnViewY + pointOnViewX;
+        }
+        auto line = new QGraphicsLineItem(x1, y1, x2, y2);
 
         QPen pen(Qt::red);          // Color
-        pen.setWidth(2);            // Line width
-        pen.setStyle(Qt::DashLine); // Dashed line
+        pen.setWidth(3);            // Line width
+        // pen.setStyle(Qt::DashLine); // Dashed line
         line->setPen(pen);
         QImagesWidget::addLine(i, line);
     }
