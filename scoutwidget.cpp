@@ -3,7 +3,6 @@
 #include <QMatrix4x4>
 #include <QPen>
 
-
 ScoutWidget::ScoutWidget(QWidget *parent) : QImagesWidget(parent) {
     setRowNum(m_rowNum);
     setColNum(m_colNum);
@@ -16,7 +15,7 @@ void ScoutWidget::setScoutImages(QList<QImage> images, double fov,
     QImagesWidget::setImages(images);
     m_scoutFov = fov;
     m_scoutSlices.clear();
-    for(int i=0;i<angles.length();i++){
+    for (int i = 0; i < angles.length(); i++) {
         m_scoutSlices.append(qMakePair(angles[i], offsets[i]));
     }
 }
@@ -48,12 +47,12 @@ void ScoutWidget::preview(double fov, double thickness, double sliceSeparation,
         auto offset = o * v + offsets;
         slices.append(qMakePair(angles, offset));
     }
-    
+
     preview(fov, thickness, slices);
 }
 
-
-void ScoutWidget::preview(double fov, double thickness, QVector<QPair<QVector3D, QVector3D>> slices) {
+void ScoutWidget::preview(double fov, double thickness,
+                          QVector<QPair<QVector3D, QVector3D>> slices) {
     if (m_scoutSlices.empty()) {
         return;
     }
@@ -184,13 +183,14 @@ ScoutWidget::intersectionLine(const QVector3D angle1, const QVector3D offset1,
                             D2);
 }
 
-
 void ScoutWidget::previewSlice(double fov, QVector3D angles,
                                QVector3D offsets) {
-    /// @todo 可选择是否将slice视为无边界的平面
+    /// @note 可选择是否将slice视为无边界的平面，只需要调整lineEdge
 
-    LOG_INFO(QString("offset: %1, %2, %3").arg(
-        offsets.x()).arg(offsets.y()).arg(offsets.z()));
+    LOG_INFO(QString("offset: %1, %2, %3")
+                 .arg(offsets.x())
+                 .arg(offsets.y())
+                 .arg(offsets.z()));
     for (int i = 0; i < m_scoutSlices.length(); i++) {
         auto scoutAngle = m_scoutSlices[i].first;
         auto scoutOffset = m_scoutSlices[i].second;
@@ -255,14 +255,9 @@ void ScoutWidget::onViewMouseMoved(int row, int col, QMouseEvent *event) {
     QVector3D movement;
     movement = hMovement * haxis + vMovement * vaxis;
 
-    LOG_INFO(QString("offset changed, movement: (%1, %2, %3), row: %4, col: %5")
-                 .arg(movement.x())
-                 .arg(movement.y())
-                 .arg(movement.z()).arg(row).arg(col));
     emit offsetChanged(movement);
 
     m_prevMousePos = currentMousePos;
-
 }
 
 void ScoutWidget::onViewWheeled(int row, int col, QWheelEvent *event) {
