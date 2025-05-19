@@ -257,5 +257,9 @@ void ScoutWidget::onViewMouseMoved(int row, int col, QMouseEvent *event) {
 void ScoutWidget::onViewWheeled(int row, int col, QWheelEvent *event) {
     const double rate = 0.01;
     auto delta = event->angleDelta().y() * rate;
-    /// @todo 这里应该根据原来的角度，进行旋转，得到新的角度再返回
+
+    auto axis = rotateMatrix(m_scoutSlices[row * m_colNum + col].first)
+                    .map(INIT_NORMAL_VECTOR);
+
+    emit angleChanged(axis * delta);
 }

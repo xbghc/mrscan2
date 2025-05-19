@@ -1,5 +1,8 @@
 #include <QMessageBox>
 #include <QVector>
+#include <QMatrix4x4>
+#include <QQuaternion>
+
 
 #include "exameditdialog.h"
 #include "ui_exameditdialog.h"
@@ -14,10 +17,29 @@ ExamEditDialog::ExamEditDialog(QWidget *parent)
 
     resisterEditerSignals();
 
+    // offset changed
     connect(ui->scoutWidget, &ScoutWidget::offsetChanged, this, [this](QVector3D movement){
         this->shouldRepaint = false;
 
         this->setOffset(this->offset() + movement);
+        this->shouldRepaint = true;
+        this->preview();
+    });
+
+    // angle changed
+    connect(ui->scoutWidget, &ScoutWidget::angleChanged, this, [this](QVector3D angle){
+
+        auto currentIndex = ui->comboSlice->currentIndex();
+        auto currentSlice = m_slices[currentIndex];
+        auto oldMatrix = ui->scoutWidget->rotateMatrix(currentSlice.first);
+        auto newMatrix = oldMatrix * ui->scoutWidget->rotateMatrix(angle);
+        // 由矩阵计算角度(x,y,z), 要求旋转顺序为xyz
+        QQuaternion quat = QQuaternion::fromRotationMatrix(newMatrix.toGenericMatrix<3,3>());
+        auto newAngle = quat.toEulerAngles();
+
+        this->shouldRepaint = false;
+
+        this->setAngle(newAngle);
         this->shouldRepaint = true;
         this->preview();
     });
