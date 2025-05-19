@@ -12,14 +12,28 @@ void ScoutWidget::setScoutImages(QList<QImage> images, double fov,
                                  QList<QVector3D> angles,
                                  QList<QVector3D> offsets) {
     QImagesWidget::setImages(images);
+    QImagesWidget::setSceneWidth(fov);
+    QImagesWidget::setSceneHeight(fov);
+
     m_scoutFov = fov;
     m_scoutSlices.clear();
+    
     for (int i = 0; i < angles.length(); i++) {
         m_scoutSlices.append(qMakePair(angles[i], offsets[i]));
     }
+
+    for (int r = 0; r < m_rowNum; r++) {
+        for (int c = 0; c < m_colNum; c++) {
+            auto [hAxis, vAxis] = getViewAxes(m_scoutSlices[r * m_colNum + c].first);
+            auto offset = m_scoutSlices[r * m_colNum + c].second;
+            setSceneOffset(r, c, QVector3D::dotProduct(offset, hAxis) - m_scoutFov / 2, QVector3D::dotProduct(offset, vAxis) - m_scoutFov / 2);
+        }
+    }
 }
 
-void ScoutWidget::updateMarkers() { QImagesWidget::updateMarkers(); }
+void ScoutWidget::updateMarkers() {
+    QImagesWidget::updateMarkers();
+}
 
 std::pair<QVector3D, QVector3D>
 ScoutWidget::getViewAxes(QVector3D angle) const {

@@ -1,6 +1,5 @@
 #include "../resultwidget.h"
 #include "ui_resultwidget.h"
-#include "utils.h"
 
 #include <QDir>
 #include <QFile>
@@ -124,12 +123,12 @@ void ResultWidget::setColNum(int col)
 
 void ResultWidget::setHeight(int height)
 {
-    ui->contentWidget->setHeight(height);
+    ui->contentWidget->setViewHeight(height);
 }
 
 void ResultWidget::setWidth(int width)
 {
-    ui->contentWidget->setWidth(width);
+    ui->contentWidget->setViewWidth(width);
 }
 
 void ResultWidget::updateMarkers()
