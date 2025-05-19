@@ -1,5 +1,4 @@
 #include "scoutwidget.h"
-#include "utils.h"
 #include <QMatrix4x4>
 #include <QPen>
 
