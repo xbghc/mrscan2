@@ -21,21 +21,6 @@ public:
 
     void setScoutFov(double other);
 
-signals:
-    void offsetChanged(QVector3D movement); /// 返回变化的量，单位是现实长度单位，与offset一致
-    void angleChanged(QVector3D movement); /// 返回角度变化量
-
-protected:
-    bool eventFilter(QObject *watched, QEvent *event) override;
-
-private:
-    QVector<QPair<QVector3D, QVector3D>> m_scoutSlices;
-    double m_scoutFov;
-    int m_rowNum=3;
-    int m_colNum=3;
-
-    QPointF m_prevMousePos;
-
     /**
      * @brief 给定角度，获取对应的旋转矩阵
      * @details 旋转是固定的x,y,z顺序
@@ -66,7 +51,31 @@ private:
      *  @note 当谱仪的初始平面改动时，这个函数需要进行调整
      *  @todo 初始值写在setting中
      */
-    std::pair<QVector3D, QVector3D> getViewAxes(QVector3D angle);
+    std::pair<QVector3D, QVector3D> getViewAxes(QVector3D angle) const;
+
+    /// @todo 这些是由谱仪决定的常量，将来应该调整到配置里面，使其可修改
+    constexpr const static QVector3D INIT_NORMAL_VECTOR = QVector3D(0, 0, 1);
+    constexpr const static QVector3D INIT_HORIZONTAL_VECTOR = QVector3D(-1, 0, 0);
+    constexpr const static QVector3D INIT_VERTICAL_VECTOR = QVector3D(0, -1, 0);
+
+signals:
+    void offsetChanged(QVector3D movement); /// 返回变化的量，单位是现实长度单位，与offset一致
+    void angleChanged(QVector3D movement); /// 返回角度变化量
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
+    void onViewMousePressd(int row, int col, QMouseEvent *event);
+    void onViewMouseMoved(int row, int col, QMouseEvent *event);
+    void onViewWheeled(int row, int col, QWheelEvent *event);
+
+private:
+    QVector<QPair<QVector3D, QVector3D>> m_scoutSlices;
+    double m_scoutFov;
+    int m_rowNum=3;
+    int m_colNum=3;
+
+    QPointF m_prevMousePos;
 
     /**
      * @brief 预览单个切片，改方法不会清除视图中已存在的内容
@@ -76,14 +85,6 @@ private:
      */
     void previewSlice(double fov, QVector3D angles, QVector3D offsets);
 
-    void onViewMousePressd(int row, int col, QMouseEvent *event);
-    void onViewMouseMoved(int row, int col, QMouseEvent *event);
-    void onViewWheeled(int row, int col, QWheelEvent *event);
-
-    /// @todo 这些是由谱仪决定的常量，将来应该调整到配置里面，使其可修改
-    constexpr const static QVector3D INIT_NORMAL_VECTOR = QVector3D(0, 0, 1);
-    constexpr const static QVector3D INIT_HORIZONTAL_VECTOR = QVector3D(-1, 0, 0);
-    constexpr const static QVector3D INIT_VERTICAL_VECTOR = QVector3D(0, -1, 0);
 };
 
 #endif // SCOUTWIDGET_H

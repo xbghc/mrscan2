@@ -22,7 +22,8 @@ void ScoutWidget::setScoutImages(QList<QImage> images, double fov,
 
 void ScoutWidget::updateMarkers() { QImagesWidget::updateMarkers(); }
 
-std::pair<QVector3D, QVector3D> ScoutWidget::getViewAxes(QVector3D angle) {
+std::pair<QVector3D, QVector3D>
+ScoutWidget::getViewAxes(QVector3D angle) const {
     auto hAxis = INIT_HORIZONTAL_VECTOR;
     auto vAxis = INIT_VERTICAL_VECTOR;
 
@@ -59,12 +60,9 @@ void ScoutWidget::preview(double fov, double thickness,
 
     updateMarkers();
 
-    LOG_INFO("start paint");
     for (int i = 0; i < slices.length(); i++) {
         previewSlice(fov, slices[i].first, slices[i].second);
     }
-
-    LOG_INFO("paint end");
 }
 
 void ScoutWidget::setScoutFov(double fov) { m_scoutFov = fov; }
@@ -187,10 +185,6 @@ void ScoutWidget::previewSlice(double fov, QVector3D angles,
                                QVector3D offsets) {
     /// @note 可选择是否将slice视为无边界的平面，只需要调整lineEdge
 
-    LOG_INFO(QString("offset: %1, %2, %3")
-                 .arg(offsets.x())
-                 .arg(offsets.y())
-                 .arg(offsets.z()));
     for (int i = 0; i < m_scoutSlices.length(); i++) {
         auto scoutAngle = m_scoutSlices[i].first;
         auto scoutOffset = m_scoutSlices[i].second;
@@ -228,8 +222,8 @@ void ScoutWidget::previewSlice(double fov, QVector3D angles,
         }
         auto line = new QGraphicsLineItem(x1, y1, x2, y2);
 
-        QPen pen(Qt::red);          // Color
-        pen.setWidth(3);            // Line width
+        QPen pen(Qt::red); // Color
+        pen.setWidth(3);   // Line width
         // pen.setStyle(Qt::DashLine); // Dashed line
         line->setPen(pen);
         QImagesWidget::addLine(i, line);
