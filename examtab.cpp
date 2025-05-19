@@ -1,6 +1,5 @@
 #include "examtab.h"
 #include "configmanager.h"
-#include "exameditdialog.h"
 #include "patient.h"
 #include "patientinfodialog.h"
 #include "store.h"
@@ -19,7 +18,7 @@ namespace {} // namespace
 
 ExamTab::ExamTab(QWidget *parent)
     : QWidget(parent), ui(new Ui::examtab),
-    m_patientDialog(new PatientInfoDialog) {
+    m_patientDialog(new PatientInfoDialog), m_examDialog(new ExamEditDialog) {
 
     ui->setupUi(this);
     updatePatientList(true);
@@ -54,19 +53,25 @@ ExamTab::ExamTab(QWidget *parent)
             &ExamTab::onEditExamButtonClicked);
     connect(ui->scanButton, &QPushButton::clicked, this,
             &ExamTab::onScanStopButtonClicked);
+
+    connect(m_examDialog.get(), &ExamEditDialog::accepted, this,
+            &ExamTab::onExamDialogAccept);
 }
 
 ExamTab::~ExamTab() {}
 
 void ExamTab::updatePatientList(bool reload) {
     if (reload) {
-        m_patients = store::loadAllPatients();
+        m_patients.clear();
+        for (const auto &p : store::loadAllPatients()) {
+            m_patients.push_back(std::shared_ptr<IPatient>(p));
+        }
     }
 
     ui->comboBox->clear();
-    for (auto &p : m_patients) {
-        QString label = QString("%1 - %2").arg(p.id(), p.name());
-        ui->comboBox->addItem(label, p.id());
+    for (const auto &p : m_patients) {
+        QString label = QString("%1 - %2").arg(p->id(), p->name());
+        ui->comboBox->addItem(label, p->id());
     }
 }
 
@@ -101,24 +106,31 @@ void ExamTab::onScanStoped() {
     ui->comboBox->setEnabled(true);
 }
 
-const Exam &ExamTab::onResponseReceived(IExamResponse *response) {
-    auto row = processingRow();
-    m_exams[row].setResponse(response);
-    m_exams[row].setEndTime();
-    m_exams[row].setStatus(Exam::Status::Done);
+const Exam &ExamTab::setResponse(IExamResponse *response) {
+    auto &exam = m_exams[processingRow()];
+
+    exam.setResponse(response);
+    exam.setEndTime();
+    exam.setStatus(Exam::Status::Done);
 
     auto patient = getPatient(currentPatientId());
-    m_exams[row].setPatient(reinterpret_cast<IPatient *>(&patient));
-    store::saveExam(m_exams[row]);
+    exam.setPatient(patient);
 
     updateExamTable();
-    return m_exams[row];
+
+    /// @note 这是判断scout的方式
+    if (exam.request().name().toLower() == "scout") {
+        LOG_INFO("Scout result received");
+        m_examDialog->setScout(exam);
+    }
+
+    return exam;
 }
 
 void ExamTab::onEditPatientButtonClicked() {
-    auto patient = m_patients[ui->comboBox->currentIndex()];
+    const auto &patient = m_patients[ui->comboBox->currentIndex()];
 
-    m_patientDialog->setPatient(&patient);
+    m_patientDialog->setPatient(patient.get());
     m_patientDialog->setType(PatientInfoDialog::Type::Edit);
 
     m_patientDialog->setModal(true);
@@ -148,12 +160,12 @@ void ExamTab::onPatientDialogAccepted() {
     // m_patientDialog->type() == PatientInfoDialog::Type::Edit
     auto id = m_patientDialog->id();
 
-    for (auto &p : m_patients) {
-        if (p.id() == id) {
-            p.setName(name);
-            p.setBirthday(birthday);
-            p.setGender(gender);
-            store::savePatient(p);
+    for (const auto &p : m_patients) {
+        if (p->id() == id) {
+            p->setName(name);
+            p->setBirthday(birthday);
+            p->setGender(gender);
+            store::savePatient(p.get());
             updatePatientList();
             return;
         }
@@ -172,7 +184,7 @@ void ExamTab::onDeletePatientButtonClicked() {
     auto id = ui->comboBox->currentData().toString();
     store::deletePatient(id);
     for (int i = 0; i < m_patients.size(); i++) {
-        if (m_patients[i].id() == id) {
+        if (m_patients[i]->id() == id) {
             m_patients.removeAt(i);
             updatePatientList();
             return;
@@ -202,6 +214,7 @@ void ExamTab::onRemoveExamButtonClicked() {
     }
 
     m_exams.removeAt(curRow);
+    updateExamTable();
 }
 
 void ExamTab::onCopyExamButtonClicked() {
@@ -218,33 +231,14 @@ void ExamTab::onCopyExamButtonClicked() {
 void ExamTab::onEditExamButtonClicked() {
     int curRow = currentRow();
     if (curRow == -1) {
-        LOG_WARNING("No exam selected");
+        LOG_INFO("Edit button: No exam selected");
         return;
     }
 
-    ExamEditDialog dlg(this);
-    dlg.setData(m_exams[curRow]);
-    connect(&dlg, &QDialog::accepted, this, [&]() {
-        QJsonObject parameters = dlg.getParameters();
-        auto request = this->m_exams[curRow].request();
-        request.setParams(parameters);
-        this->m_exams[curRow].setRequest(request);
-    });
+    m_examDialog->setData(m_exams[curRow]);
 
-    // TODO The readability of examModel code is poor, after adjustment, determine
-    // whether to scan scout, if so, call dlg.setScoutImages Below is mock data
-    QList<QImage> images;
-    QList<QVector3D> angles;
-    QList<QVector3D> offsets;
-    for (int i = 0; i < 9; i++) {
-        images.push_back(QImage(256, 256, QImage::Format_Grayscale8));
-        angles.push_back(QVector3D(90, 0, 0));
-        offsets.push_back(QVector3D(0, -40 + 10 * i, 0));
-    }
-    dlg.setScoutImages(images, 256, angles, offsets);
-
-    dlg.setModal(true);
-    dlg.exec();
+    m_examDialog->setModal(true);
+    m_examDialog->exec();
 }
 
 void ExamTab::onScanStopButtonClicked() {
@@ -272,6 +266,14 @@ void ExamTab::onScanStopButtonClicked() {
     emit startButtonClicked(request);
 }
 
+void ExamTab::onExamDialogAccept() {
+    QJsonObject parameters = m_examDialog->getParameters();
+    auto curRow = currentRow();
+    auto request = this->m_exams[curRow].request();
+    request.setParams(parameters);
+    this->m_exams[curRow].setRequest(request);
+}
+
 void ExamTab::onCurrentExamChanged() {
     int curRow = currentRow();
 
@@ -295,27 +297,27 @@ void ExamTab::onCurrentExamChanged() {
     }
 }
 
-JsonPatient ExamTab::getPatient(QString id) {
-    for (auto &p : m_patients) {
-        if (p.id() == id) {
-            return p;
+IPatient *ExamTab::getPatient(QString id) {
+    for (const auto &p : m_patients) {
+        if (p->id() == id) {
+            return p.get();
         }
     }
 
     LOG_ERROR(QString("Can't find patient with id: %1").arg(id));
-    return {};
+    return nullptr;
 }
 
 void ExamTab::addPatient(QString name, QDate birthday,
                          IPatient::Gender gender) {
     QString id = QString::number(nextPatientId());
 
-    JsonPatient patient;
-    patient.setId(id);
-    patient.setName(name);
-    patient.setBirthday(birthday);
-    patient.setGender(gender);
-    m_patients.push_back(patient);
+    auto patient = new JsonPatient();
+    patient->setId(id);
+    patient->setName(name);
+    patient->setBirthday(birthday);
+    patient->setGender(gender);
+    m_patients.push_back(std::shared_ptr<IPatient>(patient));
 
     setNextId(id.toInt() + 1);
     store::addPatient(patient);

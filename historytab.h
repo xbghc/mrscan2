@@ -3,15 +3,14 @@
 
 #include <QWidget>
 
+#include "exam.h"
 #include "historymodel.h"
 
 namespace Ui {
 class HistoryTab;
 }
 
-/// @todo 应该向外传递selection改变的信号
-class HistoryTab : public QWidget
-{
+class HistoryTab : public QWidget {
     Q_OBJECT
 
 public:
@@ -20,10 +19,16 @@ public:
 
     void loadHistoryList();
 
+signals:
+    void currentItemChanged(const Exam &exam);
+
+private slots:
+    void onCurrentRowChanged();
 private:
     Ui::HistoryTab *ui;
 
-    HistoryModel* m_model;
+    HistoryModel *m_model;
+    std::map<std::pair<QString, QString>, Exam> m_cache;
 };
 
 #endif // HISTORYTAB_H

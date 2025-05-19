@@ -91,7 +91,7 @@
           <item row="8" column="0" colspan="2">
            <widget class="QCheckBox" name="checkGroupMode">
             <property name="enabled">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
             <property name="text">
              <string>Group Mode</string>

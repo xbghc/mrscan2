@@ -107,6 +107,9 @@ void Exam::setResponse(IExamResponse *other)
 
 IPatient *Exam::patient() const
 {
+    if(!m_patient){
+        LOG_ERROR("patient is not set");
+    }
     return m_patient.get();
 }
 

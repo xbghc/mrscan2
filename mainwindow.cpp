@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "preferencesdialog.h"
+#include "store.h"
 #include "tuningcentralfrequency.h"
 #include "tuningradiofrequencypower.h"
 #include "tuningshimming.h"
@@ -48,6 +49,12 @@ MainWindow::MainWindow(QWidget *parent, IScanner* scanner)
     // Receive scan operation signals from ExamTab
     connect(ui->examTab, &ExamTab::stopButtonClicked, this, &MainWindow::handleScanStop);
     connect(ui->examTab, &ExamTab::startButtonClicked, m_scanner.get(), &IScanner::scan);
+
+    // 查看历史记录
+    connect(ui->historyTab, &HistoryTab::currentItemChanged,
+            [this](const Exam& exam){
+        ui->imagesWidget->setData(exam);
+    });
 
     // preference
     connect(ui->actionPreferences, &QAction::triggered, this, [this]() {
@@ -103,10 +110,12 @@ void MainWindow::onScanCompleted(IExamResponse* response)
 
     LOG_INFO("Scan completed, saving data");
 
-    const auto& exam = ui->examTab->onResponseReceived(response);
+    const auto& exam = ui->examTab->setResponse(response);
+
+    store::saveExam(exam);
 
     ui->imagesWidget->setData(exam);
-    ui->historyTab->loadHistoryList();
+    ui->historyTab->loadHistoryList(); /// @todo 这个不太好
 
     LOG_INFO("History record updated");
 }

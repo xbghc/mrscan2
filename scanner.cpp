@@ -42,14 +42,11 @@ void VScanner::scan(const ExamRequest& request) {
     emit completed(new MrdResponse(fileContent));
 }
 
-/// @todo
+/// @todo 应该让scan中的代码不再返回
 QString VScanner::stop(QString id)
 {
     LOG_INFO(QString("Stopping scan, ID: %1").arg(id));
-    int size;
-    
-    LOG_ERROR(QString("Failed to stop scan, ID: %1").arg(id));
-    return "-1";
+    return id;
 }
 
 int VScanner::close() {

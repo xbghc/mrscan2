@@ -1,230 +1,264 @@
 #include "scoutwidget.h"
 #include <QMatrix4x4>
 #include <QPen>
-#include "utils.h"
 
-namespace {
-// Compare if two floating point numbers are equal
-bool equal(float a, float b, float epsilon = 1e-6) {
-    return std::abs(a - b) < epsilon;
-}
-
-// Calculate normal vector based on Euler angles
-QVector3D getVector(const QVector3D& angles) {
-    QMatrix4x4 r;
-    r.rotate(angles.x(), QVector3D(1, 0, 0));
-    r.rotate(angles.y(), QVector3D(0, 1, 0));
-    r.rotate(angles.z(), QVector3D(0, 0, 1));
-
-    return r.map(QVector3D(0, 0, 1));
-}
-
-// Check if vector is parallel to coordinate axes, if so return the corresponding unit vector
-QVector3D getAxis(const QVector3D& angles) {
-    QVector3D v = getVector(angles);
-    QVector3D result(0, 0, 0);
-    
-    // Check if parallel to x-axis
-    if (equal(std::abs(v.x()), 1.0f)) {
-        result.setX(v.x() > 0 ? 1 : -1);
-        return result;
-    } 
-    // Check if parallel to y-axis
-    else if (equal(std::abs(v.y()), 1.0f)) {
-        result.setY(v.y() > 0 ? 1 : -1);
-        return result;
-    } 
-    // Check if parallel to z-axis
-    else if (equal(std::abs(v.z()), 1.0f)) {
-        result.setZ(v.z() > 0 ? 1 : -1);
-        return result;
-    }
-    
-    LOG_WARNING("Scout normal vector angle error, must be parallel to x, y or z axis");
-    return result;
-}
-
-QList<QPointF> getLineInViewport(double a, double b, double c, double viewFov, double lineFov){
-    // ax + by + c = 0
-    QList<QPointF> points;
-
-    if(a == 0){
-        // 1. When slice is parallel to y (a=0), we have by + c = 0, so y=-c/b
-        auto y = -c/b;
-        if(abs(y) > viewFov/2){
-            LOG_WARNING("Line out of viewport");
-        }
-        points.push_back(QPointF(-viewFov/2, y));
-        points.push_back(QPointF(viewFov/2, y));
-    }else{
-        // 2. Given y, x = (c-by)/a; Given x, y = (c-ax)/b
-        //
-        // Assume y equals ±fov/2
-        //
-        auto y1 = viewFov/2;
-        auto y2 = -viewFov/2;
-        auto x1 = (c-b*y1)/a;
-        auto x2 = (c-b*y2)/a;
-
-        if(x1 > viewFov/2){
-            x1 = viewFov/2;
-            y1 = (c-(a*x1))/b;
-        }else if(x1 < -viewFov/2){
-            x1 = -viewFov/2;
-            y1 = (c-(a*x1))/b;
-        }
-        if(abs(y1) > viewFov/2){
-            LOG_WARNING("Line is outside scout range");
-        }
-        points.push_back(QPointF(x1, y1));
-
-        if(x2 > viewFov/2){
-            x2 = viewFov/2;
-            y2 = (c-(a*x2))/b;
-        }else if(x2 < -viewFov/2){
-            x2 = -viewFov/2;
-            y2 = (c-(a*x1))/b;
-        }
-        if(abs(y2) > viewFov/2){
-            LOG_WARNING("Line is outside scout range");
-        }
-        points.push_back(QPointF(x2, y2));
-    }
-
-    if(points.length() != 2){
-        LOG_WARNING("Intersection line calculation error");
-    }
-
-    return points;
-}
-
-} // namespace
-
-ScoutWidget::ScoutWidget(QWidget *parent)
-    : QImagesWidget(parent)
-{
-    setRowNum(3);
-    setColNum(3);
+ScoutWidget::ScoutWidget(QWidget *parent) : QImagesWidget(parent) {
+    setRowNum(m_rowNum);
+    setColNum(m_colNum);
     setImages(QList<QImage>());
 }
 
-void ScoutWidget::setScoutImages(QList<QImage> images, double fov, QList<QVector3D> angles, QList<QVector3D> offsets)
-{
+void ScoutWidget::setScoutImages(QList<QImage> images, double fov,
+                                 QList<QVector3D> angles,
+                                 QList<QVector3D> offsets) {
     QImagesWidget::setImages(images);
-    m_fov = fov;
-    m_angles = angles;
-    m_offsets = offsets;
-}
-
-void ScoutWidget::updateMarkers()
-{
-    QImagesWidget::updateMarkers();
-}
-
-void ScoutWidget::preview(double fov, double thickness, double sliceSeparation, int noSlices, QVector3D angles, QVector3D offsets)
-{
-    auto angleList = QList<QVector3D>();
-    auto offsetList = QList<QVector3D>();
-    auto v = getVector(angles);
-
-
-    for(int i=0;i<noSlices;i++){
-        double o=(i - static_cast<double>(noSlices) + 1) * sliceSeparation;
-        offsetList.push_back(o * v + offsets);
-        angleList.push_back(angles);
-    }
-    preview(fov, thickness, noSlices, angleList, offsetList);
-}
-
-void ScoutWidget::preview(double fov, double thickness, int noSlices, QList<QVector3D> angles, QList<QVector3D> offsets)
-{
-    for(int i=0;i<noSlices;i++){
-        previewSlice(fov, angles[i], offsets[i]);
+    m_scoutFov = fov;
+    m_scoutSlices.clear();
+    for (int i = 0; i < angles.length(); i++) {
+        m_scoutSlices.append(qMakePair(angles[i], offsets[i]));
     }
 }
 
-void ScoutWidget::setFov(double fov)
-{
-    m_fov = fov;
+void ScoutWidget::updateMarkers() { QImagesWidget::updateMarkers(); }
+
+std::pair<QVector3D, QVector3D>
+ScoutWidget::getViewAxes(QVector3D angle) const {
+    auto hAxis = INIT_HORIZONTAL_VECTOR;
+    auto vAxis = INIT_VERTICAL_VECTOR;
+
+    auto r = rotateMatrix(angle);
+
+    hAxis = r.map(hAxis);
+    vAxis = r.map(vAxis);
+
+    return {hAxis, vAxis};
 }
 
-void ScoutWidget::clearLines()
-{
-    // Clear all previously added lines, but keep the images
-    // QImagesWidget doesn't have a direct clearLines method, but we can refresh the scene by calling updateMarkers()
-    // updateMarkers() will clear the scene (scene->clear()) and re-add the images
+void ScoutWidget::preview(double fov, double thickness, double sliceSeparation,
+                          int noSlices, QVector3D angles, QVector3D offsets) {
+    if (m_scoutSlices.empty()) {
+        return;
+    }
+
+    QVector<QPair<QVector3D, QVector3D>> slices;
+    auto v = rotateMatrix(angles).map(INIT_NORMAL_VECTOR);
+    for (int i = 0; i < noSlices; i++) {
+        double o = (i - (static_cast<double>(noSlices) - 1) / 2) * sliceSeparation;
+        auto offset = o * v + offsets;
+        slices.append(qMakePair(angles, offset));
+    }
+
+    preview(fov, thickness, slices);
+}
+
+void ScoutWidget::preview(double fov, double thickness,
+                          QVector<QPair<QVector3D, QVector3D>> slices) {
+    if (m_scoutSlices.empty()) {
+        return;
+    }
+
     updateMarkers();
+
+    for (int i = 0; i < slices.length(); i++) {
+        previewSlice(fov, slices[i].first, slices[i].second);
+    }
 }
 
-bool ScoutWidget::eventFilter(QObject *obj, QEvent *event)
-{
-    auto view = qobject_cast<QGraphicsView*>(obj);
-    if(!view){
-        return false;
-    }
+void ScoutWidget::setScoutFov(double fov) { m_scoutFov = fov; }
 
-    auto [row, col] = viewPosition(view);
-    switch(event->type()){
+bool ScoutWidget::eventFilter(QObject *watched, QEvent *event) {
+
+    auto viewport = qobject_cast<QWidget *>(watched);
+    if (!viewport) {
+        return QWidget::eventFilter(watched, event);
+    }
+    auto [row, col] = viewPortPosition(viewport);
+
+    switch (event->type()) {
     case QEvent::MouseButtonPress:
-        onViewMousePress(row, col, static_cast<QMouseEvent*>(event));
-        return true;
-    case QEvent::MouseMove:
-        onViewMouseMove(row, col, static_cast<QMouseEvent*>(event));
-        return true;
-    case QEvent::Wheel:
-        onViewWheeled(row, col, static_cast<QWheelEvent*>(event));
-        return true;
-    default:
+        onViewMousePressd(row, col, static_cast<QMouseEvent *>(event));
         return false;
+    case QEvent::MouseMove:
+        onViewMouseMoved(row, col, static_cast<QMouseEvent *>(event));
+        return false;
+    case QEvent::Wheel:
+        onViewWheeled(row, col, static_cast<QWheelEvent *>(event));
+        return false;
+    default:
+        break;
     }
+
+    return QWidget::eventFilter(watched, event);
 }
 
-void ScoutWidget::previewSlice(double fov, QVector3D angles, QVector3D offsets)
-{
-    // TODO Function code can be optimized
+QMatrix4x4 ScoutWidget::rotateMatrix(const QVector3D angle) const {
+    QMatrix4x4 r;
+    r.rotate(angle.x(), QVector3D(1, 0, 0));
+    r.rotate(angle.y(), QVector3D(0, 1, 0));
+    r.rotate(angle.z(), QVector3D(0, 0, 1));
+    return r;
+}
 
-    for(int i=0;i<m_angles.length();i++){
-        /* Ignore FOV here, view the slice as a plane
-         * First calculate the normal vector v of the slice based on angles, v[0]*x+v[1]*y+v[2]*z+c=0
-         * Scout has an offset relative to the origin, viewed as center in graphicScene, equivalent to slice offset in opposite direction, so slice offset is offsets - m_offsets[i]
-         * Scout is parallel to a coordinate axis, so one of x,y,z equals 0, thus we have ax + by + c = 0, where x and y have different meanings than in 3D
-         * The x and y discussed below are in the scout plane rather than in 3D
-         * Scout value range is (-m_fov/2, m_fov/2)
-        */
-        auto v = getVector(angles);
-        auto c = (m_offsets[i][0] - offsets[0])*v[0] + (m_offsets[i][1] - offsets[1])*v[1] + (m_offsets[i][2] - offsets[2])*v[2];
-        auto axis = getAxis(m_angles[i]);
+QPair<QVector3D, QVector3D>
+ScoutWidget::intersectionLine(const double A1, const double B1, const double C1,
+                              const double D1, const double A2, const double B2,
+                              const double C2, const double D2) const {
+    auto n1 = QVector3D(A1, B1, C1);
+    auto n2 = QVector3D(A2, B2, C2);
 
-        QList<QPointF> points;
-        // Normal vectors of 1 and -1 affect the result
-        if(axis[0] != 0){
-            points = getLineInViewport(v[1] * axis[0], v[2] * axis[0], c, m_fov, fov);
-        }else if(axis[1] != 0){
-            points = getLineInViewport(v[0] * axis[1], v[2] * axis[1], c, m_fov, fov);
-        }else if(axis[2] != 0){
-            points = getLineInViewport(v[0] * axis[2], v[1] * axis[2], c, m_fov, fov);
+    QVector3D line_direction = QVector3D::crossProduct(n1, n2);
+    constexpr double epsilon = 1e-9; // 根据精度需求调整
+
+    // 1. 检查平面是否平行或重合
+    if (line_direction.lengthSquared() <
+        epsilon * epsilon) { // 使用平方避免开方，epsilon也要平方比较
+        // 法向量平行，平面可能平行或重合
+        // 如果需要区分平行且不重合（无交线）与重合（无限交线），需要进一步检查：
+        // 例如，检查一个平面上的点是否在另一个平面上。
+        // 或者检查 (A1,B1,C1,D1) 和 (A2,B2,C2,D2) 是否线性相关。
+        // 对于此函数，如果目标是返回一条“唯一”交线，则平行或重合都算作无唯一交线。
+        return {QVector3D(), QVector3D()}; // 表示无唯一交线或错误
+    }
+
+    QVector3D point_on_line;
+    // 使用平面方程 Ax + By + Cz = -D 的形式
+    double d1_val = -D1;
+    double d2_val = -D2;
+
+    // 2. 计算交线上的一点 (更鲁棒的方法)
+    // 通过选择 line_direction 中绝对值最大的分量来决定将哪个坐标设为0，
+    // 以确保求解时使用的行列式（即 line_direction
+    // 的对应分量）不为零且较大，提高数值稳定性。
+    double absLx = std::abs(line_direction.x());
+    double absLy = std::abs(line_direction.y());
+    double absLz = std::abs(line_direction.z());
+
+    if (absLx >= absLy && absLx >= absLz) { // line_direction.x() 绝对值最大或之一
+        // 设 x = 0. 求解:
+        // B1*y + C1*z = d1_val
+        // B2*y + C2*z = d2_val
+        // det = B1*C2 - B2*C1 = line_direction.x()
+        double det = line_direction.x();
+        point_on_line.setX(0);
+        point_on_line.setY((d1_val * C2 - d2_val * C1) / det);
+        point_on_line.setZ((B1 * d2_val - B2 * d1_val) / det);
+    } else if (absLy >= absLx &&
+               absLy >= absLz) { // line_direction.y() 绝对值最大或之一
+        // 设 y = 0. 求解:
+        // A1*x + C1*z = d1_val
+        // A2*x + C2*z = d2_val
+        // det_sys = A1*C2 - A2*C1 = -line_direction.y()
+        double det =
+            -line_direction.y(); // (因为 line_direction.y() = A2*C1 - A1*C2)
+        point_on_line.setY(0);
+        point_on_line.setX((d1_val * C2 - d2_val * C1) / det);
+        point_on_line.setZ((A1 * d2_val - A2 * d1_val) / det);
+    } else { // line_direction.z() 绝对值最大
+        // 设 z = 0. 求解:
+        // A1*x + B1*y = d1_val
+        // A2*x + B2*y = d2_val
+        // det = A1*B2 - A2*B1 = line_direction.z()
+        double det = line_direction.z();
+        point_on_line.setZ(0);
+        point_on_line.setX((d1_val * B2 - d2_val * B1) / det);
+        point_on_line.setY((A1 * d2_val - A2 * d1_val) / det);
+    }
+
+    // 返回交线上一点和归一化的方向向量
+    return {point_on_line, line_direction.normalized()};
+}
+
+QPair<QVector3D, QVector3D>
+ScoutWidget::intersectionLine(const QVector3D angle1, const QVector3D offset1,
+                              const QVector3D angle2,
+                              const QVector3D offset2) const {
+    auto v1 = rotateMatrix(angle1).map(INIT_NORMAL_VECTOR);
+    auto v2 = rotateMatrix(angle2).map(INIT_NORMAL_VECTOR);
+    auto D1 = -(QVector3D::dotProduct(v1, offset1));
+    auto D2 = -(QVector3D::dotProduct(v2, offset2));
+    return intersectionLine(v1.x(), v1.y(), v1.z(), D1, v2.x(), v2.y(), v2.z(),
+                            D2);
+}
+
+void ScoutWidget::previewSlice(double fov, QVector3D angles,
+                               QVector3D offsets) {
+    /// @note 可选择是否将slice视为无边界的平面，只需要调整lineEdge
+
+    for (int i = 0; i < m_scoutSlices.length(); i++) {
+        auto scoutAngle = m_scoutSlices[i].first;
+        auto scoutOffset = m_scoutSlices[i].second;
+
+        auto [point, vector] =
+            intersectionLine(scoutAngle, scoutOffset, angles, offsets);
+
+        if (vector.lengthSquared() < 1e-6) {
+            continue;
         }
 
-        auto line = new QGraphicsLineItem(points[0].x(), points[0].y(), points[1].x(), points[1].y());
-        QPen pen(Qt::red);      // Color
-        pen.setWidth(2);        // Line width
-        pen.setStyle(Qt::DashLine); // Dashed line
+        // 计算与视图边缘的交点位置
+        auto [hAxis, vAxis] = getViewAxes(scoutAngle);
+
+        // point在视图中的投影
+        auto pointOnViewX = QVector3D::dotProduct(point, hAxis);
+        auto pointOnViewY = QVector3D::dotProduct(point, vAxis);
+
+        // vector在视图中的投影
+        auto vectorOnViewX = QVector3D::dotProduct(vector, hAxis);
+        auto vectorOnViewY = QVector3D::dotProduct(vector, vAxis);
+
+        auto lineEdge = m_scoutFov;
+        double x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+        if (std::abs(vectorOnViewX) > std::abs(vectorOnViewY)) {
+            x1 = -lineEdge / 2;
+            x2 = lineEdge / 2;
+            y1 = (x1 - pointOnViewX) * vectorOnViewY / vectorOnViewX + pointOnViewY;
+            y2 = (x2 - pointOnViewX) * vectorOnViewY / vectorOnViewX + pointOnViewY;
+        } else {
+            y1 = -lineEdge / 2;
+            y2 = lineEdge / 2;
+            x1 = (y1 - pointOnViewY) * vectorOnViewX / vectorOnViewY + pointOnViewX;
+            x2 = (y2 - pointOnViewY) * vectorOnViewX / vectorOnViewY + pointOnViewX;
+        }
+        auto line = new QGraphicsLineItem(x1, y1, x2, y2);
+
+        QPen pen(Qt::red); // Color
+        pen.setWidth(3);   // Line width
+        // pen.setStyle(Qt::DashLine); // Dashed line
         line->setPen(pen);
         QImagesWidget::addLine(i, line);
     }
 }
 
-void ScoutWidget::onViewMousePress(int row, int col, QMouseEvent *event)
-{
+void ScoutWidget::onViewMousePressd(int row, int col, QMouseEvent *event) {
+    if (event->button() != Qt::LeftButton) {
+        return;
+    }
 
+    auto view = this->view(row, col);
+    m_prevMousePos = view->mapToScene(event->pos());
 }
 
-void ScoutWidget::onViewMouseMove(int row, int col, QMouseEvent *event)
-{
+void ScoutWidget::onViewMouseMoved(int row, int col, QMouseEvent *event) {
+    auto [haxis, vaxis] = getViewAxes(m_scoutSlices[row * m_colNum + col].first);
+    auto view = this->view(row, col);
+    auto currentMousePos = view->mapToScene(event->pos());
 
+    auto [hMovement, vMovement] = currentMousePos - m_prevMousePos;
+
+    QVector3D movement;
+    movement = hMovement * haxis + vMovement * vaxis;
+
+    emit offsetChanged(movement);
+
+    m_prevMousePos = currentMousePos;
 }
 
-void ScoutWidget::onViewWheeled(int row, int col, QWheelEvent *event)
-{
+void ScoutWidget::onViewWheeled(int row, int col, QWheelEvent *event) {
+    const double rate = 0.01;
+    auto delta = event->angleDelta().y() * rate;
 
+    auto axis = rotateMatrix(m_scoutSlices[row * m_colNum + col].first)
+                    .map(INIT_NORMAL_VECTOR);
+
+    emit angleChanged(axis * delta);
 }

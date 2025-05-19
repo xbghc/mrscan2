@@ -6,7 +6,6 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <random>
 
 const QString ConfigManager::kConfigDir = "./configs";
 

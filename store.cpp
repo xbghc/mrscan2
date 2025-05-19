@@ -70,7 +70,7 @@ void loadExamInfo(Exam &exam, const QString &pid, const QString &eid) {
     exam.setEndTime(endTime);
 
     auto patient = store::loadPatient(pid);
-    exam.setPatient(&patient);
+    exam.setPatient(patient);
 }
 
 void saveExamInfo(const Exam &exam) {
@@ -101,16 +101,17 @@ QString edir(const QString &pid, const QString &eid) {
     return QString("%1/%2").arg(pdir(pid), eid);
 }
 
-JsonPatient loadPatient(const QString &pid) {
+IPatient* loadPatient(const QString &pid) {
     auto path = patientInfoPath(pid);
     auto jsonObj = json_utils::readFromFile(path).object();
-    return JsonPatient(jsonObj);
+    auto ptr = new JsonPatient(jsonObj);
+    return ptr;
 }
 
-void savePatient(const JsonPatient &patient) {
-    auto path = patientInfoPath(patient.id());
-    auto jsonObj = patient.json();
-    json_utils::saveToFile(path, jsonObj);
+void savePatient(IPatient* patient) {
+    auto path = patientInfoPath(patient->id());
+    auto bytes = patient->bytes();
+    file_utils::save(path, bytes);
 }
 
 Exam loadExam(const QString &pid, const QString &eid) {
@@ -163,8 +164,8 @@ QStringList examEntries(const QString& pid){
  * @brief 加载所有病人
  * @detial 遍历根文件夹中的文件夹列表，每一个文件夹都代表一个病人
  */
-QVector<JsonPatient> loadAllPatients() {
-    QVector<JsonPatient> patients;
+QVector<IPatient*> loadAllPatients() {
+    QVector<IPatient*> patients;
 
     for (const auto &pid : patientEntries()) {
         patients.push_back(loadPatient(pid));
@@ -179,10 +180,10 @@ void deletePatient(const QString &pid) {
     dir.removeRecursively();
 }
 
-void addPatient(const JsonPatient &patient) {
-    QDir dir(pdir(patient.id()));
+void addPatient(IPatient* patient) {
+    QDir dir(pdir(patient->id()));
     if (dir.exists()) {
-        LOG_WARNING(QString("病人信息被意外的覆盖了, pid: %1").arg(patient.id()));
+        LOG_WARNING(QString("病人信息被意外的覆盖了, pid: %1").arg(patient->id()));
     }
     dir.mkpath(".");
 

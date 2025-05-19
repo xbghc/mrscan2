@@ -11,6 +11,7 @@
 #include <QDebug>
 #include <fftw3.h>
 
+
 // Log levels
 enum class LogLevel {
     Debug,
@@ -95,7 +96,5 @@ namespace json_utils{
     void saveToFile(const QString& fpath, QJsonObject obj);
     void saveToFile(const QString& fpath, QJsonArray array);
 }
-
-void newEmptyFile(QFile &file);
 
 #endif // UTILS_H

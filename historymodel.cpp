@@ -80,18 +80,5 @@ void HistoryModel::loadHistoryList()
         }
     }
 
-    // QStringList patientIds = PathManager::getAllPatientIds();
-    // for(const auto& patientIdStr : patientIds) {
-    //     int patientId = patientIdStr.toInt();
-    //     QStringList examIds = PathManager::getExamIdsForPatient(patientId);
-        
-    //     for(const auto &examIdStr : examIds) {
-    //         int examId = examIdStr.toInt();
-    //         QString examDirPath = PathManager::getExamDir(patientId, examId);
-    //         QFileInfo dirInfo(examDirPath);
-    //         QDateTime createTime = dirInfo.birthTime();
-    //         m_historyList.append(HistoryItem(examId, patientId, createTime));
-    //     }
-    // }
     endResetModel();
 }

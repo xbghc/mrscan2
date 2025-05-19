@@ -15,11 +15,11 @@ const QString JsonPatient::Keys::Name = "name";
 
 namespace {} // namespace
 
-JsonPatient::JsonPatient() : m_data(QJsonObject()) {}
+JsonPatient::JsonPatient(QJsonObject data)
+    :m_data(data)
+{
 
-JsonPatient::JsonPatient(QJsonObject data) : m_data(data) {}
-
-JsonPatient::JsonPatient(QJsonObject &&data) : m_data(data) {}
+}
 
 IPatient *JsonPatient::clone() const { return new JsonPatient(m_data); }
 
@@ -46,8 +46,6 @@ QDate JsonPatient::birthday() const {
     return QDate::fromString(dateStr, kDateFormat);
 }
 
-QJsonObject JsonPatient::json() const { return m_data; }
-
 void JsonPatient::setId(const QString &other) {
     auto old = id();
     if (old.toInt() >= 0 && old != other) {
@@ -69,4 +67,10 @@ void JsonPatient::setBirthday(int year, int month, int day) {
 
 void JsonPatient::setBirthday(QDate other) {
     m_data[Keys::Birthday] = other.toString(kDateFormat);
+}
+
+QByteArray JsonPatient::bytes() const
+{
+    QJsonDocument doc(m_data);
+    return doc.toJson();
 }
