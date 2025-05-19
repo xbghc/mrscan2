@@ -107,41 +107,69 @@ QPair<QVector3D, QVector3D>
 ScoutWidget::intersectionLine(const double A1, const double B1, const double C1,
                               const double D1, const double A2, const double B2,
                               const double C2, const double D2) const {
-    auto plane1NormalVector = QVector3D(A1, B1, C1);
-    auto plane2NormalVector = QVector3D(A2, B2, C2);
-    // 法向量相等说明平面平行
-    if ((plane1NormalVector - plane2NormalVector).lengthSquared() < 1e-6) {
-        return {QVector3D(), QVector3D(0, 0, 0)};
+    auto n1 = QVector3D(A1, B1, C1);
+    auto n2 = QVector3D(A2, B2, C2);
+
+    QVector3D line_direction = QVector3D::crossProduct(n1, n2);
+    constexpr double epsilon = 1e-9; // 根据精度需求调整
+
+    // 1. 检查平面是否平行或重合
+    if (line_direction.lengthSquared() <
+        epsilon * epsilon) { // 使用平方避免开方，epsilon也要平方比较
+        // 法向量平行，平面可能平行或重合
+        // 如果需要区分平行且不重合（无交线）与重合（无限交线），需要进一步检查：
+        // 例如，检查一个平面上的点是否在另一个平面上。
+        // 或者检查 (A1,B1,C1,D1) 和 (A2,B2,C2,D2) 是否线性相关。
+        // 对于此函数，如果目标是返回一条“唯一”交线，则平行或重合都算作无唯一交线。
+        return {QVector3D(), QVector3D()}; // 表示无唯一交线或错误
     }
 
-    QVector3D point;
-    auto lineVector =
-        QVector3D::crossProduct(plane1NormalVector, plane2NormalVector);
+    QVector3D point_on_line;
+    // 使用平面方程 Ax + By + Cz = -D 的形式
+    double d1_val = -D1;
+    double d2_val = -D2;
 
-    if (std::abs(lineVector.x()) > 1e-6) {
-        point.setX(0);
+    // 2. 计算交线上的一点 (更鲁棒的方法)
+    // 通过选择 line_direction 中绝对值最大的分量来决定将哪个坐标设为0，
+    // 以确保求解时使用的行列式（即 line_direction
+    // 的对应分量）不为零且较大，提高数值稳定性。
+    double absLx = std::abs(line_direction.x());
+    double absLy = std::abs(line_direction.y());
+    double absLz = std::abs(line_direction.z());
 
-        auto det = B1 * C2 - C1 * B2;
-
-        if(std::abs(det) > 1e-6){
-            point.setY((-C2 * D1 + C1 * D2) / det);
-            point.setZ((B2 * D1 - B1 * D2) / det);
-        }else{
-            return {QVector3D(), QVector3D(0, 0, 0)};
-        }
-    } else {
-        point.setY(0);
-
-        auto det = A1 * C2 - C1 * A2;
-
-        if(std::abs(det) > 1e-6){
-            point.setX((-C2 * D1 + C1 * D2) / det);
-            point.setZ((A2 * D1 - A1 * D2) / det);
-        }else{
-            return {QVector3D(), QVector3D(0, 0, 0)};
-        }
+    if (absLx >= absLy && absLx >= absLz) { // line_direction.x() 绝对值最大或之一
+        // 设 x = 0. 求解:
+        // B1*y + C1*z = d1_val
+        // B2*y + C2*z = d2_val
+        // det = B1*C2 - B2*C1 = line_direction.x()
+        double det = line_direction.x();
+        point_on_line.setX(0);
+        point_on_line.setY((d1_val * C2 - d2_val * C1) / det);
+        point_on_line.setZ((B1 * d2_val - B2 * d1_val) / det);
+    } else if (absLy >= absLx &&
+               absLy >= absLz) { // line_direction.y() 绝对值最大或之一
+        // 设 y = 0. 求解:
+        // A1*x + C1*z = d1_val
+        // A2*x + C2*z = d2_val
+        // det_sys = A1*C2 - A2*C1 = -line_direction.y()
+        double det =
+            -line_direction.y(); // (因为 line_direction.y() = A2*C1 - A1*C2)
+        point_on_line.setY(0);
+        point_on_line.setX((d1_val * C2 - d2_val * C1) / det);
+        point_on_line.setZ((A1 * d2_val - A2 * d1_val) / det);
+    } else { // line_direction.z() 绝对值最大
+        // 设 z = 0. 求解:
+        // A1*x + B1*y = d1_val
+        // A2*x + B2*y = d2_val
+        // det = A1*B2 - A2*B1 = line_direction.z()
+        double det = line_direction.z();
+        point_on_line.setZ(0);
+        point_on_line.setX((d1_val * B2 - d2_val * B1) / det);
+        point_on_line.setY((A1 * d2_val - A2 * d1_val) / det);
     }
-    return {point, lineVector};
+
+    // 返回交线上一点和归一化的方向向量
+    return {point_on_line, line_direction.normalized()};
 }
 
 QPair<QVector3D, QVector3D>
