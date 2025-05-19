@@ -174,8 +174,8 @@ ScoutWidget::intersectionLine(const double A1, const double B1, const double C1,
 
 QPair<QVector3D, QVector3D>
 ScoutWidget::intersectionLine(const QVector3D angle1, const QVector3D offset1,
-                              const QVector3D offset2,
-                              const QVector3D angle2) const {
+                              const QVector3D angle2,
+                              const QVector3D offset2) const {
     auto v1 = rotateMatrix(angle1).map(INIT_NORMAL_VECTOR);
     auto v2 = rotateMatrix(angle2).map(INIT_NORMAL_VECTOR);
     auto D1 = -(QVector3D::dotProduct(v1, offset1));
