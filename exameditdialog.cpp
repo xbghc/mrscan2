@@ -111,12 +111,12 @@ void ExamEditDialog::setData(const Exam& exam)
     ui->editObserveFrequency->setValue(parameters[KEY_OBSERVE_FREQUENCY].toDouble());
     ui->editSliceThickness->setValue(parameters[KEY_SLICE_THICKNESS].toDouble());
 
-    if(parameters.contains("slices")){
+    if(parameters.contains(KEY_SLICES)){
         ui->checkGroupMode->setChecked(false);
-        setSlices(parameters["slices"].toArray());
+        setSlices(parameters[KEY_SLICES].toArray());
     }else{
         ui->checkGroupMode->setChecked(true);
-        ui->editSliceSeparation->setValue(parameters["sliceSeparation"].toDouble());
+        ui->editSliceSeparation->setValue(parameters[KEY_SLICE_SEPARATION].toDouble());
     }
 
     preview();
@@ -151,19 +151,19 @@ void ExamEditDialog::setScout(const Exam &exam)
 
         /// @todo 创建类读取params，这样容易出错
         auto params = exam.request().params();
-        auto fov = params["fov"].toDouble();
-        auto slices = params["slices"].toArray();
+        auto fov = params[KEY_FOV].toDouble();
+        auto slices = params[KEY_SLICES].toArray();
 
         QList<QVector3D> angles;
         QList<QVector3D> offsets;
         for (const auto &slice : slices) {
             auto sliceObj = slice.toObject();
-            auto xOffset = sliceObj["xOffset"].toDouble();
-            auto yOffset = sliceObj["yOffset"].toDouble();
-            auto zOffset = sliceObj["zOffset"].toDouble();
-            auto xAngle = sliceObj["xAngle"].toDouble();
-            auto yAngle = sliceObj["yAngle"].toDouble();
-            auto zAngle = sliceObj["zAngle"].toDouble();
+            auto xOffset = sliceObj[KEY_X_OFFSET].toDouble();
+            auto yOffset = sliceObj[KEY_Y_OFFSET].toDouble();
+            auto zOffset = sliceObj[KEY_Z_OFFSET].toDouble();
+            auto xAngle = sliceObj[KEY_X_ANGLE].toDouble();
+            auto yAngle = sliceObj[KEY_Y_ANGLE].toDouble();
+            auto zAngle = sliceObj[KEY_Z_ANGLE].toDouble();
 
             offsets.push_back(QVector3D(xOffset, yOffset, zOffset));
             angles.push_back(QVector3D(xAngle, yAngle, zAngle));
@@ -284,8 +284,6 @@ void ExamEditDialog::preview()
     if(!shouldRepaint){
         return;
     }
-
-    LOG_INFO("paint");
 
     auto fov = ui->editFOV->value();
     auto noSlices = ui->editNoSlices->value();

@@ -45,6 +45,23 @@ public:
     QVector3D angle() const;
     void setAngle(QVector3D other);
 
+    constexpr const static char* KEY_X_OFFSET = "xOffset";
+    constexpr const static char* KEY_Y_OFFSET = "yOffset";
+    constexpr const static char* KEY_Z_OFFSET = "zOffset";
+    constexpr const static char* KEY_X_ANGLE = "xAngle";
+    constexpr const static char* KEY_Y_ANGLE = "yAngle";
+    constexpr const static char* KEY_Z_ANGLE = "zAngle";
+
+    constexpr const static char* KEY_FOV = "fov";
+    constexpr const static char* KEY_NO_AVERAGES = "noAverages";
+    constexpr const static char* KEY_NO_SLICES = "noSlices";
+    constexpr const static char* KEY_NO_SAMPLES = "noSamples";
+    constexpr const static char* KEY_NO_VIEWS = "noViews";
+    constexpr const static char* KEY_OBSERVE_FREQUENCY = "observeFrequency";
+    constexpr const static char* KEY_SLICE_THICKNESS = "sliceThickness"; 
+    constexpr const static char* KEY_SLICE_SEPARATION = "sliceSeparation";
+    constexpr const static char* KEY_SLICES = "slices";
+
 private slots:
     void on_comboSlice_currentIndexChanged(int index);
 
@@ -67,23 +84,6 @@ private:
     void preview();
 
     void resisterEditerSignals();
-
-    constexpr const static char* KEY_X_OFFSET = "xOffset";
-    constexpr const static char* KEY_Y_OFFSET = "yOffset";
-    constexpr const static char* KEY_Z_OFFSET = "zOffset";
-    constexpr const static char* KEY_X_ANGLE = "xAngle";
-    constexpr const static char* KEY_Y_ANGLE = "yAngle";
-    constexpr const static char* KEY_Z_ANGLE = "zAngle";
-
-    constexpr const static char* KEY_FOV = "fov";
-    constexpr const static char* KEY_NO_AVERAGES = "noAverages";
-    constexpr const static char* KEY_NO_SLICES = "noSlices";
-    constexpr const static char* KEY_NO_SAMPLES = "noSamples";
-    constexpr const static char* KEY_NO_VIEWS = "noViews";
-    constexpr const static char* KEY_OBSERVE_FREQUENCY = "observeFrequency";
-    constexpr const static char* KEY_SLICE_THICKNESS = "sliceThickness"; 
-    constexpr const static char* KEY_SLICE_SEPARATION = "sliceSeparation";
-    constexpr const static char* KEY_SLICES = "slices";
 };
 
 #endif // EXAMEDITDIALOG_H
