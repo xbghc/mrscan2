@@ -36,7 +36,7 @@ public slots:
     void setColNum(int col);
     void setHeight(int height);
     void setWidth(int width);
-    void updateMarkers();
+    void updateImages();
 
 private:
     QVector<QVector<QImage>> m_channels;
@@ -45,7 +45,5 @@ private:
 
     void initializeUI();
     void setupConnections();
-    QString extractChannelLabel(const QString& filePath);
-    void updateImageList();
 };
 #endif // RESULTWIDGET_H

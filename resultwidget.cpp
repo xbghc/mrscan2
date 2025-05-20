@@ -1,5 +1,6 @@
 #include "../resultwidget.h"
 #include "ui_resultwidget.h"
+#include "utils.h"
 
 #include <QDir>
 #include <QFile>
@@ -46,8 +47,8 @@ void ResultWidget::initializeUI()
 void ResultWidget::setupConnections()
 {
     // Connect selection box change signals
-    connect(ui->ChannelBox, &QCheckComboBox::itemStatusChanged, this, &ResultWidget::updateMarkers);
-    connect(ui->ImageBox, &QCheckComboBox::itemStatusChanged, this, &ResultWidget::updateMarkers);
+    connect(ui->ChannelBox, &QCheckComboBox::itemStatusChanged, this, &ResultWidget::updateImages);
+    connect(ui->ImageBox, &QCheckComboBox::itemStatusChanged, this, &ResultWidget::updateImages);
     
     // Connect layout control change signals
     connect(ui->rowSpin, &QSpinBox::valueChanged, this, &ResultWidget::setRowNum);
@@ -60,58 +61,43 @@ void ResultWidget::setData(const Exam& exam)
 {
     clear();
     m_channels = exam.images();
-    ui->ChannelBox->setItems(QStringList(m_channels.size()));
-    updateImageList();
-    updateMarkers();
-}
 
-QString ResultWidget::extractChannelLabel(const QString& filePath)
-{
-    QFileInfo info(filePath);
-    QString fileName = info.fileName();
-    QStringList parts = fileName.split("#");
-    if (parts.size() < 2) return fileName;
-    
-    QStringList subParts = parts[1].split(".");
-    return subParts[0];
-}
-
-/// @todo 信号断开再连接是否是必要的
-void ResultWidget::updateImageList()
-{
-    // Disconnect signals first to avoid unnecessary updates when updating the list
-    disconnect(ui->ImageBox, &QCheckComboBox::itemStatusChanged, this, &ResultWidget::updateMarkers);
-    
-    ui->ImageBox->removeAllItems();
-    
-    if (!m_channels.isEmpty()) {
-        int imageNum = m_channels[0].size();
-        for (int i = 0; i < imageNum; i++) {
-            ui->ImageBox->addItem(QString::number(i + 1), i);
-        }
-        
-        // Select first image by default
-        if (ui->ImageBox->itemCount() > 0) {
-            ui->ImageBox->setChecked(0, true);
-        }
+    // 更新选择框
+    auto channelsNum = m_channels.size();
+    auto imagesNum = m_channels[0].size();
+    QStringList channelsList;   
+    QStringList imagesList;
+    for(int i=0;i<channelsNum;i++){
+        channelsList.append(QString::number(i));
     }
+    for(int i=0;i<imagesNum;i++){
+        imagesList.append(QString::number(i));
+    }
+    ui->ChannelBox->setItems(channelsList);
+    ui->ImageBox->setItems(imagesList);
     
-    // Reconnect signals
-    connect(ui->ImageBox, &QCheckComboBox::itemStatusChanged, this, &ResultWidget::updateMarkers);
+    // 选中所有
+    for(int i=0;i<channelsNum;i++){
+        ui->ChannelBox->setChecked(i, true);
+    }
+    for(int i=0;i<imagesNum;i++){
+        ui->ImageBox->setChecked(i, true);
+    }
+
+    updateImages();
 }
 
 void ResultWidget::clear()
 {
     // Clear data
-    m_channels.clear();
+    QVector<QVector<QImage>>().swap(m_channels);
     
     // Clear UI
     ui->ChannelBox->removeAllItems();
     ui->ImageBox->removeAllItems();
     
     // Clear image display
-    QList<QImage> emptyList;
-    ui->contentWidget->setImages(emptyList);
+    ui->contentWidget->setImages(QList<QImage>());
 }
 
 void ResultWidget::setRowNum(int row)
@@ -134,21 +120,13 @@ void ResultWidget::setWidth(int width)
     ui->contentWidget->setViewWidth(width);
 }
 
-void ResultWidget::updateMarkers()
+void ResultWidget::updateImages()
 {
-    // Check if there is data
     if (m_channels.isEmpty()) return;
     
     // Get selected channels and images
     QList<QVariant> checkedChannels = ui->ChannelBox->values(QCheckComboBox::CHECKED);
     QList<QVariant> checkedImages = ui->ImageBox->values(QCheckComboBox::CHECKED);
-    
-    // If no channels or images are selected, clear display
-    if (checkedChannels.isEmpty() || checkedImages.isEmpty()) {
-        QList<QImage> emptyList;
-        ui->contentWidget->setImages(emptyList);
-        return;
-    }
     
     // Prepare image list
     QList<QImage> images;
@@ -165,8 +143,6 @@ void ResultWidget::updateMarkers()
             images.push_back(m_channels[channelIndex][imageIndex]);
         }
     }
-    
-    // Update display
+
     ui->contentWidget->setImages(images);
 }
-

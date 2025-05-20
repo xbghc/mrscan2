@@ -87,7 +87,10 @@ padding: 5px;
          <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
         </property>
         <property name="minimum">
-         <number>3</number>
+         <number>1</number>
+        </property>
+        <property name="value">
+         <number>4</number>
         </property>
        </widget>
       </item>
@@ -116,7 +119,7 @@ padding: 5px;
          <number>1</number>
         </property>
         <property name="value">
-         <number>4</number>
+         <number>3</number>
         </property>
        </widget>
       </item>
