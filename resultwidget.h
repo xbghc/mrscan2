@@ -32,10 +32,6 @@ public:
     void clear();
 
 public slots:
-    void setRowNum(int row);
-    void setColNum(int col);
-    void setHeight(int height);
-    void setWidth(int width);
     void updateImages();
 
 private:

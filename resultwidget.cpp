@@ -23,7 +23,6 @@ ResultWidget::ResultWidget(QWidget *parent)
     initializeUI();
 
     ui->contentWidget->setUpdateEnabled(false);
-    LOG_DEBUG("result widget setup qimageswidget");
     ui->contentWidget->setRowNum(ui->rowSpin->value());
     ui->contentWidget->setColNum(ui->columnSpin->value());
     ui->contentWidget->setViewWidth(ui->widthSpin->value());
@@ -42,6 +41,7 @@ void ResultWidget::initializeUI()
     // Set initial configuration for UI components
     ui->ChannelBox->setMinimumWidth(60);
     ui->ImageBox->setMinimumWidth(80);
+
 }
 
 void ResultWidget::setupConnections()
@@ -51,10 +51,10 @@ void ResultWidget::setupConnections()
     connect(ui->ImageBox, &QCheckComboBox::itemStatusChanged, this, &ResultWidget::updateImages);
     
     // Connect layout control change signals
-    connect(ui->rowSpin, &QSpinBox::valueChanged, this, &ResultWidget::setRowNum);
-    connect(ui->columnSpin, &QSpinBox::valueChanged, this, &ResultWidget::setColNum);
-    connect(ui->widthSpin, &QSpinBox::valueChanged, this, &ResultWidget::setWidth);
-    connect(ui->heightSpin, &QSpinBox::valueChanged, this, &ResultWidget::setHeight);
+    connect(ui->rowSpin, &QSpinBox::valueChanged, ui->contentWidget, &QImagesWidget::setRowNum);
+    connect(ui->columnSpin, &QSpinBox::valueChanged, ui->contentWidget, &QImagesWidget::setColNum);
+    connect(ui->widthSpin, &QSpinBox::valueChanged, ui->contentWidget, &QImagesWidget::setViewWidth);
+    connect(ui->heightSpin, &QSpinBox::valueChanged, ui->contentWidget, &QImagesWidget::setViewHeight);
 }
 
 void ResultWidget::setData(const Exam& exam)
@@ -98,26 +98,6 @@ void ResultWidget::clear()
     
     // Clear image display
     ui->contentWidget->setImages(QList<QImage>());
-}
-
-void ResultWidget::setRowNum(int row)
-{
-    ui->contentWidget->setRowNum(row);
-}
-
-void ResultWidget::setColNum(int col)
-{
-    ui->contentWidget->setColNum(col);
-}
-
-void ResultWidget::setHeight(int height)
-{
-    ui->contentWidget->setViewHeight(height);
-}
-
-void ResultWidget::setWidth(int width)
-{
-    ui->contentWidget->setViewWidth(width);
 }
 
 void ResultWidget::updateImages()

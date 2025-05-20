@@ -13,23 +13,14 @@ MainWindow::MainWindow(QWidget *parent, IScanner* scanner)
     , workerThread(new QThread)
 {
     ui->setupUi(this);
-
-    // TODO Don't know why the default height is wrong, need to adjust manually
-    this->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-    this->resize(QSize(this->width(), this->height()));
-
-    // start： Attempt to fix default height issue
-    // Use minimum size hint to ensure window has reasonable size
-    this->setMinimumSize(1024, 768);
     
-    // Ensure reasonable size policy to fit content
-    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    // // Ensure reasonable size policy to fit content
+    // this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     
-    // Ensure layout is calculated correctly
-    this->adjustSize();
+    // // Ensure layout is calculated correctly
+    // this->adjustSize();
     
     LOG_INFO("Main window initialized");
-    // end： Attempt to fix default height issue
 
     // If no scanner is provided, create a default one
     if (scanner == nullptr) {
@@ -52,7 +43,7 @@ MainWindow::MainWindow(QWidget *parent, IScanner* scanner)
 
     // 查看历史记录
     connect(ui->historyTab, &HistoryTab::currentItemChanged,
-            [this](const Exam& exam){
+            this, [this](const Exam& exam){
         ui->imagesWidget->setData(exam);
     });
 
