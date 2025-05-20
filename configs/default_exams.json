@@ -1,0 +1,199 @@
+[
+    {
+        "name": "scout",
+        "sequence": "t2",
+        "parameters": {
+            "observeFrequency": 0,
+            "noSamples": 128,
+            "noViews": 128,
+            "viewsPerSegment": 1,
+            "noAverages": 4,
+            "sliceThickness": 10,
+            "fov": 256,
+            "noSlices": 9,
+            "slices": [
+                {
+                    "xOffset": 0,
+                    "yOffset": 0,
+                    "zOffset": -90,
+                    "xAngle": 0,
+                    "yAngle": 0,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": 0,
+                    "yOffset": 0,
+                    "zOffset": 0,
+                    "xAngle": 0,
+                    "yAngle": 0,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": 0,
+                    "yOffset": 0,
+                    "zOffset": 90,
+                    "xAngle": 0,
+                    "yAngle": 0,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": 0,
+                    "yOffset": -90,
+                    "zOffset": 0,
+                    "xAngle": 90,
+                    "yAngle": 0,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": 0,
+                    "yOffset": 0,
+                    "zOffset": 0,
+                    "xAngle": 90,
+                    "yAngle": 0,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": 0,
+                    "yOffset": 90,
+                    "zOffset": 0,
+                    "xAngle": 90,
+                    "yAngle": 0,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": -90,
+                    "yOffset": 0,
+                    "zOffset": 0,
+                    "xAngle": 0,
+                    "yAngle": 90,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": 0,
+                    "yOffset": 0,
+                    "zOffset": 0,
+                    "xAngle": 0,
+                    "yAngle": 90,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": 90,
+                    "yOffset": 0,
+                    "zOffset": 0,
+                    "xAngle": 0,
+                    "yAngle": 90,
+                    "zAngle": 0
+                }
+            ]
+        }
+    },
+    {
+        "name": "T1",
+        "sequence": "t1",
+        "parameters": {
+            "observeFrequency": 0,
+            "noSamples": 128,
+            "noViews": 128,
+            "noViews2": 18,
+            "noAverages": 4,
+            "sliceThickness": 10,
+            "sliceSeparation": 12,
+            "fov": 256,
+            "noSlices": 1,
+            "xAngle": 0,
+            "yAngle": 0,
+            "zAngle": 0,
+            "xOffset": 0,
+            "yOffset": 0,
+            "zOffset": 0
+        }
+    },
+    {
+        "name": "T2",
+        "sequence": "t2",
+        "parameters": {
+            "observeFrequency": 0,
+            "noSamples": 128,
+            "noViews": 128,
+            "viewsPerSegment": 1,
+            "noAverages": 4,
+            "sliceThickness": 10,
+            "fov": 256,
+            "noSlices": 9,
+            "slices": [
+                {
+                    "xOffset": 0,
+                    "yOffset": 0,
+                    "zOffset": -90,
+                    "xAngle": 0,
+                    "yAngle": 0,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": 0,
+                    "yOffset": 0,
+                    "zOffset": 0,
+                    "xAngle": 0,
+                    "yAngle": 0,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": 0,
+                    "yOffset": 0,
+                    "zOffset": 90,
+                    "xAngle": 0,
+                    "yAngle": 0,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": 0,
+                    "yOffset": -90,
+                    "zOffset": 0,
+                    "xAngle": 90,
+                    "yAngle": 0,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": 0,
+                    "yOffset": 0,
+                    "zOffset": 0,
+                    "xAngle": 90,
+                    "yAngle": 0,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": 0,
+                    "yOffset": 90,
+                    "zOffset": 0,
+                    "xAngle": 90,
+                    "yAngle": 0,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": -90,
+                    "yOffset": 0,
+                    "zOffset": 0,
+                    "xAngle": 0,
+                    "yAngle": 90,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": 0,
+                    "yOffset": 0,
+                    "zOffset": 0,
+                    "xAngle": 0,
+                    "yAngle": 90,
+                    "zAngle": 0
+                },
+                {
+                    "xOffset": 90,
+                    "yOffset": 0,
+                    "zOffset": 0,
+                    "xAngle": 0,
+                    "yAngle": 90,
+                    "zAngle": 0
+                }
+            ]
+        }
+    }
+] 

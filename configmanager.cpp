@@ -6,212 +6,24 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QTextStream>
 
 const QString ConfigManager::kConfigDir = "./configs";
 
 namespace {
 QJsonArray defaultExamList(){
-    QJsonDocument doc = QJsonDocument::fromJson(R"([{
-      "name" : "scout",
-        "sequence" : "t2",
-        "parameters" : {
-                       "observeFrequency" : 0,
-            "noSamples" : 128,
-            "noViews" : 128,
-            "viewsPerSegment" : 1,
-            "noAverages" : 4,
-            "sliceThickness" : 10,
-            "fov" : 256,
-            "noSlices" : 9,
-            "slices" : [
-                {
-                 "xOffset" : 0,
-                    "yOffset" : 0,
-                    "zOffset" : -90,
-                    "xAngle" : 0,
-                    "yAngle" : 0,
-                    "zAngle" : 0
-                },
-                {
-                 "xOffset" : 0,
-                    "yOffset" : 0,
-                    "zOffset" : 0,
-                    "xAngle" : 0,
-                    "yAngle" : 0,
-                    "zAngle" : 0
-                },
-                {
-                 "xOffset" : 0,
-                    "yOffset" : 0,
-                    "zOffset" : 90,
-                    "xAngle" : 0,
-                    "yAngle" : 0,
-                    "zAngle" : 0
-                },
-                {
-                 "xOffset" : 0,
-                    "yOffset" : -90,
-                    "zOffset" : 0,
-                    "xAngle" : 90,
-                    "yAngle" : 0,
-                    "zAngle" : 0
-                },
-                {
-                 "xOffset" : 0,
-                    "yOffset" : 0,
-                    "zOffset" : 0,
-                    "xAngle" : 90,
-                    "yAngle" : 0,
-                    "zAngle" : 0
-                },
-                {
-                 "xOffset" : 0,
-                    "yOffset" : 90,
-                    "zOffset" : 0,
-                    "xAngle" : 90,
-                    "yAngle" : 0,
-                    "zAngle" : 0
-                },
-                {
-                 "xOffset" : -90,
-                    "yOffset" : 0,
-                    "zOffset" : 0,
-                    "xAngle" : 0,
-                    "yAngle" : 90,
-                    "zAngle" : 0
-                },
-                {
-                 "xOffset" : 0,
-                    "yOffset" : 0,
-                    "zOffset" : 0,
-                    "xAngle" : 0,
-                    "yAngle" : 90,
-                    "zAngle" : 0
-                },
-                {
-                 "xOffset" : 90,
-                    "yOffset" : 0,
-                    "zOffset" : 0,
-                    "xAngle" : 0,
-                    "yAngle" : 90,
-                    "zAngle" : 0
-                }
-            ]
-        }
-    },
-     {
-      "name" : "T1",
-         "sequence" : "t1",
-         "parameters" : {
-                        "observeFrequency" : 0,
-             "noSamples" : 128,
-             "noViews" : 128,
-             "noViews2" : 18,
-             "noAverages" : 4,
-             "sliceThickness" : 10,
-             "sliceSeparation" : 12,
-             "fov" : 256,
-             "noSlices" : 1,
-             "xAngle" : 0,
-             "yAngle" : 0,
-             "zAngle" : 0,
-             "xOffset" : 0,
-             "yOffset" : 0,
-             "zOffset" : 0
-         }
-     },
-     {
-      "name" : "T2",
-         "sequence" : "t2",
-         "parameters" : {
-                        "observeFrequency" : 0,
-             "noSamples" : 128,
-             "noViews" : 128,
-             "viewsPerSegment" : 1,
-             "noAverages" : 4,
-             "sliceThickness" : 10,
-             "fov" : 256,
-             "noSlices" : 9,
-             "slices" : [
-                 {
-                  "xOffset" : 0,
-                     "yOffset" : 0,
-                     "zOffset" : -90,
-                     "xAngle" : 0,
-                     "yAngle" : 0,
-                     "zAngle" : 0
-                 },
-                 {
-                  "xOffset" : 0,
-                     "yOffset" : 0,
-                     "zOffset" : 0,
-                     "xAngle" : 0,
-                     "yAngle" : 0,
-                     "zAngle" : 0
-                 },
-                 {
-                  "xOffset" : 0,
-                     "yOffset" : 0,
-                     "zOffset" : 90,
-                     "xAngle" : 0,
-                     "yAngle" : 0,
-                     "zAngle" : 0
-                 },
-                 {
-                  "xOffset" : 0,
-                     "yOffset" : -90,
-                     "zOffset" : 0,
-                     "xAngle" : 90,
-                     "yAngle" : 0,
-                     "zAngle" : 0
-                 },
-                 {
-                  "xOffset" : 0,
-                     "yOffset" : 0,
-                     "zOffset" : 0,
-                     "xAngle" : 90,
-                     "yAngle" : 0,
-                     "zAngle" : 0
-                 },
-                 {
-                  "xOffset" : 0,
-                     "yOffset" : 90,
-                     "zOffset" : 0,
-                     "xAngle" : 90,
-                     "yAngle" : 0,
-                     "zAngle" : 0
-                 },
-                 {
-                  "xOffset" : -90,
-                     "yOffset" : 0,
-                     "zOffset" : 0,
-                     "xAngle" : 0,
-                     "yAngle" : 90,
-                     "zAngle" : 0
-                 },
-                 {
-                  "xOffset" : 0,
-                     "yOffset" : 0,
-                     "zOffset" : 0,
-                     "xAngle" : 0,
-                     "yAngle" : 90,
-                     "zAngle" : 0
-                 },
-                 {
-                  "xOffset" : 90,
-                     "yOffset" : 0,
-                     "zOffset" : 0,
-                     "xAngle" : 0,
-                     "yAngle" : 90,
-                     "zAngle" : 0
-                 }
-             ]
-         }
-     }])");
+    const QString kDefaultExamsPath = ":/configs/default_exams.json";
+
+    auto doc = json_utils::readFromFile(kDefaultExamsPath);
+    if (doc.isNull() || !doc.isArray()) {
+        LOG_ERROR("Failed to load or parse default_exams.json. Returning empty array.");
+        return QJsonArray();
+    }
 
     return doc.array();
 }
-}
+} // namespace
+
 
 ConfigManager *ConfigManager::instance() {
     static ConfigManager s_instance;
@@ -235,7 +47,7 @@ void ConfigManager::load(const QString &cname) {
 }
 
 void ConfigManager::save(const QString &cname) {
-    json_utils::saveToFile(fpath(cname), m_configs[cname].toObject());
+    json_utils::saveToFile(fpath(cname), m_configs[cname]);
 }
 
 QJsonValue ConfigManager::get(const QString &cname, const QString &key) {
@@ -243,12 +55,12 @@ QJsonValue ConfigManager::get(const QString &cname, const QString &key) {
         load(cname);
     }
 
-    return m_configs[cname].toObject().value(key);
+    return m_configs[cname].value(key);
 }
 
 void ConfigManager::set(const QString &cname, const QString &key,
                         QJsonValue value) {
-    m_configs[cname].toObject()[key] = value;
+    m_configs[cname][key] = value;
     save(cname);
 }
 

@@ -38,7 +38,7 @@ private:
     
     QString fpath(const QString& configName);
 
-    QMap<QString, QJsonValue> m_configs; /// @todo 考虑value直接用QJsonObject
+    QMap<QString, QJsonObject> m_configs;
 };
 
 class ExamConfig{
