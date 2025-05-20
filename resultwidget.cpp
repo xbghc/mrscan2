@@ -16,8 +16,19 @@ ResultWidget::ResultWidget(QWidget *parent)
     , ui(std::make_unique<Ui::ResultWidget>())
 {
     ui->setupUi(this);
-    initializeUI();
+    
     setupConnections();
+
+    initializeUI();
+
+    ui->contentWidget->setUpdateEnabled(false);
+    LOG_DEBUG("result widget setup qimageswidget");
+    ui->contentWidget->setRowNum(ui->rowSpin->value());
+    ui->contentWidget->setColNum(ui->columnSpin->value());
+    ui->contentWidget->setViewWidth(ui->widthSpin->value());
+    ui->contentWidget->setViewHeight(ui->heightSpin->value());
+    ui->contentWidget->setUpdateEnabled(true);
+    // 不需要手动更新，主窗口初始化时会调整尺寸，触发contentWidget的resizeEvent
 }
 
 ResultWidget::~ResultWidget()
@@ -30,14 +41,6 @@ void ResultWidget::initializeUI()
     // Set initial configuration for UI components
     ui->ChannelBox->setMinimumWidth(60);
     ui->ImageBox->setMinimumWidth(80);
-    
-    // Initialize image display area
-    ui->contentWidget->init(
-        ui->rowSpin->value(),
-        ui->columnSpin->value(),
-        ui->widthSpin->value(),
-        ui->heightSpin->value()
-    );
 }
 
 void ResultWidget::setupConnections()
