@@ -7,7 +7,6 @@ class MrdResponse : public IExamResponse {
 public:
     MrdResponse();
     MrdResponse(QByteArray data);
-    ~MrdResponse() = default;
     IExamResponse *clone() const override;
 
     QVector<QVector<QImage>> images() const override;

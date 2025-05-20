@@ -5,6 +5,7 @@
 #include "patient.h"
 
 #include <QJsonObject>
+#include <memory>
 
 class ExamRequest{
 public:
@@ -36,11 +37,10 @@ public:
         Done
     };
     Exam();
-    ~Exam()=default;
-    Exam(const Exam& other); /// @todo 完善Exam, IPatient, IResponse的Rule of Five
+    Exam(const Exam& other);
     Exam& operator=(const Exam& other);
-    Exam(Exam&& other)noexcept;
-    Exam& operator=(Exam&& other)noexcept;
+    Exam(Exam&& other) noexcept = default;
+    Exam& operator=(Exam&& other) noexcept = default;
 
     ExamRequest request() const;
     void setRequest(const ExamRequest& other);

@@ -48,7 +48,6 @@ public:
         const static QString InitExams;
     };
 
-    /// @todo 添加set
     static QList<Exam> initialExams();
 private:
     ExamConfig() = delete;

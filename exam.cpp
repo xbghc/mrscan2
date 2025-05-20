@@ -14,25 +14,13 @@ Exam::Exam()
 
 Exam::Exam(const Exam &other)
     : m_request(other.m_request),
-    m_response(other.m_response?other.m_response->clone():nullptr),
-    m_patient(other.m_patient?other.m_patient->clone():nullptr),
+    m_response(other.m_response ? other.m_response->clone() : nullptr),
+    m_patient(other.m_patient ? std::shared_ptr<IPatient>(other.m_patient->clone()) : nullptr),
     m_status(other.m_status),
     m_startTime(other.m_startTime),
     m_endTime(other.m_endTime),
     m_id(other.m_id)
 {
-}
-
-Exam::Exam(Exam &&other) noexcept
-    :m_request(other.m_request),
-    m_response(std::move(other.m_response)),
-    m_patient(std::move(other.m_patient)),
-    m_status(other.m_status),
-    m_startTime(other.m_startTime),
-    m_endTime(other.m_endTime),
-    m_id(other.m_id)
-{
-
 }
 
 Exam& Exam::operator=(const Exam& other){
@@ -52,29 +40,6 @@ Exam& Exam::operator=(const Exam& other){
         m_patient.reset(other.m_patient->clone());
     } else {
         m_patient.reset();
-    }
-
-    m_status = other.m_status;
-    m_startTime = other.m_startTime;
-    m_endTime = other.m_endTime;
-    m_id = other.m_id;
-
-    return *this;
-}
-
-Exam& Exam::operator=(Exam&& other) noexcept{
-    if(this==&other){
-        return *this;
-    }
-
-    m_request = other.m_request;
-
-    if(other.m_response){
-        m_response = std::move(other.m_response);
-    }
-
-    if(other.m_patient){
-        m_patient = std::move(other.m_patient);
     }
 
     m_status = other.m_status;

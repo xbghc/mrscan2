@@ -44,13 +44,9 @@ public:
     static constexpr auto kDateFormat = "yyyy-MM-dd";
 
     JsonPatient() = default;
-    ~JsonPatient() override = default;
     JsonPatient(QJsonObject m_data);
     IPatient *clone() const override;
 
-    /**
-   * @brief 返回id，若返回负数，表示没有id
-   */
     QString id() const override;
     QString name() const override;
     Gender gender() const override;
