@@ -3,11 +3,11 @@
 
 #include <QImage>
 #include <QVector>
-#include <fftw3.h>
+#include "utils.h"
 
 namespace mrd_utils {
 struct Mrd {
-    fftw_complex *kdata = nullptr;
+    fftw_utils::fftw_complex_ptr kdata = nullptr;
     int experiments = 0;
     int echoes = 0;
     int slices = 0;

@@ -10,6 +10,7 @@
 #include <QJsonArray>
 #include <QDebug>
 #include <fftw3.h>
+#include <memory>
 
 
 // Log levels
@@ -56,11 +57,23 @@ public:
  * @detail 这里的vector使用标准库，没有使用QVector因为方便以后在非Qt的C++项目中使用
  */
 namespace fftw_utils{
-    fftw_complex* createArray(size_t size);
+    // 定义一个自定义的deleter，用于unique_ptr
+    struct FFTWDeleter {
+        void operator()(fftw_complex* ptr) const {
+            if (ptr) {
+                fftw_free(ptr);
+            }
+        }
+    };
+
+    // 使用 unique_ptr 和自定义 deleter 来管理 fftw_complex 内存
+    using fftw_complex_ptr = std::unique_ptr<fftw_complex[], FFTWDeleter>;
+
+    fftw_complex_ptr createArray(size_t size);
 
     std::vector<double> abs(fftw_complex* array, size_t len);
 
-    fftw_complex* exec_fft_3d(fftw_complex* in, std::vector<int> n);
+    fftw_complex_ptr exec_fft_3d(fftw_complex* in, std::vector<int> n);
 
     /**
      * @brief 用于逻辑上的多维数组，但是使用一维数组表示，根据数组形状和每个维度的索引给出数组索引

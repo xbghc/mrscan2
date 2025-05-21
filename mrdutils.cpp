@@ -1,6 +1,7 @@
 #include "mrdutils.h"
 
 #include <QtEndian>
+#include <vector>
 
 #include "utils.h"
 
@@ -13,41 +14,46 @@ int readInt32(const char *ptr) {
 }
 
 template <typename T>
-fftw_complex *readKdata(const char *ptr, int nele, bool isComplex) {
-    auto kdata = fftw_utils::createArray(nele);
+fftw_utils::fftw_complex_ptr readKdata(const char *ptr, int nele, bool isComplex) {
+    auto kdata_ptr = fftw_utils::createArray(nele);
 
     auto array = reinterpret_cast<const T *>(ptr);
     if (isComplex) {
         for (size_t i = 0; i < nele; i++) {
-            kdata[i][0] = array[2 * i];
-            kdata[i][1] = array[2 * i + 1];
+            kdata_ptr.get()[i][0] = array[2 * i];
+            kdata_ptr.get()[i][1] = array[2 * i + 1];
         }
     } else {
         for (size_t i = 0; i < nele; i++) {
-            kdata[i][0] = array[i];
-            kdata[i][1] = 0;
+            kdata_ptr.get()[i][0] = array[i];
+            kdata_ptr.get()[i][1] = 0;
         }
     }
-    return kdata;
+    return kdata_ptr;
 }
 
 template <typename T>
-QVector<fftw_complex *> readKdatas(const char *ptr, int nele, bool isComplex,
+std::vector<fftw_utils::fftw_complex_ptr> readKdatas(const char *ptr, int nele, bool isComplex,
                                    int totalSize) {
     auto kdataSize = nele * sizeof(T) * (isComplex ? 2 : 1);
 
+    if (kdataSize == 0) {
+        LOG_ERROR("Mrd文件数据有误: kdataSize is zero");
+        return {};
+    }
     if (totalSize % kdataSize != 0) {
         LOG_ERROR("Mrd文件数据有误");
         return {};
     }
 
-    QVector<fftw_complex *> kdatas;
+    std::vector<fftw_utils::fftw_complex_ptr> kdatas_vec;
+    kdatas_vec.reserve(totalSize / kdataSize);
     int noChannels = totalSize / kdataSize;
     for (int i = 0; i < noChannels; i++) {
-        auto kdata = readKdata<T>(ptr + i * kdataSize, nele, isComplex);
-        kdatas.push_back(kdata);
+        auto single_kdata_ptr = readKdata<T>(ptr + i * kdataSize, nele, isComplex);
+        kdatas_vec.push_back(std::move(single_kdata_ptr));
     }
-    return kdatas;
+    return kdatas_vec;
 }
 } // namespace
 
@@ -69,7 +75,7 @@ size_t Mrd::size() const {
 }
 
 QVector<QImage> Mrd::images() const {
-    if (!kdata) {
+    if (!kdata.get()) {
         return {};
     }
 
@@ -89,12 +95,16 @@ QVector<QImage> Mrd::images() const {
         shape[2] = samples;
     }
 
-    auto outPtr = fftw_utils::exec_fft_3d(kdata, shape);
-    fftw_utils::fftshift3d(outPtr, shape);
+    auto outPtr = fftw_utils::exec_fft_3d(kdata.get(), shape);
+    if (!outPtr.get()) {
+        LOG_ERROR("FFT execution failed or returned null pointer.");
+        return {};
+    }
+    fftw_utils::fftshift3d(outPtr.get(), shape);
 
     // Take absolute values
     size_t noPixels = shape[0] * shape[1] * shape[2];
-    auto absValues = fftw_utils::abs(outPtr, noPixels);
+    auto absValues = fftw_utils::abs(outPtr.get(), noPixels);
 
     double max_val = 0;
     for (size_t i = 0; i < noPixels; i++) {
@@ -144,26 +154,21 @@ QVector<QImage> Mrd::images() const {
 Mrd::Mrd() {}
 
 Mrd::~Mrd() {
-    if (kdata) {
-        fftw_free(kdata);
-        kdata = nullptr;
-    }
 }
 
 Mrd::Mrd(const Mrd &other)
-    : kdata(nullptr), experiments(other.experiments), echoes(other.echoes),
+    : experiments(other.experiments), echoes(other.echoes),
     slices(other.slices), views(other.views), views2(other.views2),
     samples(other.samples) {
-    if (!other.kdata) {
+    if (!other.kdata.get()) {
         return;
     }
 
     auto num_elements = other.size();
-    kdata = static_cast<fftw_complex *>(fftw_alloc_complex(num_elements));
-    if (!kdata) {
-        throw std::bad_alloc();
-    }
-    memcpy(kdata, other.kdata, num_elements * sizeof(fftw_complex));
+    if (num_elements == 0) return;
+
+    kdata = fftw_utils::createArray(num_elements);
+    memcpy(kdata.get(), other.kdata.get(), num_elements * sizeof(fftw_complex));
 }
 
 Mrd &Mrd::operator=(const Mrd &other) {
@@ -237,56 +242,66 @@ QVector<Mrd> Mrd::fromBytes(const QByteArray &bytes) {
         return {};
     }
     int totalSize = posPPR + 1 - kdataOffset - 120;
-
-    // 解析数据部分
-    QVector<fftw_complex *> kdatas;
-    bool isComplex = datatype & 0x10;
-    switch (datatype & 0xf) {
-    case 0:
-        kdatas =
-            readKdatas<quint8>(rawData + kdataOffset, nele, isComplex, totalSize);
-        break;
-    case 1:
-        kdatas =
-            readKdatas<qint8>(rawData + kdataOffset, nele, isComplex, totalSize);
-        break;
-    case 2:
-        // Case 2 and 3 are the same
-    case 3:
-        kdatas =
-            readKdatas<qint16>(rawData + kdataOffset, nele, isComplex, totalSize);
-        break;
-    case 4:
-        kdatas =
-            readKdatas<qint32>(rawData + kdataOffset, nele, isComplex, totalSize);
-        break;
-    case 5:
-        kdatas =
-            readKdatas<float>(rawData + kdataOffset, nele, isComplex, totalSize);
-        break;
-    case 6:
-        kdatas =
-            readKdatas<double>(rawData + kdataOffset, nele, isComplex, totalSize);
-        break;
-    default:
-        LOG_ERROR("Unknown data type in the MRD file!");
+    if (totalSize < 0) {
+        LOG_ERROR("Invalid totalSize calculated for Mrd data.");
         return {};
     }
 
-    QVector<Mrd> mrds;
-    for (int i = 0; i < kdatas.size(); i++) {
-        Mrd mrd;
-        mrd.kdata = kdatas[i];
-        mrd.samples = samples;
-        mrd.views = views;
-        mrd.views2 = views2;
-        mrd.slices = slices;
-        mrd.echoes = echoes;
-        mrd.experiments = experiments;
-        mrds.push_back(mrd);
+    // 解析数据部分
+    std::vector<fftw_utils::fftw_complex_ptr> kdatas_ptr_vec;
+    bool isComplex = datatype & 0x10;
+    switch (datatype & 0xf) {
+    case 0:
+        kdatas_ptr_vec =
+            readKdatas<quint8>(rawData + kdataOffset, nele, isComplex, totalSize);
+        break;
+    case 1:
+        kdatas_ptr_vec =
+            readKdatas<qint8>(rawData + kdataOffset, nele, isComplex, totalSize);
+        break;
+    case 2:
+        kdatas_ptr_vec =
+            readKdatas<quint16>(rawData + kdataOffset, nele, isComplex, totalSize);
+        break;
+    case 3:
+        kdatas_ptr_vec =
+            readKdatas<qint16>(rawData + kdataOffset, nele, isComplex, totalSize);
+        break;
+    case 4:
+        kdatas_ptr_vec =
+            readKdatas<quint32>(rawData + kdataOffset, nele, isComplex, totalSize);
+        break;
+    case 5:
+        kdatas_ptr_vec =
+            readKdatas<qint32>(rawData + kdataOffset, nele, isComplex, totalSize);
+        break;
+    case 6:
+        kdatas_ptr_vec =
+            readKdatas<float>(rawData + kdataOffset, nele, isComplex, totalSize);
+        break;
+    case 7:
+        kdatas_ptr_vec =
+            readKdatas<double>(rawData + kdataOffset, nele, isComplex, totalSize);
+        break;
+    default:
+        LOG_ERROR(QString("Unknown datatype: %1").arg(datatype));
+        return {};
     }
 
-    return mrds;
+    QVector<Mrd> results;
+    for (auto &k_ptr : kdatas_ptr_vec) {
+        Mrd m;
+        m.samples = samples;
+        m.views = views;
+        m.views2 = views2;
+        m.slices = slices;
+        m.echoes = echoes;
+        m.experiments = experiments;
+        m.kdata = std::move(k_ptr);
+        results.push_back(std::move(m));
+    }
+
+    return results;
 }
 
 void swap(Mrd &lhs, Mrd &rhs) noexcept { lhs.swap(rhs); }

@@ -2,18 +2,14 @@
 
 namespace fftw_utils{
 /// @todo 项目中的fftw的内存分配和释放都用统一的createArray和freeArray
-fftw_complex* createArray(size_t size){
+fftw_complex_ptr createArray(size_t size){
     auto ptr = static_cast<fftw_complex*>(fftw_alloc_complex(size));
     if(!ptr){
         auto msg = QString("尝试创建大小为%i的fftw_complex数组时失败").arg(size);
         LOG_ERROR(msg);
         throw std::runtime_error(msg.toStdString());
     }
-    return ptr;
-}
-
-void freeArray(fftw_complex* ptr){
-    fftw_free(ptr);
+    return fftw_complex_ptr(ptr);
 }
 
 std::vector<double> abs(fftw_complex* array, size_t len){
@@ -26,26 +22,22 @@ std::vector<double> abs(fftw_complex* array, size_t len){
     return magnitude;
 }
 
-fftw_complex* exec_fft_3d(fftw_complex* in, std::vector<int> n){
+fftw_complex_ptr exec_fft_3d(fftw_complex* in, std::vector<int> n){
     size_t noPixels = 1;
     for(int i=0;i<3;i++){
         noPixels *= n[i];
     }
     if(noPixels == 0){
         LOG_ERROR("exec fft error: 0 in n");
-        return nullptr;
+        return {};
     }
 
     auto out = fftw_utils::createArray(noPixels);
-    if (!out) {
-        LOG_ERROR("Failed to allocate memory for FFT output");
-        return nullptr;
-    }
-
-    fftw_plan plan = fftw_plan_dft(3, n.data(), in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    fftw_plan plan = fftw_plan_dft(3, n.data(), in, out.get(), FFTW_FORWARD, FFTW_ESTIMATE);
     if (!plan) {
         LOG_ERROR("Failed to create FFT plan");
-        return nullptr;
+        fftw_free(out.release()); // 如果plan创建失败，需要释放out的内存，因为此时out还未被传回，智能指针不会自动释放
+        return {};
     }
 
     fftw_execute(plan);
@@ -63,10 +55,6 @@ void fftshift3d(fftw_complex* data, std::vector<int> shape) {
     const size_t sz = nz / 2;
 
     auto temp = fftw_utils::createArray(nx * ny * nz);
-    if (!temp) {
-        LOG_ERROR("Failed to allocate memory for fftshift");
-        return;
-    }
 
     // Iterate through each element and rearrange
     for (size_t x = 0; x < nx; ++x) {
@@ -88,9 +76,7 @@ void fftshift3d(fftw_complex* data, std::vector<int> shape) {
         }
     }
 
-    // Copy results back to original array
-    std::memcpy(data, temp, sizeof(fftw_complex) * nx * ny * nz);
-    fftw_free(temp);
+    std::memcpy(data, temp.get(), sizeof(fftw_complex) * nx * ny * nz);
 }
 
 int getIndex(std::vector<int> shape, std::vector<int> indices){
