@@ -1,8 +1,85 @@
 #include "scoutwidget.h"
 #include <QMatrix4x4>
 #include <QPen>
+#include "configmanager.h"
+#include "utils.h"
+
+namespace {
+    const QString CNAME_AXIS_VECTOR = "axis_vector";
+    const QString KEY_INIT_NORMAL_VECTOR = "InitNormalVector";
+    const QString KEY_INIT_HORIZONTAL_VECTOR = "InitHorizontalVector";
+    const QString KEY_INIT_VERTICAL_VECTOR = "InitVerticalVector";
+
+    const QVector3D DEFAULT_INIT_NORMAL_VECTOR = QVector3D(0, 0, 1);
+    const QVector3D DEFAULT_INIT_HORIZONTAL_VECTOR = QVector3D(-1, 0, 0);
+    const QVector3D DEFAULT_INIT_VERTICAL_VECTOR = QVector3D(0, -1, 0);
+
+    void setNormalVector(const QVector3D& vec) {
+        auto cm = ConfigManager::instance();
+        QJsonObject obj;
+        obj["x"] = vec.x();
+        obj["y"] = vec.y();
+        obj["z"] = vec.z();
+        cm->set(CNAME_AXIS_VECTOR, KEY_INIT_NORMAL_VECTOR, obj);
+    }
+
+    QVector3D normalVector(){
+        auto cm = ConfigManager::instance();
+        auto vec = cm->get(CNAME_AXIS_VECTOR, KEY_INIT_NORMAL_VECTOR);
+        if (vec.isObject()) {
+            auto obj = vec.toObject();
+            return QVector3D(obj["x"].toDouble(), obj["y"].toDouble(), obj["z"].toDouble());
+        }
+        setNormalVector(DEFAULT_INIT_NORMAL_VECTOR);
+        return DEFAULT_INIT_NORMAL_VECTOR;
+    }
+
+    void setHorizontalVector(const QVector3D& vec) {
+        auto cm = ConfigManager::instance();
+        QJsonObject obj;
+        obj["x"] = vec.x();
+        obj["y"] = vec.y();
+        obj["z"] = vec.z();
+        cm->set(CNAME_AXIS_VECTOR, KEY_INIT_HORIZONTAL_VECTOR, obj);
+    }
+
+    QVector3D horizontalVector(){
+        auto cm = ConfigManager::instance();
+        auto vec = cm->get(CNAME_AXIS_VECTOR, KEY_INIT_HORIZONTAL_VECTOR);
+        if (vec.isObject()) {
+            auto obj = vec.toObject();
+            return QVector3D(obj["x"].toDouble(), obj["y"].toDouble(), obj["z"].toDouble());
+        }
+        setHorizontalVector(DEFAULT_INIT_HORIZONTAL_VECTOR);
+        return DEFAULT_INIT_HORIZONTAL_VECTOR;
+    }
+
+    void setVerticalVector(const QVector3D& vec) {
+        auto cm = ConfigManager::instance();
+        QJsonObject obj;
+        obj["x"] = vec.x();
+        obj["y"] = vec.y();
+        obj["z"] = vec.z();
+        cm->set(CNAME_AXIS_VECTOR, KEY_INIT_VERTICAL_VECTOR, obj);
+    }
+
+    QVector3D verticalVector(){
+        auto cm = ConfigManager::instance();
+        auto vec = cm->get(CNAME_AXIS_VECTOR, KEY_INIT_VERTICAL_VECTOR);
+        if (vec.isObject()) {
+            auto obj = vec.toObject();
+            return QVector3D(obj["x"].toDouble(), obj["y"].toDouble(), obj["z"].toDouble());
+        }
+        setVerticalVector(DEFAULT_INIT_VERTICAL_VECTOR);
+        return DEFAULT_INIT_VERTICAL_VECTOR;
+    }
+}
 
 ScoutWidget::ScoutWidget(QWidget *parent) : QImagesWidget(parent) {
+    m_initNormalVector = normalVector();
+    m_initHorizontalVector = horizontalVector();
+    m_initVerticalVector = verticalVector();
+
     setRowNum(m_rowNum);
     setColNum(m_colNum);
     setImages(QList<QImage>());
@@ -37,8 +114,8 @@ void ScoutWidget::updateMarkers() {
 
 std::pair<QVector3D, QVector3D>
 ScoutWidget::getViewAxes(QVector3D angle) const {
-    auto hAxis = INIT_HORIZONTAL_VECTOR;
-    auto vAxis = INIT_VERTICAL_VECTOR;
+    auto hAxis = m_initHorizontalVector;
+    auto vAxis = m_initVerticalVector;
 
     auto r = rotateMatrix(angle);
 
@@ -55,7 +132,7 @@ void ScoutWidget::preview(double fov, double thickness, double sliceSeparation,
     }
 
     QVector<QPair<QVector3D, QVector3D>> slices;
-    auto v = rotateMatrix(angles).map(INIT_NORMAL_VECTOR);
+    auto v = rotateMatrix(angles).map(m_initNormalVector);
     for (int i = 0; i < noSlices; i++) {
         double o = (i - (static_cast<double>(noSlices) - 1) / 2) * sliceSeparation;
         auto offset = o * v + offsets;
@@ -130,7 +207,7 @@ ScoutWidget::intersectionLine(const double A1, const double B1, const double C1,
         // 如果需要区分平行且不重合（无交线）与重合（无限交线），需要进一步检查：
         // 例如，检查一个平面上的点是否在另一个平面上。
         // 或者检查 (A1,B1,C1,D1) 和 (A2,B2,C2,D2) 是否线性相关。
-        // 对于此函数，如果目标是返回一条“唯一”交线，则平行或重合都算作无唯一交线。
+        // 对于此函数，如果目标是返回一条"唯一"交线，则平行或重合都算作无唯一交线。
         return {QVector3D(), QVector3D()}; // 表示无唯一交线或错误
     }
 
@@ -186,8 +263,8 @@ QPair<QVector3D, QVector3D>
 ScoutWidget::intersectionLine(const QVector3D angle1, const QVector3D offset1,
                               const QVector3D angle2,
                               const QVector3D offset2) const {
-    auto v1 = rotateMatrix(angle1).map(INIT_NORMAL_VECTOR);
-    auto v2 = rotateMatrix(angle2).map(INIT_NORMAL_VECTOR);
+    auto v1 = rotateMatrix(angle1).map(m_initNormalVector);
+    auto v2 = rotateMatrix(angle2).map(m_initNormalVector);
     auto D1 = -(QVector3D::dotProduct(v1, offset1));
     auto D2 = -(QVector3D::dotProduct(v2, offset2));
     return intersectionLine(v1.x(), v1.y(), v1.z(), D1, v2.x(), v2.y(), v2.z(),
@@ -272,7 +349,7 @@ void ScoutWidget::onViewWheeled(int row, int col, QWheelEvent *event) {
     auto delta = event->angleDelta().y() * rate;
 
     auto axis = rotateMatrix(m_scoutSlices[row * m_colNum + col].first)
-                    .map(INIT_NORMAL_VECTOR);
+                    .map(m_initNormalVector);
 
     emit angleChanged(axis * delta);
 }

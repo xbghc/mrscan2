@@ -53,14 +53,9 @@ public:
    *  @param scout扫描时传入的的角度
    *  @return [haxis, vaxis]，在图中向右和向下分别代表的空间方向
    *  @note 当谱仪的初始平面改动时，这个函数需要进行调整
-   *  @todo 初始值写在setting中
    */
     std::pair<QVector3D, QVector3D> getViewAxes(QVector3D angle) const;
 
-    /// @todo 这些是由谱仪决定的常量，将来应该调整到配置里面，使其可修改
-    constexpr const static QVector3D INIT_NORMAL_VECTOR = QVector3D(0, 0, 1);
-    constexpr const static QVector3D INIT_HORIZONTAL_VECTOR = QVector3D(-1, 0, 0);
-    constexpr const static QVector3D INIT_VERTICAL_VECTOR = QVector3D(0, -1, 0);
 
 signals:
     void offsetChanged(
@@ -79,9 +74,12 @@ private:
     double m_scoutFov;
     int m_rowNum = 3;
     int m_colNum = 3;
-
     QPointF m_prevMousePos;
 
+    QVector3D m_initNormalVector;
+    QVector3D m_initHorizontalVector;
+    QVector3D m_initVerticalVector;
+    
     /**
    * @brief 预览单个切片，改方法不会清除视图中已存在的内容
    * @param fov 所要添加的切片的fov
