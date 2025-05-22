@@ -1,7 +1,6 @@
 #include "utils.h"
 
 namespace fftw_utils{
-/// @todo 项目中的fftw的内存分配和释放都用统一的createArray和freeArray
 fftw_complex_ptr createArray(size_t size){
     auto ptr = static_cast<fftw_complex*>(fftw_alloc_complex(size));
     if(!ptr){

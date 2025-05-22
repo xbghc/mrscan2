@@ -8,6 +8,7 @@
 #include <QJsonObject>
 #include <QModelIndex>
 #include <QWidget>
+#include <QTimer>
 #include <memory>
 
 namespace Ui {
@@ -36,6 +37,9 @@ public:
     IPatient* getPatient(QString id);
     QString currentPatientId() const;
 
+    /**
+     * @brief 设置当前扫描的response，意味着扫描完成
+     */
     const Exam &setResponse(IExamResponse *response);
 public slots:
     void onScanStarted(QString id);
@@ -60,17 +64,19 @@ signals:
     void startButtonClicked(ExamRequest exam);
     void stopButtonClicked(QString id);
 
+private slots:
+    void tick();  /// 扫描过程中的计时器
+
 private:
     std::unique_ptr<Ui::examtab> ui;
-
-    QString generateNewPatientId(); // 生成新的病人id
-
     QMap<QString, std::shared_ptr<IPatient>> m_patientMap;
     QVector<Exam> m_exams;
-    std::unique_ptr<PatientInfoDialog> m_patientDialog;
+    QTimer m_timer;
 
+    std::unique_ptr<PatientInfoDialog> m_patientDialog;
     std::unique_ptr<ExamEditDialog> m_examDialog;
 
+    QString generateNewPatientId(); // 生成新的病人id
     void addPatient(QString name, QDate birthday, IPatient::Gender gender);
 
     void swap(int row1, int row2);

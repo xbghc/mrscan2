@@ -102,4 +102,8 @@ namespace json_utils{
     void saveToFile(const QString& fpath, QJsonArray array);
 }
 
+namespace utils{
+    QString secondsToString(int seconds);
+}
+
 #endif // UTILS_H

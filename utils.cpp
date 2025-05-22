@@ -155,3 +155,7 @@ void json_utils::saveToFile(const QString &fpath, QJsonArray array)
     auto doc = QJsonDocument(array);
     file_utils::save(fpath, doc.toJson());
 }
+
+QString utils::secondsToString(int seconds){
+    return QString("%1:%2").arg(seconds/60).arg(seconds%60, 2, 10, 0, QChar(u'0'));
+}

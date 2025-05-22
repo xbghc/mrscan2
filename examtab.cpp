@@ -25,6 +25,9 @@ ExamTab::ExamTab(QWidget *parent)
     updatePatientList(true);
 
     m_exams = ExamConfig::initialExams();
+    
+    m_timer.setInterval(500);
+    connect(&m_timer, &QTimer::timeout, this, &ExamTab::tick);
 
     ui->tableWidget->setColumnCount(3);
     ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Name" << "Status" << "Time");
@@ -63,6 +66,19 @@ ExamTab::ExamTab(QWidget *parent)
 }
 
 ExamTab::~ExamTab() {}
+
+void ExamTab::tick(){
+    auto procRow = processingRow();
+    if(procRow < 0 || procRow >= m_exams.size()){
+        LOG_ERROR(QString("ERROR: Processing row = %1").arg(procRow));
+        return;
+    }
+
+    auto procExam = m_exams.at(procRow);
+    procExam.setEndTime();
+    auto timeStr = utils::secondsToString(procExam.time());
+    ui->tableWidget->setItem(procRow, 2, new QTableWidgetItem(timeStr));
+}
 
 void ExamTab::updatePatientList(bool reload) {
     if (reload) {
@@ -106,6 +122,7 @@ void ExamTab::onScanStarted(QString id) {
     m_exams[row].setStartTime();
     m_exams[row].setId(id);
     updateExamTable();
+    m_timer.start();
 }
 
 void ExamTab::onScanStoped() {
@@ -115,8 +132,9 @@ void ExamTab::onScanStoped() {
         return;
     }
     m_exams[processingRow].setEndTime();
-    m_exams[processingRow].setStatus(Exam::Status::Ready);
+    m_exams[processingRow].setStatus(Exam::Status::Ready);  
     onCurrentExamChanged();
+    m_timer.stop();
 }
 
 const Exam &ExamTab::setResponse(IExamResponse *response) {
@@ -144,6 +162,8 @@ const Exam &ExamTab::setResponse(IExamResponse *response) {
         LOG_INFO("Scout result received");
         m_examDialog->setScout(exam);
     }
+
+    m_timer.stop();
     return exam;
 }
 
@@ -339,7 +359,7 @@ void ExamTab::updateExamTable() {
         ui->tableWidget->setItem(i, 1, new QTableWidgetItem(exam.statusString()));
 
         auto seconds = exam.time();
-        auto timeStr = QString("%1:%2").arg(seconds/60).arg(seconds%60, 2, 10, 0, QChar(u'0'));
+        auto timeStr = utils::secondsToString(seconds);
         ui->tableWidget->setItem(i, 2, new QTableWidgetItem(timeStr));
     }
 
