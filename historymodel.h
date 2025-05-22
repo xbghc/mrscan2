@@ -19,6 +19,7 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
     void loadHistoryList();
+    void addExam(const QString& examId, const QString& patientId, const QDateTime& createTime);
 
 private:
     QStringList m_headers;

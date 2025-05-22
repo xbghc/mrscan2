@@ -148,7 +148,6 @@ void ExamEditDialog::setScout(const Exam &exam) {
     try {
         auto images = exam.images();
 
-        /// @todo 创建类读取params，这样容易出错
         auto params = exam.request().params();
         auto fov = params[KEY_FOV].toDouble();
         auto slices = params[KEY_SLICES].toArray();

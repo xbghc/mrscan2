@@ -64,6 +64,14 @@ QVariant HistoryModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
+void HistoryModel::addExam(const QString &examId, const QString &patientId, const QDateTime &createTime)
+{
+    int row = 0;
+    beginInsertRows(QModelIndex(), row, row);
+    m_historyList.insert(row, {examId, patientId, createTime});
+    endInsertRows();
+}
+
 void HistoryModel::loadHistoryList()
 {
     auto map = store::examMap();

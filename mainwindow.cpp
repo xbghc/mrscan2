@@ -94,7 +94,7 @@ void MainWindow::onScanCompleted(IExamResponse* response)
     store::saveExam(exam);
 
     ui->imagesWidget->setData(exam);
-    ui->historyTab->loadHistoryList(); /// @todo 这个不太好
+    ui->historyTab->addExamToView(exam);
 
     LOG_INFO("History record updated");
 }

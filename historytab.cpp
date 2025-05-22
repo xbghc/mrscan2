@@ -2,6 +2,7 @@
 #include "ui_historytab.h"
 
 #include "store.h"
+#include "utils.h"
 
 HistoryTab::HistoryTab(QWidget *parent)
     : QWidget(parent), ui(new Ui::HistoryTab) {
@@ -21,6 +22,17 @@ HistoryTab::HistoryTab(QWidget *parent)
 HistoryTab::~HistoryTab() {
     delete ui;
     delete m_model;
+}
+
+void HistoryTab::addExamToView(const Exam &exam)
+{
+    if (exam.id().isEmpty() || !exam.patient() || exam.patient()->id().isEmpty()) {
+        LOG_WARNING("Attempted to add an exam with missing ID or patient information to history view.");
+        return;
+    }
+    m_model->addExam(exam.id(), exam.patient()->id(), exam.startTime());
+    // Add to cache as well, so if it's immediately selected, it's available
+    m_cache[std::pair(exam.patient()->id(), exam.id())] = exam;
 }
 
 void HistoryTab::loadHistoryList() { m_model->loadHistoryList(); }

@@ -18,6 +18,7 @@ public:
     ~HistoryTab();
 
     void loadHistoryList();
+    void addExamToView(const Exam& exam);
 
 signals:
     void currentItemChanged(const Exam &exam);
