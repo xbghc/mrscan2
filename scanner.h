@@ -35,7 +35,7 @@ public:
     virtual bool isConnected() const = 0;
 
     virtual void scan(const ExamRequest& request) = 0;
-    virtual QString stop(QString id) = 0;
+    virtual void stop(QString id) = 0;
 
 signals:
     void started(QString id);
@@ -54,7 +54,7 @@ public:
     bool isConnected() const override { return m_isConnected; }
     int open() override;
     void scan(const ExamRequest& request) override;
-    QString stop(QString id) override;
+    void stop(QString id) override;
     int close() override;
 
 private:

@@ -14,12 +14,6 @@ MainWindow::MainWindow(QWidget *parent, IScanner* scanner)
 {
     ui->setupUi(this);
     
-    // // Ensure reasonable size policy to fit content
-    // this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    
-    // // Ensure layout is calculated correctly
-    // this->adjustSize();
-    
     LOG_INFO("Main window initialized");
 
     // If no scanner is provided, create a default one
@@ -36,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent, IScanner* scanner)
     // Connect scan signals to ExamTab
     connect(m_scanner.get(), &IScanner::started, ui->examTab, &ExamTab::onScanStarted);
     connect(m_scanner.get(), &IScanner::completed, this, &MainWindow::onScanCompleted);
+    connect(m_scanner.get(), &IScanner::stoped, ui->examTab, &ExamTab::onScanStoped);
     
     // Receive scan operation signals from ExamTab
     connect(ui->examTab, &ExamTab::stopButtonClicked, this, &MainWindow::handleScanStop);
@@ -86,19 +81,12 @@ MainWindow::~MainWindow()
 
 void MainWindow::handleScanStop(QString id)
 {
-    LOG_INFO(QString("Stop scanning ID: %1").arg(id));
-    auto stoppedId = m_scanner->stop(id);
-    
-    if (stoppedId != id) {
-        LOG_ERROR(QString("Stopped scan ID does not match, expected: %1, actual: %2").arg(id, stoppedId));
-    }
-    
-    ui->examTab->onScanStoped();
+    LOG_INFO(QString("Requesting to stop scan, ID: %1").arg(id));
+    m_scanner->stop(id);
 }
 
 void MainWindow::onScanCompleted(IExamResponse* response)
 {
-
     LOG_INFO("Scan completed, saving data");
 
     const auto& exam = ui->examTab->setResponse(response);

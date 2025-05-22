@@ -89,17 +89,9 @@ namespace fftw_utils{
 namespace file_utils{
 
 QByteArray read(const QString& fpath);
+
 void save(const QString& fpath, QByteArray content);
 
-int loadMrdFiles();
-
-/**
- * @brief 获取与目标文件同一目录下的所有通道的文件列表
- * @param path 目标文件路径
- * @return 所有相关的各通道文件的路径
- * @todo 这个函数不应该作为utils的部分
- */
-QStringList getAllChannelsFile(const QString& path);
 }
 
 namespace json_utils{

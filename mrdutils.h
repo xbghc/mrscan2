@@ -32,6 +32,13 @@ struct Mrd {
 
 void swap(Mrd &lhs, Mrd &rhs) noexcept;
 
+/**
+ * @brief 获取同文件夹下所有通道的文件
+ * @param path 某一通道的文件路径
+ * @return 所有通道的文件路径
+ */
+QStringList getAllChannelsFile(const QString& path);
+
 } // namespace mrd_utils
 
 #endif // MRDUTILS_H
