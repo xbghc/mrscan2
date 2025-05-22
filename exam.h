@@ -62,6 +62,7 @@ public:
 
     Status status()const;
     void setStatus(Status other);
+    QString statusString()const;
 
     QVector<QVector<QImage>> images()const;
 private:

@@ -63,21 +63,15 @@ signals:
 private:
     std::unique_ptr<Ui::examtab> ui;
 
-    QList<Exam> m_exams;
-    QVector<std::shared_ptr<IPatient>> m_patients;
+    QString generateNewPatientId(); // 生成新的病人id
+
+    QMap<QString, std::shared_ptr<IPatient>> m_patientMap;
+    QVector<Exam> m_exams;
     std::unique_ptr<PatientInfoDialog> m_patientDialog;
 
     std::unique_ptr<ExamEditDialog> m_examDialog;
 
-    /// @note
-    /// 如果是正规dicom格式的病人数据，不至于在核磁软件中创建病人，所以这里放个生成新id的函数就够了
-    /// @todo
-    /// 调整id生成的逻辑。uitls中添加生成随机数的函数，随机生成再+1遍历没有被使用的id作为新id
-
     void addPatient(QString name, QDate birthday, IPatient::Gender gender);
-
-    int nextPatientId();
-    void setNextId(int id);
 
     void swap(int row1, int row2);
     void updateExamTable();

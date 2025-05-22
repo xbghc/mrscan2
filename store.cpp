@@ -190,6 +190,14 @@ void addPatient(IPatient* patient) {
     savePatient(patient);
 }
 
+IPatient* createNewPatient(const QString& id, const QString& name, const QDate& birthday, IPatient::Gender gender){
+    auto patient = new JsonPatient();
+    patient->setId(id);
+    patient->setName(name);
+    patient->setBirthday(birthday);
+    patient->setGender(gender);
+    return patient;
+}
 
 std::unordered_map<QString, QStringList> examMap(){
     std::unordered_map<QString, QStringList> map;

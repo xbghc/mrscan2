@@ -31,6 +31,7 @@ QString edir(const QString &pid, const QString &eid);
 QVector<IPatient*> loadAllPatients();
 
 void addPatient(IPatient* patient);
+IPatient* createNewPatient(const QString& id, const QString& name, const QDate& birthday, IPatient::Gender gender);
 
 void deletePatient(const QString &pid);
 

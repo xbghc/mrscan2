@@ -12,6 +12,7 @@
 #include <QJsonObject>
 #include <QMessageBox>
 #include <QVector3D>
+#include <QUuid>
 #include <memory>
 
 namespace {} // namespace
@@ -24,6 +25,9 @@ ExamTab::ExamTab(QWidget *parent)
     updatePatientList(true);
 
     m_exams = ExamConfig::initialExams();
+
+    ui->tableWidget->setColumnCount(3);
+    ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Name" << "Status" << "Time");
     updateExamTable();
 
     // selected index changed
@@ -62,16 +66,20 @@ ExamTab::~ExamTab() {}
 
 void ExamTab::updatePatientList(bool reload) {
     if (reload) {
-        m_patients.clear();
-        for (const auto &p : store::loadAllPatients()) {
-            m_patients.push_back(std::shared_ptr<IPatient>(p));
+        m_patientMap.clear();
+        for (const auto &p_raw : store::loadAllPatients()) {
+            if (p_raw) {
+                m_patientMap.insert(p_raw->id(), std::shared_ptr<IPatient>(p_raw));
+            }
         }
     }
 
     ui->comboBox->clear();
-    for (const auto &p : m_patients) {
-        QString label = QString("%1 - %2").arg(p->id(), p->name());
-        ui->comboBox->addItem(label, p->id());
+    for (const auto &p_shared_ptr : m_patientMap) {
+        if (p_shared_ptr) {
+            QString label = QString("%1 - %2").arg(p_shared_ptr->id(), p_shared_ptr->name());
+            ui->comboBox->addItem(label, p_shared_ptr->id());
+        }
     }
 }
 
@@ -81,41 +89,54 @@ QString ExamTab::currentPatientId() const {
 
 const Exam &ExamTab::currentExam() const {
     auto curRow = ui->tableWidget->currentRow();
-    if (curRow >= 0) {
-        throw std::runtime_error("ExamTab::getCurrentExam: No Current Exam");
+    if (curRow < 0 || curRow >= m_exams.size()) { 
+        LOG_ERROR("ExamTab::currentExam: No Current Exam or index out of bounds");
+        throw std::runtime_error("ExamTab::currentExam: No Current Exam or index out of bounds");
     }
-
     return m_exams[curRow];
 }
 
 void ExamTab::onScanStarted(QString id) {
     int row = processingRow();
-
-    ui->comboBox->setEnabled(false); // 扫描开始后不能重新选择病人
-
+    if (row < 0 || row >= m_exams.size()) {
+        LOG_ERROR(QString("onScanStarted: Invalid processing row %1").arg(row));
+        return;
+    }
+    ui->comboBox->setEnabled(false);
     m_exams[row].setStartTime();
     m_exams[row].setId(id);
-
     updateExamTable();
 }
 
 void ExamTab::onScanStoped() {
-    ui->scanButton->setText(tr("start"));
-    ui->scanButton->setEnabled(true);
-
-    ui->comboBox->setEnabled(true);
+    auto processingRow = this->processingRow();
+    if (processingRow < 0 || processingRow >= m_exams.size()) {
+        LOG_ERROR(QString("onScanStoped: Invalid processing row %1").arg(processingRow));
+        return;
+    }
+    m_exams[processingRow].setEndTime();
+    m_exams[processingRow].setStatus(Exam::Status::Ready);
+    onCurrentExamChanged();
 }
 
 const Exam &ExamTab::setResponse(IExamResponse *response) {
-    auto &exam = m_exams[processingRow()];
+    int procRow = processingRow();
+     if (procRow < 0 || procRow >= m_exams.size()) {
+        LOG_ERROR(QString("setResponse: Invalid processing row %1").arg(procRow));
+        throw std::runtime_error("setResponse: Invalid processing row index");
+    }
+    auto &exam = m_exams[procRow];
 
     exam.setResponse(response);
     exam.setEndTime();
     exam.setStatus(Exam::Status::Done);
 
-    auto patient = getPatient(currentPatientId());
-    exam.setPatient(patient);
-
+    auto patient_it = m_patientMap.find(currentPatientId());
+    if (patient_it != m_patientMap.end()) {
+        exam.setPatient(patient_it.value().get());
+    } else {
+        LOG_ERROR(QString("Patient not found in map for ID: %1").arg(currentPatientId()));
+    }
     updateExamTable();
 
     /// @note 这是判断scout的方式
@@ -123,31 +144,31 @@ const Exam &ExamTab::setResponse(IExamResponse *response) {
         LOG_INFO("Scout result received");
         m_examDialog->setScout(exam);
     }
-
     return exam;
 }
 
 void ExamTab::onEditPatientButtonClicked() {
-    const auto &patient = m_patients[ui->comboBox->currentIndex()];
+    auto currentId = currentPatientId();
+    auto patient_it = m_patientMap.find(currentId);
 
-    m_patientDialog->setPatient(patient.get());
-    m_patientDialog->setType(PatientInfoDialog::Type::Edit);
-
-    m_patientDialog->setModal(true);
-    m_patientDialog->exec();
+    if (patient_it != m_patientMap.end()) {
+        m_patientDialog->setPatient(patient_it.value().get());
+        m_patientDialog->setType(PatientInfoDialog::Type::Edit);
+        m_patientDialog->setModal(true);
+        m_patientDialog->exec();
+    } else {
+        LOG_WARNING(QString("Patient with ID %1 not found for editing.").arg(currentId));
+    }
 }
 
 void ExamTab::onNewPatientButtonClicked() {
     m_patientDialog->clear();
-
     m_patientDialog->setType(PatientInfoDialog::Type::New);
-
     m_patientDialog->setModal(true);
     m_patientDialog->exec();
 }
 
 void ExamTab::onPatientDialogAccepted() {
-
     auto name = m_patientDialog->name();
     auto gender = m_patientDialog->gender();
     auto birthday = m_patientDialog->birthday();
@@ -159,19 +180,22 @@ void ExamTab::onPatientDialogAccepted() {
 
     // m_patientDialog->type() == PatientInfoDialog::Type::Edit
     auto id = m_patientDialog->id();
+    auto patient_it = m_patientMap.find(id);
 
-    for (const auto &p : m_patients) {
-        if (p->id() == id) {
-            p->setName(name);
-            p->setBirthday(birthday);
-            p->setGender(gender);
-            store::savePatient(p.get());
-            updatePatientList();
-            return;
+    if (patient_it != m_patientMap.end()) {
+        auto p_shared_ptr = patient_it.value();
+        p_shared_ptr->setName(name);
+        p_shared_ptr->setBirthday(birthday);
+        p_shared_ptr->setGender(gender);
+        store::savePatient(p_shared_ptr.get());
+        updatePatientList(false);
+        int index = ui->comboBox->findData(id);
+        if (index != -1) {
+            ui->comboBox->setCurrentIndex(index);
         }
+        return;
     }
-
-    LOG_ERROR(QString("Edit Failed: Can't find patient with id: %1").arg(id));
+    LOG_ERROR(QString("Edit Failed: Can't find patient with id: %1 in map").arg(id));
 }
 
 void ExamTab::onDeletePatientButtonClicked() {
@@ -180,29 +204,23 @@ void ExamTab::onDeletePatientButtonClicked() {
             QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
         return;
     }
-
     auto id = ui->comboBox->currentData().toString();
     store::deletePatient(id);
-    for (int i = 0; i < m_patients.size(); i++) {
-        if (m_patients[i]->id() == id) {
-            m_patients.removeAt(i);
-            updatePatientList();
-            return;
-        }
+    if (m_patientMap.remove(id) > 0) {
+        updatePatientList(false);
+        LOG_INFO(QString("Patient with ID %1 deleted.").arg(id));
+    } else {
+        LOG_ERROR(QString("Remove failed. Can't find patient with id: %1 in map").arg(id));
     }
-
-    LOG_ERROR(QString("Remove failed. Can't find patient with id: %1").arg(id));
 }
 
 void ExamTab::onShiftUpButtonClicked() {
     int curRow = currentRow();
-
     swap(curRow, curRow - 1);
 }
 
 void ExamTab::onShiftDownButtonClicked() {
     int curRow = currentRow();
-
     swap(curRow, curRow + 1);
 }
 
@@ -212,9 +230,12 @@ void ExamTab::onRemoveExamButtonClicked() {
         LOG_WARNING("No exam selected");
         return;
     }
-
-    m_exams.removeAt(curRow);
-    updateExamTable();
+    if (curRow >= 0 && curRow < m_exams.size()){ 
+        m_exams.removeAt(curRow);
+        updateExamTable();
+    } else {
+        LOG_WARNING(QString("Cannot remove exam, invalid row: %1").arg(curRow));
+    }
 }
 
 void ExamTab::onCopyExamButtonClicked() {
@@ -223,9 +244,14 @@ void ExamTab::onCopyExamButtonClicked() {
         LOG_WARNING("No exam selected");
         return;
     }
-
-    m_exams.insert(curRow + 1, Exam());
-    m_exams[curRow + 1].setRequest(m_exams[curRow].request());
+     if (curRow >= 0 && curRow < m_exams.size()){ 
+        Exam newExam; 
+        newExam.setRequest(m_exams[curRow].request()); 
+        m_exams.insert(curRow + 1, newExam); 
+        updateExamTable();
+    } else {
+        LOG_WARNING(QString("Cannot copy exam, invalid row: %1").arg(curRow));
+    }
 }
 
 void ExamTab::onEditExamButtonClicked() {
@@ -234,11 +260,13 @@ void ExamTab::onEditExamButtonClicked() {
         LOG_INFO("Edit button: No exam selected");
         return;
     }
-
-    m_examDialog->setData(m_exams[curRow]);
-
-    m_examDialog->setModal(true);
-    m_examDialog->exec();
+    if (curRow >= 0 && curRow < m_exams.size()){ 
+        m_examDialog->setData(m_exams[curRow]);
+        m_examDialog->setModal(true);
+        m_examDialog->exec();
+    } else {
+         LOG_WARNING(QString("Cannot edit exam, invalid row: %1").arg(curRow));
+    }
 }
 
 void ExamTab::onScanStopButtonClicked() {
@@ -278,9 +306,12 @@ void ExamTab::onCurrentExamChanged() {
     int curRow = currentRow();
 
     if (curRow < 0) {
+        ui->editExamButton->setEnabled(false);
+        ui->scanButton->setEnabled(false);
         return;
     }
 
+    ui->editExamButton->setEnabled(true);
     switch (m_exams[curRow].status()) {
     case Exam::Status::Ready:
         ui->scanButton->setText(tr("start"));
@@ -297,136 +328,72 @@ void ExamTab::onCurrentExamChanged() {
     }
 }
 
-IPatient *ExamTab::getPatient(QString id) {
-    for (const auto &p : m_patients) {
-        if (p->id() == id) {
-            return p.get();
-        }
+int ExamTab::currentRow() const { return ui->tableWidget->currentRow(); }
+
+void ExamTab::updateExamTable() {
+    ui->tableWidget->clearContents();
+    ui->tableWidget->setRowCount(m_exams.size());
+    for (int i = 0; i < m_exams.size(); ++i) {
+        auto exam = m_exams[i];
+        ui->tableWidget->setItem(i, 0, new QTableWidgetItem(exam.request().name()));
+        ui->tableWidget->setItem(i, 1, new QTableWidgetItem(exam.statusString()));
+
+        auto seconds = exam.time();
+        auto timeStr = QString("%1:%2").arg(seconds/60).arg(seconds%60, 2, 10, 0, QChar(u'0'));
+        ui->tableWidget->setItem(i, 2, new QTableWidgetItem(timeStr));
     }
 
-    LOG_ERROR(QString("Can't find patient with id: %1").arg(id));
+    ui->tableWidget->resizeColumnsToContents();
+}
+
+IPatient *ExamTab::getPatient(QString id) {
+    auto patient_it = m_patientMap.find(id);
+    if (patient_it != m_patientMap.end()) {
+        return patient_it.value().get();
+    }
     return nullptr;
 }
 
 void ExamTab::addPatient(QString name, QDate birthday,
                          IPatient::Gender gender) {
-    QString id = QString::number(nextPatientId());
+    QString newId = generateNewPatientId();
 
-    auto patient = new JsonPatient();
-    patient->setId(id);
-    patient->setName(name);
-    patient->setBirthday(birthday);
-    patient->setGender(gender);
-    m_patients.push_back(std::shared_ptr<IPatient>(patient));
-
-    setNextId(id.toInt() + 1);
-    store::addPatient(patient);
-}
-
-int ExamTab::nextPatientId() {
-
-    const static QString kFilePath = "./patients/nextId";
-    auto kDirPath = "./patients";
-    QDir dir(kDirPath);
-    if (!dir.exists() && dir.mkpath(".")) {
-        qDebug() << "failed to mkdir: " << kDirPath;
-        return -1;
-    }
-
-    QFile file(kFilePath);
-    if (!file.exists()) {
-        if (!file.open(QIODevice::WriteOnly)) {
-            qDebug() << "failed to open file: " << kFilePath;
-            return -1;
-        } else {
-            file.write("1");
-            return 0;
-        }
-    }
-
-    if (!file.open(QIODevice::ReadOnly)) {
-        qDebug() << "failed to open file: " << kFilePath;
-        return -1;
-    }
-    return file.readAll().toInt();
-}
-
-void ExamTab::setNextId(int id) {
-    const static QString kFilePath = "./patients/nextId";
-    QFile file(kFilePath);
-
-    if (!file.open(QIODevice::WriteOnly)) {
-        LOG_ERROR(QString("failed to write to: %1").arg(kFilePath));
+    IPatient* patient_raw = store::createNewPatient(newId, name, birthday, gender);
+    if (!patient_raw) {
+        LOG_ERROR("Failed to create new patient object via store.");
         return;
     }
+    store::addPatient(patient_raw);
 
-    file.write(QByteArray::number(id));
-    return;
+    std::shared_ptr<IPatient> patient_shared_ptr(patient_raw);
+    m_patientMap.insert(newId, patient_shared_ptr);
+
+    updatePatientList(false);
+
+    int index = ui->comboBox->findData(newId);
+    if (index != -1) {
+        ui->comboBox->setCurrentIndex(index);
+    }
+    LOG_INFO(QString("New patient added, ID: %1").arg(newId));
+}
+
+QString ExamTab::generateNewPatientId() {
+    return QUuid::createUuid().toString(QUuid::WithoutBraces);
 }
 
 void ExamTab::swap(int row1, int row2) {
-    if (row1 < 0 || row2 < 0 || row1 >= m_exams.size() ||
+    if (row1 < 0 || row1 >= m_exams.size() || row2 < 0 ||
         row2 >= m_exams.size()) {
-        LOG_WARNING(QString("Can't swap between row %1 and %2").arg(row1, row2));
         return;
     }
-
     m_exams.swapItemsAt(row1, row2);
     updateExamTable();
+    ui->tableWidget->selectRow(row2);
 }
-
-void ExamTab::updateExamTable() {
-    auto row = ui->tableWidget->currentRow();
-
-    ui->tableWidget->clear();
-    ui->tableWidget->setColumnCount(3);
-    ui->tableWidget->setRowCount(m_exams.size());
-
-    QStringList headers;
-    headers << "Name" << "Time" << "Status";
-
-    for (int i = 0; i < m_exams.size(); i++) {
-        const auto &exam = m_exams[i];
-        const auto &request = exam.request();
-
-        auto name = request.name();
-        ui->tableWidget->setItem(i, 0, new QTableWidgetItem(name));
-
-        auto time = exam.time();
-        auto timeStr =
-            QString("%1:%2").arg(time / 60).arg(time % 60, 2, 10, 0, QChar(u'0'));
-        ui->tableWidget->setItem(i, 1, new QTableWidgetItem(timeStr));
-
-        auto status = exam.status();
-        QString statusStr;
-        switch (status) {
-        case Exam::Status::Ready:
-            statusStr = "Ready";
-            break;
-        case Exam::Status::Processing:
-            statusStr = "Processing";
-            break;
-        case Exam::Status::Done:
-            statusStr = "Done";
-            break;
-        }
-        ui->tableWidget->setItem(i, 2, new QTableWidgetItem(statusStr));
-    }
-
-    ui->tableWidget->resizeColumnsToContents();
-    ui->tableWidget->resizeRowsToContents();
-
-    if (row >= 0 && row < ui->tableWidget->rowCount()) {
-        ui->tableWidget->selectRow(row);
-    }
-}
-
-int ExamTab::currentRow() const { return ui->tableWidget->currentRow(); }
 
 int ExamTab::processingRow() const {
     for (int i = 0; i < m_exams.size(); i++) {
-        const auto &exam = m_exams[i];
-        if (exam.status() == Exam::Status::Processing) {
+        if (m_exams.at(i).status() == Exam::Status::Processing) {
             return i;
         }
     }

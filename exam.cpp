@@ -123,6 +123,20 @@ Exam::Status Exam::status() const
     return m_status;
 }
 
+QString Exam::statusString() const
+{
+    switch (m_status) {
+    case Status::Ready:
+        return "Ready";
+    case Status::Processing:
+        return "Processing";
+    case Status::Done:
+        return "Done";
+    default:
+        return "Unknown";
+    }
+}
+
 void Exam::setStatus(Status other)
 {
     m_status = other;
