@@ -25,11 +25,14 @@ signals:
 
 private slots:
     void onCurrentRowChanged();
+    
 private:
     Ui::HistoryTab *ui;
 
     HistoryModel *m_model;
     std::map<std::pair<QString, QString>, Exam> m_cache;
+    
+    void setupConnections(); // 设置信号连接
 };
 
 #endif // HISTORYTAB_H

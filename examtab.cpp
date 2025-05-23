@@ -429,4 +429,8 @@ void ExamTab::setupConnections() {
 
     connect(m_examDialog.get(), &ExamEditDialog::accepted, this,
             &ExamTab::onExamDialogAccept);
+
+    // 连接全局字体变化信号
+    connect(Config::Appearance::instance(), &Config::Appearance::fontChanged,
+            ui->tableWidget, &QTableWidget::resizeColumnsToContents);
 }

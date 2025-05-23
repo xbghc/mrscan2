@@ -1,5 +1,6 @@
 #include "historytab.h"
 #include "ui_historytab.h"
+#include "appearanceconfig.h"
 
 #include "store.h"
 #include "utils.h"
@@ -15,13 +16,23 @@ HistoryTab::HistoryTab(QWidget *parent)
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
 
-    connect(ui->tableView->selectionModel(), &QItemSelectionModel::currentRowChanged,
-            this, &HistoryTab::onCurrentRowChanged);
+    // 设置所有信号连接
+    setupConnections();
 }
 
 HistoryTab::~HistoryTab() {
     delete ui;
     delete m_model;
+}
+
+void HistoryTab::setupConnections() {
+    // 连接tableView选择变化信号
+    connect(ui->tableView->selectionModel(), &QItemSelectionModel::currentRowChanged,
+            this, &HistoryTab::onCurrentRowChanged);
+
+    // 连接全局字体变化信号
+    connect(Config::Appearance::instance(), &Config::Appearance::fontChanged,
+            ui->tableView, &QTableView::resizeColumnsToContents);
 }
 
 void HistoryTab::addExamToView(const Exam &exam)
