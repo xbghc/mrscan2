@@ -76,6 +76,7 @@ private:
     std::unique_ptr<PatientInfoDialog> m_patientDialog;
     std::unique_ptr<ExamEditDialog> m_examDialog;
 
+    void setupConnections(); // 设置所有信号连接
     QString generateNewPatientId(); // 生成新的病人id
     void addPatient(QString name, QDate birthday, IPatient::Gender gender);
 

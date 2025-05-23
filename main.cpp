@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "custompreferences.h"
+#include "appearanceconfig.h"
 #include "utils.h"
 
 #include <QApplication>
@@ -27,15 +27,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    // Ensure config directory exists
-    QDir configDir("./configs");
-    if (!configDir.exists()) {
-        configDir.mkpath(".");
-        LOG_INFO("Created config directory");
-    }
-
-    CustomPreferences::setupApp();
-    LOG_INFO("Custom preferences setup completed");
+    Config::Appearance::setupApp();
 
     MainWindow w;
     w.show();

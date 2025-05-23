@@ -40,9 +40,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         examtab.h examtab.cpp examtab.ui
         historytab.h historytab.cpp historytab.ui
         preferencesdialog.h preferencesdialog.cpp preferencesdialog.ui
-        preferencestyle.h preferencestyle.cpp preferencestyle.ui
-        preferenceimage.h preferenceimage.cpp preferenceimage.ui
-        preferencehistory.h preferencehistory.cpp preferencehistory.ui
+
+
+
         tuningcentralfrequency.h tuningcentralfrequency.cpp tuningcentralfrequency.ui
         tuningradiofrequencypower.h tuningradiofrequencypower.cpp tuningradiofrequencypower.ui
         tuningshimming.h tuningshimming.cpp tuningshimming.ui
@@ -61,8 +61,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         
         # Configuration and utility classes
         configmanager.h configmanager.cpp
-        custompreferences.h custompreferences.cpp
-        abstractpreferencestab.h abstractpreferencestab.cpp
+
+
         utils.cpp utils.h
 
         pathmanager.h pathmanager.cpp
@@ -89,6 +89,10 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         exam.h exam.cpp
         store.h store.cpp
         mrdutils.h mrdutils.cpp
+        ipreferencewidget.h ipreferencewidget.cpp
+        appearancepreference.h appearancepreference.cpp appearancepreference.ui
+        appearanceconfig.h appearanceconfig.cpp
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET mrscan2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

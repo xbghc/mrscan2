@@ -5,6 +5,7 @@
 #include "store.h"
 #include "ui_examtab.h"
 #include "utils.h"
+#include "appearanceconfig.h"
 
 #include <QDir>
 #include <QJsonArray>
@@ -27,45 +28,18 @@ ExamTab::ExamTab(QWidget *parent)
     m_exams = ExamConfig::initialExams();
     
     m_timer.setInterval(500);
-    connect(&m_timer, &QTimer::timeout, this, &ExamTab::tick);
 
     ui->tableWidget->setColumnCount(3);
     ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Name" << "Status" << "Time");
+    
     updateExamTable();
 
-    // selected index changed
-    connect(ui->tableWidget->selectionModel(),
-            &QItemSelectionModel::currentRowChanged, this,
-            &ExamTab::onCurrentExamChanged);
-
-    connect(ui->editPatientButton, &QToolButton::clicked, this,
-            &ExamTab::onEditPatientButtonClicked);
-    connect(ui->newPatientButton, &QToolButton::clicked, this,
-            &ExamTab::onNewPatientButtonClicked);
-    connect(m_patientDialog.get(), &PatientInfoDialog::accepted, this,
-            &ExamTab::onPatientDialogAccepted);
-
-    connect(ui->deletePatientButton, &QToolButton::clicked, this,
-            &ExamTab::onDeletePatientButtonClicked);
-
-    connect(ui->shiftUpButton, &QPushButton::clicked, this,
-            &ExamTab::onShiftUpButtonClicked);
-    connect(ui->shiftDownButton, &QPushButton::clicked, this,
-            &ExamTab::onShiftDownButtonClicked);
-    connect(ui->removeExamButton, &QPushButton::clicked, this,
-            &ExamTab::onRemoveExamButtonClicked);
-    connect(ui->copyButton, &QPushButton::clicked, this,
-            &ExamTab::onCopyExamButtonClicked);
-    connect(ui->editExamButton, &QPushButton::clicked, this,
-            &ExamTab::onEditExamButtonClicked);
-    connect(ui->scanButton, &QPushButton::clicked, this,
-            &ExamTab::onScanStopButtonClicked);
-
-    connect(m_examDialog.get(), &ExamEditDialog::accepted, this,
-            &ExamTab::onExamDialogAccept);
+    // 设置所有信号连接
+    setupConnections();
 }
 
-ExamTab::~ExamTab() {}
+ExamTab::~ExamTab() {
+}
 
 void ExamTab::tick(){
     auto procRow = processingRow();
@@ -419,4 +393,40 @@ int ExamTab::processingRow() const {
     }
 
     return -1;
+}
+
+void ExamTab::setupConnections() {
+    // 定时器连接
+    connect(&m_timer, &QTimer::timeout, this, &ExamTab::tick);
+    
+    // selected index changed
+    connect(ui->tableWidget->selectionModel(),
+            &QItemSelectionModel::currentRowChanged, this,
+            &ExamTab::onCurrentExamChanged);
+
+    connect(ui->editPatientButton, &QToolButton::clicked, this,
+            &ExamTab::onEditPatientButtonClicked);
+    connect(ui->newPatientButton, &QToolButton::clicked, this,
+            &ExamTab::onNewPatientButtonClicked);
+    connect(m_patientDialog.get(), &PatientInfoDialog::accepted, this,
+            &ExamTab::onPatientDialogAccepted);
+
+    connect(ui->deletePatientButton, &QToolButton::clicked, this,
+            &ExamTab::onDeletePatientButtonClicked);
+
+    connect(ui->shiftUpButton, &QPushButton::clicked, this,
+            &ExamTab::onShiftUpButtonClicked);
+    connect(ui->shiftDownButton, &QPushButton::clicked, this,
+            &ExamTab::onShiftDownButtonClicked);
+    connect(ui->removeExamButton, &QPushButton::clicked, this,
+            &ExamTab::onRemoveExamButtonClicked);
+    connect(ui->copyButton, &QPushButton::clicked, this,
+            &ExamTab::onCopyExamButtonClicked);
+    connect(ui->editExamButton, &QPushButton::clicked, this,
+            &ExamTab::onEditExamButtonClicked);
+    connect(ui->scanButton, &QPushButton::clicked, this,
+            &ExamTab::onScanStopButtonClicked);
+
+    connect(m_examDialog.get(), &ExamEditDialog::accepted, this,
+            &ExamTab::onExamDialogAccept);
 }

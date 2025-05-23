@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>504</width>
-    <height>437</height>
+    <width>526</width>
+    <height>339</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -33,24 +33,6 @@
        <property name="currentRow">
         <number>-1</number>
        </property>
-       <item>
-        <property name="text">
-         <string>Style</string>
-        </property>
-        <property name="flags">
-         <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsEnabled</set>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Images</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>History</string>
-        </property>
-       </item>
       </widget>
      </item>
      <item>
@@ -61,9 +43,12 @@
        <property name="frameShadow">
         <enum>QFrame::Shadow::Raised</enum>
        </property>
-       <widget class="PreferenceStyle" name="styleTab"/>
-       <widget class="PreferenceImage" name="imageTab"/>
-       <widget class="PreferenceHistory" name="historyTab"/>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="styleTab"/>
+       <widget class="QWidget" name="imageTab"/>
+       <widget class="QWidget" name="historyTab"/>
       </widget>
      </item>
     </layout>
@@ -104,26 +89,6 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>PreferenceStyle</class>
-   <extends>QWidget</extends>
-   <header>preferencestyle.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>PreferenceImage</class>
-   <extends>QWidget</extends>
-   <header>preferenceimage.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>PreferenceHistory</class>
-   <extends>QWidget</extends>
-   <header>preferencehistory.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections>
   <connection>

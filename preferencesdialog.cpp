@@ -1,51 +1,52 @@
 #include "preferencesdialog.h"
 #include "ui_preferencesdialog.h"
-#include "custompreferences.h"
+#include "appearancepreference.h"
 
 PreferencesDialog::PreferencesDialog(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::PreferencesDialog)
 {
     ui->setupUi(this);
-    set(CustomPreferences::load());
+    
+    setupConnections();
 
-    connect(this, &QDialog::accepted, this, [this](){
-        CustomPreferences::setupApp(get());
-    });
+    // 添加外观配置页面
+    auto appearanceWidget = new AppearancePreference(this);
+    addWidget("外观", appearanceWidget);
 }
 
 PreferencesDialog::~PreferencesDialog()
 {
 }
 
-void PreferencesDialog::on_listWidget_currentRowChanged(int currentRow)
-{
-    ui->stackedWidget->setCurrentIndex(currentRow);
+void PreferencesDialog::setupConnections(){
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, onApplyButtonClicked);
+    connect(ui->listWidget, &QListWidget::currentRowChanged, 
+            ui->stackedWidget, &QStackedWidget::setCurrentIndex);
 }
 
-void PreferencesDialog::set(QJsonObject preferences)
-{
-    for(int i=0;i<ui->stackedWidget->count();i++){
-        auto tab = qobject_cast<AbstractPreferencesTab*>(ui->stackedWidget->widget(i));
-        auto jsonKey = ui->listWidget->item(i)->text().toLower();
-        tab->set(preferences[jsonKey].toObject());
+void PreferencesDialog::onApplyButtonClicked(){
+    for(auto widget:ui->stackedWidget->children()){
+        IPreferenceWidget* preferenceWidget = qobject_cast<IPreferenceWidget*>(widget);
+        if(preferenceWidget){
+            preferenceWidget->save();
+        }
     }
 }
 
-QJsonObject PreferencesDialog::get()
+int PreferencesDialog::addWidget(const QString& label, IPreferenceWidget* widget)
 {
-    QJsonObject preferences;
-    for(int i=0;i<ui->stackedWidget->count();i++){
-        auto tab = qobject_cast<AbstractPreferencesTab*>(ui->stackedWidget->widget(i));
-        auto jsonKey = ui->listWidget->item(i)->text().toLower();
-        preferences[jsonKey] = tab->get();
+    // 添加到左侧列表
+    ui->listWidget->addItem(label);
+    
+    // 添加到右侧堆叠窗口
+    int index = ui->stackedWidget->addWidget(widget);
+    
+    // 如果是第一个窗口，设置为当前选中
+    if(ui->listWidget->count() == 1) {
+        ui->listWidget->setCurrentRow(0);
+        ui->stackedWidget->setCurrentIndex(index);
     }
-    return preferences;
+    
+    return index;
 }
-
-
-void PreferencesDialog::on_pushButton_clicked()
-{
-    CustomPreferences::save(get());
-}
-
