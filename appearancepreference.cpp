@@ -31,7 +31,7 @@ void AppearancePreference::setupConnections()
 void AppearancePreference::setupStyleComboBox()
 {
     // 填充可用的应用程序样式
-    QStringList styles = QStyleFactory::keys();
+    QStringList styles = QFontDatabase::families();
     ui->styleComboBox->addItems(styles);
 }
 
