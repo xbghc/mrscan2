@@ -1,104 +1,132 @@
+/**
+ * @file qcheckcombobox.cpp
+ * @brief Implementation of QCheckComboBox - A multi-selection combo box widget
+ * 
+ * This file contains the implementation of QCheckComboBox, which provides
+ * a dropdown list with checkable items for multi-selection functionality.
+ */
+
 #include "qcheckcombobox.h"
 
 #include <QSizePolicy>
 #include <QScreen>
 #include <QMouseEvent>
 #include <QKeyEvent>
+#include <QFocusEvent>
 #include <QApplication>
 #include <QFontMetrics>
+#include <QObject>
 
+// Style definitions
 const QString QCheckComboBox::BUTTON_STYLE = R"(
 QPushButton {
     border: none;
-    background: #ffffff;
+    background: transparent;
+    border-radius: 3px;
 }
 QPushButton:hover {
-    background: #eeeeee;
+    background: rgba(0, 0, 0, 0.1);
 }
 QPushButton:pressed {
-    background: #dddddd;
+    background: rgba(0, 0, 0, 0.2);
+}
+)";
+
+const QString QCheckComboBox::TEXT_STYLE = R"(
+QLineEdit {
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 4px 8px;
+    background: white;
+    selection-background-color: #3daee9;
+}
+QLineEdit:focus {
+    border-color: #3daee9;
+    outline: none;
+}
+QLineEdit:disabled {
+    background: #f5f5f5;
+    color: #666666;
+}
+)";
+
+const QString QCheckComboBox::POPUP_STYLE = R"(
+QListView {
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    background: white;
+    outline: none;
+    selection-background-color: #e6f3ff;
+}
+QListView::item {
+    padding: 4px 8px;
+    border: none;
+    height: %1px;
+}
+QListView::item:hover {
+    background: #f0f8ff;
+}
+QListView::item:selected {
+    color: #000000;
+    background: #e6f3ff;
 }
 )";
 
 QCheckComboBox::QCheckComboBox(QWidget *parent)
-    : QWidget(parent),
-    m_text(std::make_unique<QTextEdit>(this)),
-    m_button(std::make_unique<QPushButton>(this)),
-    m_popup(std::make_unique<QListView>(this)),
-    m_model(std::make_unique<QStandardItemModel>(this)),
-    m_animation(std::make_unique<QPropertyAnimation>(this)),
-    m_separator(", ")
+    : QWidget(parent)
+    , m_textEdit(std::make_unique<QLineEdit>(this))
+    , m_dropButton(std::make_unique<QPushButton>(this))
+    , m_popup(std::make_unique<QListView>(this))
+    , m_model(std::make_unique<QStandardItemModel>(this))
+    , m_animation(std::make_unique<QPropertyAnimation>(this))
+    , m_separator(", "),
+    m_placeholderText(""),
+    m_cachedSize(0, 0)
 {
-    initButton();
-    initTextEdit();
-    initPopup();
-    
-    // init animation object
-    m_animation->setTargetObject(m_popup.get());
-    m_animation->setPropertyName("geometry");
-    m_animation->setDuration(150);
-    m_animation->setEasingCurve(QEasingCurve::OutQuad);
-
+    setupUI();
+    setupAnimation();
     updateLayout();
     setFocusPolicy(Qt::StrongFocus);
 }
 
 QCheckComboBox::~QCheckComboBox()
 {
+    if (m_popup && m_popup->isVisible()) {
+        QApplication::instance()->removeEventFilter(this);
+    }
 }
+
+// ============================================================================
+// Public Interface - Item Management
+// ============================================================================
 
 void QCheckComboBox::addItem(const QString &text, const QVariant &data)
 {
-    auto item = new QStandardItem();
-    item->setData(text, Qt::DisplayRole);
-    item->setData(Qt::Unchecked, Qt::CheckStateRole);
-    if(!data.isNull()){
-        item->setData(data, Qt::UserRole);
+    if (text.isEmpty()) {
+        qWarning() << "QCheckComboBox: Adding item with empty text";
+        return;
     }
+
+    auto item = createItem(text, data);
     m_model->appendRow(item);
-    updateDisplayText();
+    notifyDataChanged();
 }
 
 void QCheckComboBox::setItems(const QStringList &items)
 {
     m_model->clear();
     for (const QString &text : items) {
-        addItem(text);
+        if (!text.isEmpty()) {
+            m_model->appendRow(createItem(text));
+        }
     }
-    updateDisplayText();
-    emit itemStatusChanged();
+    notifyDataChanged();
 }
 
-QList<QVariant> QCheckComboBox::values(QCheckComboBox::Filter filter)
+void QCheckComboBox::removeAllItems()
 {
-    auto result = QList<QVariant>();
-
-    for(int i=0; i<m_model->rowCount(); i++){
-        auto index = m_model->index(i, 0);
-        auto v = m_model->data(index, Qt::UserRole);
-        if(v.isNull()){
-            v = m_model->data(index, Qt::DisplayRole);
-        }
-        auto s = m_model->data(index, Qt::CheckStateRole);
-
-        switch(filter){
-        case ALL:
-            result.append(v);
-            break;
-        case CHECKED:
-            if(s.toInt() == Qt::Checked){
-                result.push_back(v);
-            }
-            break;
-        case UNCHECKED:
-            if(s.toInt() != Qt::Checked){
-                result.push_back(v);
-            }
-            break;
-        }
-    }
-
-    return result;
+    m_model->clear();
+    notifyDataChanged();
 }
 
 int QCheckComboBox::itemCount() const
@@ -106,290 +134,221 @@ int QCheckComboBox::itemCount() const
     return m_model->rowCount();
 }
 
+// ============================================================================
+// Public Interface - Selection Management
+// ============================================================================
+
 void QCheckComboBox::setChecked(int index, bool checked)
 {
-    if (index < 0 || index >= m_model->rowCount()) {
+    if (!isValidIndex(index)) {
         return;
     }
     
     QModelIndex modelIndex = m_model->index(index, 0);
     Qt::CheckState state = checked ? Qt::Checked : Qt::Unchecked;
     m_model->setData(modelIndex, state, Qt::CheckStateRole);
-    
-    // Update display text
-    updateDisplayText();
-    
-    // Trigger status change signal
-    emit itemStatusChanged();
-}
-
-void QCheckComboBox::removeAllItems()
-{
-    m_model->clear();
-    updateDisplayText();
-    emit itemStatusChanged();
+    notifyDataChanged();
 }
 
 bool QCheckComboBox::isChecked(int index) const
 {
-    if (index < 0 || index >= m_model->rowCount()) {
-        return false;
-    }
-    
-    QModelIndex modelIndex = m_model->index(index, 0);
-    QVariant checkState = m_model->data(modelIndex, Qt::CheckStateRole);
-    return checkState.toInt() == Qt::Checked;
-}
-
-void QCheckComboBox::resizeEvent(QResizeEvent *e)
-{
-    updateLayout();
-    
-    QSize popupSize = m_popup->size();
-    popupSize.setWidth(size().width());
-    m_popup->resize(popupSize);
-
-    QPropertyAnimation::State state = m_animation->state();
-    if (state != QPropertyAnimation::Stopped) {
-        QRect startRect = m_animation->startValue().toRect();
-        startRect.setWidth(size().width());
-        m_animation->setStartValue(startRect);
-
-        QRect endRect = m_animation->endValue().toRect();
-        endRect.setWidth(size().width());
-        m_animation->setEndValue(endRect);
-    }
-
-    QWidget::resizeEvent(e);
-}
-
-void QCheckComboBox::mousePressEvent(QMouseEvent *e)
-{
-    if (!m_popup->isVisible()) {
-        showPopup();
-    } else {
-        hidePopup();
-    }
-    e->accept();
-}
-
-bool QCheckComboBox::eventFilter(QObject *obj, QEvent *event)
-{
-    if(obj == m_button.get() && event->type() == QEvent::MouseButtonPress){
-        passButtonClick(obj, event);
-        return true;
-    }
-    if(event->type()==QEvent::MouseButtonPress && m_popup->isVisible()){
-        auto mouseEvent = static_cast<QMouseEvent*>(event);
-        if(!m_popup->geometry().contains(mouseEvent->globalPosition().toPoint())){
-            hidePopup();
-            return true;
-        }
-    }
-
-    return QWidget::eventFilter(obj, event);
-}
-
-void QCheckComboBox::onItemClicked(const QModelIndex& index)
-{
-    auto v = m_model->data(index, Qt::CheckStateRole);
-    auto checkStatus = qvariant_cast<Qt::CheckState>(v);
-    if(checkStatus == Qt::Unchecked){
-        m_model->setData(index, Qt::Checked, Qt::CheckStateRole);
-    }else if(checkStatus == Qt::Checked){
-        m_model->setData(index, Qt::Unchecked, Qt::CheckStateRole);
-    }else{
-        qDebug() << "unsupport check status: " << checkStatus;
-    }
-    updateDisplayText();
-    emit itemStatusChanged();
-}
-
-void QCheckComboBox::updateLayout()
-{
-    auto margins = contentsMargins();
-    
-    // Calculate text box size and position, ensure vertical centering
-    int textWidth = width() - margins.right() - margins.left();
-    int textHeight = m_text->document()->size().toSize().height() + 4; // Consider actual content height
-    int maxTextHeight = height() - margins.top() - margins.bottom();
-    textHeight = qMin(textHeight, maxTextHeight);
-    
-    // Vertical centering calculation
-    int textY = margins.top() + (maxTextHeight - textHeight) / 2;
-    
-    m_text->resize(textWidth, textHeight);
-    m_text->move(margins.left(), textY);
-    
-    // Set button position, aligned with the right side of the text box and vertically centered
-    m_button->setFixedHeight(textHeight-4);
-    int buttonX = width() - m_button->width() - margins.right() - 4;
-    int buttonY = (height() - m_button->height()) / 2;
-    m_button->move(buttonX, buttonY);
-    
-    // Set appropriate focus order
-    setTabOrder(this, m_text.get());
-    setTabOrder(m_text.get(), m_button.get());
-}
-
-void QCheckComboBox::showPopup()
-{
-    // First automatically adjust item height based on content
-    adjustItemsHeight();
-    
-    QPoint globalPos = mapToGlobal(QPoint(0, height()));
-    QRect screenRect = screen()->availableGeometry();
-    
-    QFontMetrics fm(font());
-    int itemHeight = fm.height() + 8; // Keep consistent with adjustItemsHeight
-    int itemCount = m_model->rowCount();
-    int contentHeight = itemCount * itemHeight;
-    
-    // Add border space
-    if (itemCount > 0) {
-        contentHeight += 2;
-    }
-    
-    // Set reasonable minimum and maximum height
-    int minHeight = 30;
-    int maxHeight = qMin(screenRect.height() - globalPos.y(), 200);
-
-    int popupHeight = qMin(qMax(contentHeight, minHeight), maxHeight);
-
-    QRect startRect(globalPos, QSize(width(), 0));
-    QRect endRect(globalPos, QSize(width(), popupHeight));
-    m_animation->setStartValue(startRect);
-    m_animation->setEndValue(endRect);
-
-    // Use KeepWhenStopped to avoid deleting member variables
-    m_popup->setGeometry(startRect);
-    m_popup->show();
-    m_popup->raise();
-    m_animation->start(QAbstractAnimation::KeepWhenStopped);
-}
-
-void QCheckComboBox::hidePopup()
-{
-    if(!m_popup->isVisible()){
-        return;
-    }
-    
-    // Stop current animation (if any)
-    if (m_animation && m_animation->state() == QAbstractAnimation::Running) {
-        m_animation->stop();
-    }
-
-    m_popup->hide();
-}
-
-void QCheckComboBox::initButton()
-{
-    m_button->setStyleSheet(BUTTON_STYLE);
-
-    m_button->setFixedSize(BUTTON_SIZE);
-    m_button->setIcon(QIcon(":/qcheckcombobox.svg"));
-    m_button->setIconSize(QSize(16, 16));
-    m_button->raise();
-    m_button->installEventFilter(this);
-}
-
-void QCheckComboBox::initPopup()
-{
-    m_popup->hide();
-
-    m_popup->setModel(m_model.get());
-    m_popup->setWindowFlags(Qt::Popup | Qt::FramelessWindowHint);
-    m_popup->setUniformItemSizes(true);
-    
-    m_popup->installEventFilter(this);
-    connect(m_popup.get(), &QListView::clicked, this, &QCheckComboBox::onItemClicked);
-}
-
-void QCheckComboBox::passButtonClick(QObject *obj, QEvent *event)
-{
-    auto mouseEvent = static_cast<QMouseEvent *>(event);
-    auto parentPos = m_button->mapToParent(mouseEvent->pos());
-    auto globalPos = m_button->mapToGlobal(mouseEvent->pos());
-    QMouseEvent parentEvent(QEvent::MouseButtonPress,
-                           parentPos,
-                           globalPos,
-                           mouseEvent->button(),
-                           mouseEvent->buttons(),
-                           mouseEvent->modifiers()
-                           );
-    QApplication::sendEvent(this, &parentEvent);
-}
-
-void QCheckComboBox::updateDisplayText()
-{
-    QStringList selectedTexts;
-    for (int i = 0; i < m_model->rowCount(); i++) {
-        QModelIndex index = m_model->index(i, 0);
-        if (m_model->data(index, Qt::CheckStateRole).toInt() == Qt::Checked) {
-            selectedTexts << m_model->data(index, Qt::DisplayRole).toString();
-        }
-    }
-    
-    m_text->setText(selectedTexts.join(m_separator));
-    updateLayout(); // Update layout to ensure text is centered
-}
-
-void QCheckComboBox::setButtonIcon(const QIcon &icon)
-{
-    m_button->setIcon(icon);
+    return isItemChecked(index);
 }
 
 void QCheckComboBox::selectAll()
 {
-    for (int i = 0; i < m_model->rowCount(); i++) {
-        QModelIndex index = m_model->index(i, 0);
-        m_model->setData(index, Qt::Checked, Qt::CheckStateRole);
-    }
-    updateDisplayText();
-    emit itemStatusChanged();
+    setAllChecked(true);
 }
 
 void QCheckComboBox::deselectAll()
 {
-    for (int i = 0; i < m_model->rowCount(); i++) {
+    setAllChecked(false);
+}
+
+void QCheckComboBox::setCheckedByTexts(const QStringList &texts)
+{
+    setAllChecked(false);
+    
+    for (int i = 0; i < m_model->rowCount(); ++i) {
         QModelIndex index = m_model->index(i, 0);
-        m_model->setData(index, Qt::Unchecked, Qt::CheckStateRole);
+        QString itemText = m_model->data(index, Qt::DisplayRole).toString();
+        if (texts.contains(itemText)) {
+            m_model->setData(index, Qt::Checked, Qt::CheckStateRole);
+        }
     }
-    updateDisplayText();
-    emit itemStatusChanged();
+    notifyDataChanged();
+}
+
+// ============================================================================
+// Public Interface - Data Retrieval
+// ============================================================================
+
+QList<QVariant> QCheckComboBox::values(QCheckComboBox::Filter filter)
+{
+    QList<QVariant> result;
+    
+    for (int i = 0; i < m_model->rowCount(); ++i) {
+        QModelIndex index = m_model->index(i, 0);
+        bool isChecked = m_model->data(index, Qt::CheckStateRole).toInt() == Qt::Checked;
+        
+        bool shouldInclude = (filter == ALL) || 
+                           (filter == CHECKED && isChecked) || 
+                           (filter == UNCHECKED && !isChecked);
+        
+        if (shouldInclude) {
+            QVariant value = m_model->data(index, Qt::UserRole);
+            result.append(value.isNull() ? m_model->data(index, Qt::DisplayRole) : value);
+        }
+    }
+    
+    return result;
+}
+
+QStringList QCheckComboBox::checkedTexts() const
+{
+    QStringList result;
+    for (int i = 0; i < m_model->rowCount(); ++i) {
+        if (isItemChecked(i)) {
+            QModelIndex index = m_model->index(i, 0);
+            result << m_model->data(index, Qt::DisplayRole).toString();
+        }
+    }
+    return result;
+}
+
+QList<int> QCheckComboBox::checkedIndexes() const
+{
+    QList<int> result;
+    for (int i = 0; i < m_model->rowCount(); ++i) {
+        if (isItemChecked(i)) {
+            result << i;
+        }
+    }
+    return result;
+}
+
+// ============================================================================
+// Public Interface - Appearance Customization
+// ============================================================================
+
+void QCheckComboBox::setButtonIcon(const QIcon &icon)
+{
+    m_dropButton->setIcon(icon);
 }
 
 void QCheckComboBox::setSeparator(const QString &separator)
 {
+    if (separator.isEmpty()) {
+        qWarning() << "QCheckComboBox: Empty separator provided";
+        return;
+    }
     m_separator = separator;
     updateDisplayText();
 }
 
-void QCheckComboBox::initTextEdit()
+void QCheckComboBox::setPlaceholderText(const QString &placeholder)
 {
-    static const QString TEXT_STYLE = R"(
-    QTextEdit {
-        border: 1px solid #c0c0c0;
-        border-radius: 3px;
-        padding: 2px 4px;
-        background: white;
-        margin: 0px;
+    m_placeholderText = placeholder;
+    m_textEdit->setPlaceholderText(placeholder);
+    updateDisplayText();
+}
+
+// ============================================================================
+// Public Interface - Size Hints
+// ============================================================================
+
+QSize QCheckComboBox::sizeHint() const
+{
+    return calculateSize(true);
+}
+
+QSize QCheckComboBox::minimumSizeHint() const
+{
+    return calculateSize(false);
+}
+
+// ============================================================================
+// Protected Event Handlers
+// ============================================================================
+
+void QCheckComboBox::resizeEvent(QResizeEvent *event)
+{
+    updateLayout();
+    
+    // Update popup width if visible
+    if (m_popup->isVisible()) {
+        QRect popupGeometry = m_popup->geometry();
+        popupGeometry.setWidth(width());
+        m_popup->setGeometry(popupGeometry);
     }
-    )";
     
-    m_text->setStyleSheet(TEXT_STYLE);
-    m_text->setEnabled(false);
-    m_text->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_text->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_text->setLineWrapMode(QTextEdit::NoWrap);
+    QWidget::resizeEvent(event);
+}
+
+void QCheckComboBox::mousePressEvent(QMouseEvent *event)
+{
+    togglePopup();
+    event->accept();
+}
+
+bool QCheckComboBox::eventFilter(QObject *obj, QEvent *event)
+{
+    // Handle button click
+    if (obj == m_dropButton.get() && event->type() == QEvent::MouseButtonPress) {
+        togglePopup();
+        return true;
+    }
     
-    // Adjust text box content alignment
-    QTextOption option = m_text->document()->defaultTextOption();
-    option.setAlignment(Qt::AlignVCenter);
-    m_text->document()->setDefaultTextOption(option);
-    
-    // Remove internal padding
-    m_text->document()->setDocumentMargin(0);
+    // Handle events when popup is visible
+    if (m_popup->isVisible()) {
+        switch (event->type()) {
+        case QEvent::FocusIn:
+        case QEvent::FocusOut:
+            // Only hide popup if focus moves outside our component
+            if (!isWidgetPartOfComboBox(QApplication::focusWidget())) {
+                hidePopup();
+            }
+            return false; // Don't consume focus events
+            
+        case QEvent::WindowActivate:
+        case QEvent::WindowDeactivate:
+            // Hide popup when window activation changes
+            hidePopup();
+            return false; // Don't consume window events
+            
+        case QEvent::Move:
+        case QEvent::Resize:
+            // Hide popup when parent window moves or resizes
+            if (obj && obj->isWidgetType()) {
+                QWidget* widget = static_cast<QWidget*>(obj);
+                if (widget->isWindow()) {
+                    QWidget* topLevel = this->window();
+                    if (widget == topLevel) {
+                        hidePopup();
+                    }
+                }
+            }
+            return false; // Don't consume move/resize events
+            
+        case QEvent::MouseButtonPress: {
+            auto mouseEvent = static_cast<QMouseEvent*>(event);
+            QPoint globalPos = mouseEvent->globalPosition().toPoint();
+            
+            // Check if click is inside popup
+            if (m_popup->geometry().contains(globalPos)) {
+                return false; // Let popup handle the click
+            }
+            
+            // Click is outside - hide popup but don't consume the event
+            hidePopup();
+            return false; // Let the event propagate to other widgets
+        }
+        default:
+            break;
+        }
+    }
+
+    return QWidget::eventFilter(obj, event);
 }
 
 void QCheckComboBox::keyPressEvent(QKeyEvent *event)
@@ -398,13 +357,10 @@ void QCheckComboBox::keyPressEvent(QKeyEvent *event)
     case Qt::Key_Space:
     case Qt::Key_Enter:
     case Qt::Key_Return:
-        if (!m_popup->isVisible()) {
-            showPopup();
-        } else {
-            hidePopup();
-        }
+        togglePopup();
         event->accept();
         break;
+        
     case Qt::Key_Escape:
         if (m_popup->isVisible()) {
             hidePopup();
@@ -413,6 +369,7 @@ void QCheckComboBox::keyPressEvent(QKeyEvent *event)
             QWidget::keyPressEvent(event);
         }
         break;
+
     case Qt::Key_A:
         if (event->modifiers() & Qt::ControlModifier) {
             selectAll();
@@ -421,22 +378,308 @@ void QCheckComboBox::keyPressEvent(QKeyEvent *event)
             QWidget::keyPressEvent(event);
         }
         break;
+        
     default:
         QWidget::keyPressEvent(event);
+        break;
     }
 }
 
-void QCheckComboBox::adjustItemsHeight()
+void QCheckComboBox::focusInEvent(QFocusEvent *event)
 {
-    // Directly use current font to calculate item height
-    QFontMetrics fm(font());
-    int textHeight = fm.height();
-    
-    // Add margin to get final height
-    int itemHeight = textHeight + 8;
-    
-    // Apply uniform item height
-    QString styleSheet = QString("QListView::item { height: %1px; }").arg(itemHeight);
-    m_popup->setStyleSheet(styleSheet);
+    QWidget::focusInEvent(event);
+    update();
 }
 
+void QCheckComboBox::focusOutEvent(QFocusEvent *event)
+{
+    QWidget::focusOutEvent(event);
+    if (m_popup->isVisible() && shouldHideOnFocusOut(event)) {
+        hidePopup();
+    }
+    update();
+}
+
+// ============================================================================
+// Private Slots
+// ============================================================================
+
+void QCheckComboBox::onItemClicked(const QModelIndex& index)
+{
+    Qt::CheckState currentState = static_cast<Qt::CheckState>(
+        m_model->data(index, Qt::CheckStateRole).toInt());
+    Qt::CheckState newState = (currentState == Qt::Checked) ? Qt::Unchecked : Qt::Checked;
+    
+    m_model->setData(index, newState, Qt::CheckStateRole);
+    notifyDataChanged();
+}
+
+// ============================================================================
+// Private Implementation - Core Functionality
+// ============================================================================
+
+void QCheckComboBox::setupUI()
+{
+    // Setup text edit
+    m_textEdit->setStyleSheet(TEXT_STYLE);
+    m_textEdit->setReadOnly(true);
+    m_textEdit->setPlaceholderText(m_placeholderText);
+
+    // Setup button
+    m_dropButton->setStyleSheet(BUTTON_STYLE);
+    m_dropButton->setFixedSize(BUTTON_SIZE);
+    m_dropButton->setIcon(QIcon(":/qcheckcombobox.svg"));
+    m_dropButton->setIconSize(QSize(16, 16));
+    m_dropButton->installEventFilter(this);
+
+    // Setup popup
+    m_popup->hide();
+    m_popup->setModel(m_model.get());
+    m_popup->setWindowFlags(Qt::Popup | Qt::FramelessWindowHint);
+    m_popup->setUniformItemSizes(true);
+    m_popup->setStyleSheet(POPUP_STYLE.arg(ITEM_HEIGHT));
+    m_popup->installEventFilter(this);
+    
+    connect(m_popup.get(), &QListView::clicked, this, &QCheckComboBox::onItemClicked);
+}
+
+void QCheckComboBox::setupAnimation()
+{
+    m_animation->setTargetObject(m_popup.get());
+    m_animation->setPropertyName("geometry");
+    m_animation->setDuration(ANIMATION_DURATION);
+    m_animation->setEasingCurve(QEasingCurve::OutCubic);
+}
+
+void QCheckComboBox::updateLayout()
+{
+    auto margins = contentsMargins();
+    int availableWidth = width() - margins.left() - margins.right();
+    int availableHeight = height() - margins.top() - margins.bottom();
+    
+    // Calculate text edit geometry
+    int buttonSpace = BUTTON_SIZE.width() + 8;
+    int textWidth = availableWidth - buttonSpace;
+    
+    QFontMetrics fm(font());
+    int textHeight = fm.height() + 8;
+    int textY = margins.top() + (availableHeight - textHeight) / 2;
+    
+    m_textEdit->setGeometry(margins.left(), textY, textWidth, textHeight);
+    
+    // Calculate button geometry
+    int buttonX = width() - BUTTON_SIZE.width() - margins.right() - 4;
+    int buttonY = margins.top() + (availableHeight - BUTTON_SIZE.height()) / 2;
+    m_dropButton->setGeometry(buttonX, buttonY, BUTTON_SIZE.width(), BUTTON_SIZE.height());
+    
+    // Set tab order
+    setTabOrder(this, m_textEdit.get());
+    setTabOrder(m_textEdit.get(), m_dropButton.get());
+}
+
+void QCheckComboBox::updateDisplayText()
+{
+    QString displayText = calculateDisplayText();
+    m_textEdit->setText(displayText);
+    
+    // Update size hint if changed
+    QSize newSize = sizeHint();
+    if (newSize != m_cachedSize) {
+        m_cachedSize = newSize;
+        updateGeometry();
+    }
+    
+    updateLayout();
+}
+
+void QCheckComboBox::notifyDataChanged()
+{
+    updateDisplayText();
+    emit itemStatusChanged();
+}
+
+// ============================================================================
+// Private Implementation - Popup Management
+// ============================================================================
+
+void QCheckComboBox::showPopup()
+{
+    if (m_popup->isVisible()) {
+        return;
+    }
+    
+    QRect popupRect = calculatePopupGeometry();
+    QRect startRect(popupRect.topLeft(), QSize(popupRect.width(), 0));
+    
+    m_animation->setStartValue(startRect);
+    m_animation->setEndValue(popupRect);
+
+    m_popup->setGeometry(startRect);
+    m_popup->show();
+    m_popup->raise();
+    m_popup->setFocus();
+    
+    QApplication::instance()->installEventFilter(this);
+    m_animation->start(QAbstractAnimation::KeepWhenStopped);
+}
+
+void QCheckComboBox::hidePopup()
+{
+    if (!m_popup->isVisible()) {
+        return;
+    }
+    
+    if (m_animation->state() == QAbstractAnimation::Running) {
+        m_animation->stop();
+    }
+
+    QApplication::instance()->removeEventFilter(this);
+    m_popup->hide();
+    setFocus();
+}
+
+void QCheckComboBox::togglePopup()
+{
+    m_popup->isVisible() ? hidePopup() : showPopup();
+}
+
+QRect QCheckComboBox::calculatePopupGeometry() const
+{
+    QPoint globalPos = mapToGlobal(QPoint(0, height()));
+    QRect screenRect = screen()->availableGeometry();
+    
+    // Calculate content height
+    int itemCount = m_model->rowCount();
+    int contentHeight = itemCount * ITEM_HEIGHT + 4; // 4px for borders
+    int popupHeight = qBound(MIN_POPUP_HEIGHT, contentHeight, MAX_POPUP_HEIGHT);
+    
+    // Check if popup should appear above
+    if (globalPos.y() + popupHeight > screenRect.bottom()) {
+        int availableSpaceAbove = mapToGlobal(QPoint(0, 0)).y() - screenRect.top();
+        if (availableSpaceAbove > popupHeight) {
+            globalPos.setY(mapToGlobal(QPoint(0, 0)).y() - popupHeight);
+        } else {
+            popupHeight = qMin(popupHeight, screenRect.bottom() - globalPos.y());
+        }
+    }
+    
+    return QRect(globalPos, QSize(width(), popupHeight));
+}
+
+// ============================================================================
+// Private Implementation - Helper Methods
+// ============================================================================
+
+QString QCheckComboBox::calculateDisplayText() const
+{
+    QStringList selectedTexts = checkedTexts();
+    
+    if (selectedTexts.isEmpty()) {
+        return m_placeholderText;
+    }
+    
+    if (selectedTexts.size() > MAX_DISPLAY_ITEMS) {
+        return QString("%1 / %2").arg(selectedTexts.size()).arg(m_model->rowCount());
+    }
+    
+    return selectedTexts.join(m_separator);
+}
+
+QSize QCheckComboBox::calculateSize(bool preferredSize) const
+{
+    QFontMetrics fm(font());
+    QString displayText = calculateDisplayText();
+    if (displayText.isEmpty()) {
+        displayText = m_placeholderText;
+    }
+    
+    int textWidth = fm.horizontalAdvance(displayText);
+    int padding = preferredSize ? PADDING_WIDTH * 2 : PADDING_WIDTH;
+    int minWidth = textWidth + BUTTON_SIZE.width() + padding;
+    int height = qMax(fm.height() + (preferredSize ? 12 : 8), 
+                     BUTTON_SIZE.height() + (preferredSize ? 8 : 4));
+    
+    if (preferredSize) {
+        minWidth = qBound(120, minWidth, 400);
+    } else {
+        minWidth = qMax(minWidth, MIN_WIDTH);
+    }
+    
+    return QSize(minWidth, height);
+}
+
+bool QCheckComboBox::isValidIndex(int index) const
+{
+    return index >= 0 && index < m_model->rowCount();
+}
+
+bool QCheckComboBox::isItemChecked(int index) const
+{
+    if (!isValidIndex(index)) {
+        return false;
+    }
+    
+    QModelIndex modelIndex = m_model->index(index, 0);
+    return m_model->data(modelIndex, Qt::CheckStateRole).toInt() == Qt::Checked;
+}
+
+void QCheckComboBox::setAllChecked(bool checked)
+{
+    Qt::CheckState state = checked ? Qt::Checked : Qt::Unchecked;
+    for (int i = 0; i < m_model->rowCount(); ++i) {
+        QModelIndex index = m_model->index(i, 0);
+        m_model->setData(index, state, Qt::CheckStateRole);
+    }
+    notifyDataChanged();
+}
+
+QStandardItem* QCheckComboBox::createItem(const QString& text, const QVariant& data) const
+{
+    auto item = new QStandardItem();
+    item->setData(text, Qt::DisplayRole);
+    item->setData(Qt::Unchecked, Qt::CheckStateRole);
+    item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
+    
+    if (!data.isNull()) {
+        item->setData(data, Qt::UserRole);
+    }
+    
+    return item;
+}
+
+// ============================================================================
+// Private Implementation - Event Handling Helpers
+// ============================================================================
+
+bool QCheckComboBox::shouldHideOnFocusOut(QFocusEvent* event) const
+{
+    if (event->reason() == Qt::PopupFocusReason || 
+        event->reason() == Qt::MouseFocusReason) {
+        return false;
+    }
+    
+    return !isWidgetPartOfComboBox(QApplication::focusWidget());
+}
+
+bool QCheckComboBox::isWidgetPartOfComboBox(QWidget* widget) const
+{
+    if (!widget) {
+        return false;
+    }
+    
+    // Check if widget is part of this combo box
+    if (widget == this || isAncestorOf(widget)) {
+        return true;
+    }
+    
+    // Check if widget is part of popup hierarchy
+    QWidget* current = widget;
+    while (current) {
+        if (current == m_popup.get()) {
+            return true;
+        }
+        current = current->parentWidget();
+    }
+    
+    return false;
+}
