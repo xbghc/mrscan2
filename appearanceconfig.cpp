@@ -4,6 +4,7 @@
 
 #include <QApplication>
 #include <QGuiApplication>
+#include <QStyle>
 #include <QStyleHints>
 #include <QStyleFactory>
 
@@ -34,8 +35,13 @@ QString Appearance::fontFamily(){
     auto cm = ConfigManager::instance();
     auto ff = cm->get(CONFIG_NAME, KEY_FONT_FAMILY);
     if(ff.isNull()){
-        cm->set(CONFIG_NAME, KEY_FONT_FAMILY, "Arial");
-        return "Arial";
+        // 使用系统默认字体，对中文支持更好
+        QString defaultFont = QApplication::font().family();
+        if (defaultFont.isEmpty()) {
+            defaultFont = "Microsoft YaHei"; // Windows 中文环境的默认字体
+        }
+        cm->set(CONFIG_NAME, KEY_FONT_FAMILY, defaultFont);
+        return defaultFont;
     }
     return ff.toString();
 }
@@ -48,8 +54,13 @@ QString Appearance::theme(){
     auto cm = ConfigManager::instance();
     auto th = cm->get(CONFIG_NAME, KEY_THEME);
     if(th.isNull()){
-        cm->set(CONFIG_NAME, KEY_THEME, "Light");
-        return "Light";
+        // 使用系统默认样式，在Windows上通常是"Windows"
+        QString defaultStyle = QApplication::style()->objectName();
+        if (defaultStyle.isEmpty()) {
+            defaultStyle = "Windows"; // Windows平台的默认样式
+        }
+        cm->set(CONFIG_NAME, KEY_THEME, defaultStyle);
+        return defaultStyle;
     }
     return th.toString();
 }
@@ -68,8 +79,8 @@ QString Appearance::language(){
     auto cm = ConfigManager::instance();
     auto lang = cm->get(CONFIG_NAME, KEY_LANGUAGE);
     if(lang.isNull()){
-        cm->set(CONFIG_NAME, KEY_LANGUAGE, "English");
-        return "English";
+        cm->set(CONFIG_NAME, KEY_LANGUAGE, "en");
+        return "en";
     }
     return lang.toString();
 }
@@ -78,7 +89,6 @@ void Appearance::setFontSize(int size){
     auto cm = ConfigManager::instance();
     cm->set(CONFIG_NAME, KEY_FONT_SIZE, size);
     
-    // 直接发射信号
     emit instance()->fontChanged(font());
 }
 
@@ -86,7 +96,6 @@ void Appearance::setFontFamily(const QString& family){
     auto cm = ConfigManager::instance();
     cm->set(CONFIG_NAME, KEY_FONT_FAMILY, family);
     
-    // 直接发射信号
     emit instance()->fontChanged(font());
 }
 
@@ -94,7 +103,6 @@ void Appearance::setTheme(const QString& theme){
     auto cm = ConfigManager::instance();
     cm->set(CONFIG_NAME, KEY_THEME, theme);
     
-    // 直接发射信号
     emit instance()->themeChanged(theme);
 }
 
@@ -102,7 +110,6 @@ void Appearance::setColorTheme(const QString& colorTheme){
     auto cm = ConfigManager::instance();
     cm->set(CONFIG_NAME, KEY_COLOR_THEME, colorTheme);
     
-    // 直接发射信号
     emit instance()->colorThemeChanged(colorTheme);
 }
 
@@ -110,7 +117,6 @@ void Appearance::setLanguage(const QString& language){
     auto cm = ConfigManager::instance();
     cm->set(CONFIG_NAME, KEY_LANGUAGE, language);
     
-    // 直接发射信号
     emit instance()->languageChanged(language);
 }
 
@@ -119,15 +125,18 @@ void Appearance::setupApp(){
     auto themeStr = theme();
     auto colorThemeStr = colorTheme();
 
-    LOG_INFO(QString("Setting up application with font: %1, theme: %2, color theme: %3")
-             .arg(fontObj.family(), themeStr, colorThemeStr));
+    LOG_INFO(QString("Setting up application with font: %1 %2pt, theme: %3, color theme: %4")
+             .arg(fontObj.family()).arg(fontObj.pointSize()).arg(themeStr, colorThemeStr));
 
-    QApplication::setFont(fontObj);
-    
-    // 设置应用程序样式
+    // 首先设置应用程序样式
     QStringList styles = QStyleFactory::keys();
+    LOG_INFO(QString("Available styles: %1").arg(styles.join(", ")));
+    
     if(styles.contains(themeStr, Qt::CaseInsensitive)){
         QApplication::setStyle(QStyleFactory::create(themeStr));
+        LOG_INFO(QString("Style set to: %1").arg(themeStr));
+    } else {
+        LOG_WARNING(QString("Style '%1' not found, using default").arg(themeStr));
     }
     
     // 设置颜色方案
@@ -138,6 +147,11 @@ void Appearance::setupApp(){
     }else if(colorThemeStr == "Dark"){
         QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);
     }
+    
+    // 最后设置字体（在样式设置之后，确保字体不被样式覆盖）
+    QApplication::setFont(fontObj);
+    LOG_INFO(QString("Application font set to: %1 %2pt")
+             .arg(QApplication::font().family()).arg(QApplication::font().pointSize()));
 }
 
 } // namespace Config

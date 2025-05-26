@@ -16,8 +16,8 @@ class examtab;
 }
 
 /**
- * @todo 移除对JsonPatient的依赖，使用统一的IPatient接口
- * @todo 调整patient的存储结构
+ * @todo Remove dependency on JsonPatient, use unified IPatient interface
+ * @todo Adjust patient storage structure
  * @brief The ExamTab class
  */
 class ExamTab : public QWidget {
@@ -31,7 +31,7 @@ public:
     QSize minimumSizeHint() const override;
 
     // exam related
-    int currentRow() const; /// 当前exam所在行
+    int currentRow() const; /// Current exam row
     int processingRow() const;
     const Exam &currentExam() const;
 
@@ -41,26 +41,26 @@ public:
     QString currentPatientId() const;
 
     /**
-     * @brief 设置当前扫描的response，意味着扫描完成
+     * @brief Set the response of the current scan, meaning the scan is complete
      */
     const Exam &setResponse(IExamResponse *response);
 public slots:
     void onScanStarted(QString id);
-    void onScanStoped(); /// 用户手动停止
+    void onScanStoped(); /// User manually stopped
 
 private slots:
-    void onEditPatientButtonClicked(); /// 按钮： 编辑病人
-    void onNewPatientButtonClicked();  /// 按钮： 新建病人
-    void onPatientDialogAccepted();    /// 病人窗口中点击确定
+    void onEditPatientButtonClicked(); /// Button: Edit patient
+    void onNewPatientButtonClicked();  /// Button: New patient
+    void onPatientDialogAccepted();    /// Patient dialog confirmed
 
-    void onDeletePatientButtonClicked(); /// 按钮：删除病人
-    void onShiftUpButtonClicked();       /// 按钮： ↑
-    void onShiftDownButtonClicked();     /// 按钮： ↓
-    void onRemoveExamButtonClicked();    /// 按钮： 删除序列
-    void onCopyExamButtonClicked();      /// 按钮： 复制序列
-    void onEditExamButtonClicked();      /// 按钮： 编辑序列
-    void onScanStopButtonClicked();      /// 按钮： 开始扫描/停止扫描
-    void onExamDialogAccept(); /// Exam窗口点击确定
+    void onDeletePatientButtonClicked(); /// Button: Delete patient
+    void onShiftUpButtonClicked();       /// Button: ↑
+    void onShiftDownButtonClicked();     /// Button: ↓
+    void onRemoveExamButtonClicked();    /// Button: Remove sequence
+    void onCopyExamButtonClicked();      /// Button: Copy sequence
+    void onEditExamButtonClicked();      /// Button: Edit sequence
+    void onScanStopButtonClicked();      /// Button: Start scan/Stop scan
+    void onExamDialogAccept(); /// Exam dialog confirmed
 
     void onCurrentExamChanged();
 signals:
@@ -68,7 +68,7 @@ signals:
     void stopButtonClicked(QString id);
 
 private slots:
-    void tick();  /// 扫描过程中的计时器
+    void tick();  /// Timer during scanning process
 
 private:
     std::unique_ptr<Ui::examtab> ui;
@@ -79,9 +79,9 @@ private:
     std::unique_ptr<PatientInfoDialog> m_patientDialog;
     std::unique_ptr<ExamEditDialog> m_examDialog;
 
-    void setupConnections(); // 设置所有信号连接
-    void resizeTableToContents(); // 调整表格大小以适应内容
-    QString generateNewPatientId(); // 生成新的病人id
+    void setupConnections(); // Set up all signal connections
+    void resizeTableToContents(); // Adjust table size to fit content
+    QString generateNewPatientId(); // Generate new patient ID
     void addPatient(QString name, QDate birthday, IPatient::Gender gender);
 
     void swap(int row1, int row2);

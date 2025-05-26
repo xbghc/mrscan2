@@ -26,6 +26,7 @@ private:
     std::unique_ptr<Ui::AppearancePreference> ui;
     void setupConnections();
     void setupStyleComboBox();
+    void setupFontComboBox();
 };
 
 #endif // APPEARANCEPREFERENCE_H

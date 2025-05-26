@@ -73,7 +73,7 @@ void MainWindow::setupConnections()
     connect(ui->examTab, &ExamTab::stopButtonClicked, this, &MainWindow::handleScanStop);
     connect(ui->examTab, &ExamTab::startButtonClicked, m_scanner.get(), &IScanner::scan);
 
-    // 查看历史记录
+    // View history records
     connect(ui->historyTab, &HistoryTab::currentItemChanged,
             this, [this](const Exam& exam){
         ui->imagesWidget->setData(exam);

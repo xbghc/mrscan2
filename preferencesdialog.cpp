@@ -14,11 +14,11 @@ PreferencesDialog::PreferencesDialog(QWidget *parent)
 
     // 添加外观配置页面
     auto appearanceWidget = new AppearancePreference(this);
-    addWidget("外观", appearanceWidget);
+    addWidget(tr("Appearance"), appearanceWidget);
 
     // 添加调试配置页面
     auto debugWidget = new DebugPreference(this);
-    addWidget("调试", debugWidget);
+    addWidget(tr("Debug"), debugWidget);
 }
 
 PreferencesDialog::~PreferencesDialog()

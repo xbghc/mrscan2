@@ -36,13 +36,13 @@ ExamTab::ExamTab(QWidget *parent)
     ui->tableWidget->setColumnCount(3);
     ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Name" << "Status" << "Time");
     
-    // 配置表格大小调整策略 - 只调整宽度
+    // Configure table size adjustment strategy - only adjust width
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
     
     updateExamTable();
 
-    // 设置所有信号连接
+    // Set up all signal connections
     setupConnections();
 }
 
@@ -139,7 +139,7 @@ const Exam &ExamTab::setResponse(IExamResponse *response) {
     }
     updateExamTable();
 
-    /// @note 这是判断scout的方式
+    /// @note This is the way to determine scout
     if (exam.request().name().toLower() == "scout") {
         LOG_INFO("Scout result received");
         m_examDialog->setScout(exam);
@@ -412,7 +412,7 @@ int ExamTab::processingRow() const {
 }
 
 void ExamTab::setupConnections() {
-    // 定时器连接
+    // Timer connection
     connect(&m_timer, &QTimer::timeout, this, &ExamTab::tick);
     
     // selected index changed
@@ -446,59 +446,59 @@ void ExamTab::setupConnections() {
     connect(m_examDialog.get(), &ExamEditDialog::accepted, this,
             &ExamTab::onExamDialogAccept);
 
-    // 连接全局字体变化信号
+    // Connect global font change signal
     connect(config::Appearance::instance(), &config::Appearance::fontChanged,
             this, &ExamTab::resizeTableToContents);
 }
 
 void ExamTab::resizeTableToContents() {
-    // 只调整列宽以适应内容
+    // Only adjust column width to fit content
     ui->tableWidget->resizeColumnsToContents();
     
-    // 计算表格需要的最小宽度
+    // Calculate the minimum width needed for the table
     int totalWidth = 0;
     for (int i = 0; i < ui->tableWidget->columnCount(); ++i) {
         totalWidth += ui->tableWidget->columnWidth(i);
     }
     
-    // 添加边距
+    // Add margins
     totalWidth += ui->tableWidget->frameWidth() * 2;
     
-    // 如果有垂直滚动条，添加滚动条宽度
+    // If there's a vertical scrollbar, add scrollbar width
     if (ui->tableWidget->verticalScrollBar()->isVisible()) {
         totalWidth += ui->tableWidget->verticalScrollBar()->width();
     }
 }
 
 QSize ExamTab::sizeHint() const {
-    // 计算表格所需宽度
+    // Calculate table required width
     int tableWidth = 0;
     for (int i = 0; i < ui->tableWidget->columnCount(); ++i) {
         tableWidth += ui->tableWidget->columnWidth(i);
     }
     
-    // 添加表格边距
+    // Add table margins
     tableWidth += ui->tableWidget->frameWidth() * 2;
     
-    // 添加滚动条宽度（预估）
+    // Add scrollbar width (estimated)
     tableWidth += ui->tableWidget->verticalScrollBar()->sizeHint().width();
     
-    // 计算按钮区域宽度
+    // Calculate button area width
     int buttonWidth = ui->buttonContainer->sizeHint().width();
     
-    // 计算布局间距
+    // Calculate layout spacing
     int layoutSpacing = ui->horizontalLayout_3->spacing();
     
-    // 总宽度 = 表格宽度 + 按钮宽度 + 布局间距
+    // Total width = table width + button width + layout spacing
     int totalWidth = tableWidth + buttonWidth + layoutSpacing;
     
-    // 计算高度：头部 + 表格内容 + 布局边距
+    // Calculate height: header + table content + layout margins
     int headerHeight = ui->header->sizeHint().height();
     int tableHeight = ui->tableWidget->horizontalHeader()->height() + 
                      (ui->tableWidget->rowCount() * ui->tableWidget->rowHeight(0)) + 
                      ui->tableWidget->frameWidth() * 2;
     
-    // 限制表格最小高度
+    // Limit minimum table height
     tableHeight = qMax(150, tableHeight);
     
     int layoutMargins = ui->verticalLayout_2->contentsMargins().top() + 
@@ -511,33 +511,33 @@ QSize ExamTab::sizeHint() const {
 }
 
 QSize ExamTab::minimumSizeHint() const {
-    // 计算最小表格宽度（基于列标题）
+    // Calculate minimum table width (based on column headers)
     int minTableWidth = 0;
     QFontMetrics fm(ui->tableWidget->font());
     
-    // 计算每列的最小宽度（基于列标题文本）
+    // Calculate minimum width for each column (based on column header text)
     QStringList headers = {"Name", "Status", "Time"};
     for (const QString &header : headers) {
-        minTableWidth += fm.horizontalAdvance(header) + 20; // 添加一些边距
+        minTableWidth += fm.horizontalAdvance(header) + 20; // Add some margins
     }
     
-    // 添加表格边距和滚动条宽度
+    // Add table margins and scrollbar width
     minTableWidth += ui->tableWidget->frameWidth() * 2;
     minTableWidth += ui->tableWidget->verticalScrollBar()->sizeHint().width();
     
-    // 计算按钮区域的最小宽度
+    // Calculate minimum width of button area
     int minButtonWidth = ui->buttonContainer->minimumSizeHint().width();
     
-    // 计算布局间距
+    // Calculate layout spacing
     int layoutSpacing = ui->horizontalLayout_3->spacing();
     
-    // 总的最小宽度
+    // Total minimum width
     int minTotalWidth = minTableWidth + minButtonWidth + layoutSpacing;
     
-    // 计算最小高度：头部 + 最小表格高度 + 布局边距
+    // Calculate minimum height: header + minimum table height + layout margins
     int headerHeight = ui->header->minimumSizeHint().height();
     int minTableHeight = ui->tableWidget->horizontalHeader()->height() + 
-                        ui->tableWidget->rowHeight(0) * 2 + // 至少显示2行
+                        ui->tableWidget->rowHeight(0) * 2 + // At least display 2 rows
                         ui->tableWidget->frameWidth() * 2;
     
     int layoutMargins = ui->verticalLayout_2->contentsMargins().top() + 

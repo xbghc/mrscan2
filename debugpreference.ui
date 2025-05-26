@@ -11,19 +11,19 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>调试配置</string>
+   <string>Debug Configuration</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QGroupBox" name="scannerGroupBox">
      <property name="title">
-      <string>虚拟扫描仪设置</string>
+      <string>Virtual Scanner Settings</string>
      </property>
      <layout class="QFormLayout" name="formLayout">
       <item row="0" column="0">
        <widget class="QLabel" name="mockFileLabel">
         <property name="text">
-         <string>Mock文件路径:</string>
+         <string>Mock File Path:</string>
         </property>
        </widget>
       </item>
@@ -32,14 +32,14 @@
         <item>
          <widget class="QLineEdit" name="mockFilePathEdit">
           <property name="placeholderText">
-           <string>选择mock数据文件路径</string>
+           <string>Select mock data file path</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="browseButton">
           <property name="text">
-           <string>浏览...</string>
+           <string>Browse...</string>
           </property>
           <property name="maximumSize">
            <size>
@@ -54,14 +54,14 @@
       <item row="1" column="0">
        <widget class="QLabel" name="scanTimeLabel">
         <property name="text">
-         <string>扫描时间(秒):</string>
+         <string>Scan Time (seconds):</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
        <widget class="QSpinBox" name="scanTimeSpinBox">
         <property name="suffix">
-         <string> 秒</string>
+         <string> sec</string>
         </property>
         <property name="minimum">
          <number>1</number>
@@ -77,14 +77,14 @@
       <item row="2" column="0">
        <widget class="QLabel" name="enableDelayLabel">
         <property name="text">
-         <string>启用扫描延时:</string>
+         <string>Enable Scan Delay:</string>
         </property>
        </widget>
       </item>
       <item row="2" column="1">
        <widget class="QCheckBox" name="enableDelayCheckBox">
         <property name="text">
-         <string>模拟真实扫描时间</string>
+         <string>Simulate real scan time</string>
         </property>
         <property name="checked">
          <bool>false</bool>
@@ -97,13 +97,13 @@
    <item>
     <widget class="QGroupBox" name="loggingGroupBox">
      <property name="title">
-      <string>日志设置</string>
+      <string>Logging Settings</string>
      </property>
      <layout class="QFormLayout" name="loggingFormLayout">
       <item row="0" column="0">
        <widget class="QLabel" name="logLevelLabel">
         <property name="text">
-         <string>日志级别:</string>
+         <string>Log Level:</string>
         </property>
        </widget>
       </item>
@@ -139,14 +139,14 @@
       <item row="1" column="0">
        <widget class="QLabel" name="logToFileLabel">
         <property name="text">
-         <string>记录到文件:</string>
+         <string>Log to File:</string>
         </property>
        </widget>
       </item>
              <item row="1" column="1">
         <widget class="QCheckBox" name="logToFileCheckBox">
          <property name="text">
-          <string>启用文件日志</string>
+          <string>Enable file logging</string>
          </property>
          <property name="checked">
           <bool>true</bool>
@@ -156,7 +156,7 @@
        <item row="2" column="0">
         <widget class="QLabel" name="logFilePathLabel">
          <property name="text">
-          <string>日志文件路径:</string>
+          <string>Log File Path:</string>
          </property>
         </widget>
        </item>
@@ -165,14 +165,14 @@
          <item>
           <widget class="QLineEdit" name="logFilePathEdit">
            <property name="placeholderText">
-            <string>选择日志文件存储路径</string>
+            <string>Select log file storage path</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="browseLogPathButton">
            <property name="text">
-            <string>浏览...</string>
+            <string>Browse...</string>
            </property>
            <property name="maximumSize">
             <size>

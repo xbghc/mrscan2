@@ -114,7 +114,7 @@ void Debug::setLogToFile(bool enable){
     auto cm = ConfigManager::instance();
     cm->set(CONFIG_NAME, KEY_LOG_TO_FILE, enable);
     
-    // 发射信号
+    // Emit signal
     emit instance()->logToFileChanged(enable);
 }
 
@@ -122,7 +122,7 @@ void Debug::setLogFilePath(const QString& path){
     auto cm = ConfigManager::instance();
     cm->set(CONFIG_NAME, KEY_LOG_FILE_PATH, path);
     
-    // 发射信号
+    // Emit signal
     emit instance()->logFilePathChanged(path);
 }
 

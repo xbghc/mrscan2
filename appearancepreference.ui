@@ -28,7 +28,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QFontComboBox" name="fontFamilyComboBox"/>
+       <widget class="QComboBox" name="fontFamilyComboBox"/>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="fontSizeLabel">
@@ -60,7 +60,7 @@
       <item row="2" column="1">
        <widget class="QLabel" name="fontPreview">
         <property name="text">
-         <string>Sample Text 示例文本</string>
+         <string>Sample Text</string>
         </property>
         <property name="styleSheet">
          <string>border: 1px solid gray; padding: 8px; background-color: white;</string>
@@ -155,43 +155,7 @@
         </property>
        </widget>
       </item>
-      <item>
-       <layout class="QHBoxLayout" name="previewButtonLayout">
-        <item>
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QPushButton" name="applyButton">
-          <property name="text">
-           <string>Apply Now</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-       </layout>
-      </item>
+
      </layout>
     </widget>
    </item>

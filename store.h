@@ -7,25 +7,25 @@
 /**
  * @namespace store
  * @brief
- * 统一处理扫描文件的读写，管理扫描文件的目录结构，同时为HistoryModel提供类似于数据库的访问方式
+ * Unified handling of scan file read/write, managing scan file directory structure, and providing database-like access for HistoryModel
  *
- * 目录结构为:
- *   - patientId 每个病人对应一个文件夹
- *     - patientInfo.json 存储病人信息
- *     - examId 每一次扫描对应一个文件夹
- *       - request.json 扫描参数
- *       - response.mrd 扫描结果数据
+ * Directory structure:
+ *   - patientId Each patient corresponds to a folder
+ *     - patientInfo.json Store patient information
+ *     - examId Each scan corresponds to a folder
+ *       - request.json Scan parameters
+ *       - response.mrd Scan result data
  *       - info.json
-其他信息，比如扫描的id，开始和结束事件等，同时文件会包含一份完整的病人信息
+Other information, such as scan ID, start and end events, etc., and the file will contain a complete copy of patient information
  *
- * @note 尽量不要包含具体的文件内容到数据结构的转换过程，这应该在类的静态函数中实现
+ * @note Try not to include specific file content to data structure conversion process, this should be implemented in static functions of the class
  */
 namespace store {
 
-/// 病人目录
+/// Patient directory
 QString pdir(const QString &pid);
 
-/// 扫描目录
+/// Scan directory
 QString edir(const QString &pid, const QString &eid);
 
 QVector<IPatient*> loadAllPatients();
@@ -35,23 +35,23 @@ IPatient* createNewPatient(const QString& id, const QString& name, const QDate& 
 
 void deletePatient(const QString &pid);
 
-/// 加载病人信息
+/// Load patient information
 IPatient* loadPatient(const QString &pid);
-/// 保存病人信息
+/// Save patient information
 void savePatient(IPatient* patient);
 
-/// 加载扫描记录
+/// Load scan record
 Exam loadExam(const QString &pid, const QString &eid);
-/// 保存扫描记录
+/// Save scan record
 void saveExam(const Exam &exam);
 
-/// 返回病人的id列表
+/// Return patient ID list
 QStringList patientEntries();
 
-/// 获取pid: QVector<eid>的字典
+/// Get pid: QVector<eid> dictionary
 std::unordered_map<QString, QStringList> examMap();
 
-/// 返回病人的eid列表
+/// Return patient's eid list
 QStringList examEntries(const QString& pid);
 
 } // namespace store

@@ -24,12 +24,16 @@ int main(int argc, char *argv[])
     QString preferredLanguage = config::Appearance::language();
     bool translationLoaded = false;
     
-    if (preferredLanguage == "Chinese") {
+    if (preferredLanguage == "zh" || preferredLanguage == "Chinese") {
         if (translator.load(":/i18n/mrscan2_zh_CN")) {
             a.installTranslator(&translator);
             LOG_INFO("Loaded Chinese translation");
             translationLoaded = true;
         }
+    } else if (preferredLanguage == "en" || preferredLanguage == "English") {
+        // Explicitly use English (default language, no translation file needed)
+        LOG_INFO("Using English language (default)");
+        translationLoaded = true;
     } else {
         // Try system language if preference is not explicitly set
         const QStringList uiLanguages = QLocale::system().uiLanguages();

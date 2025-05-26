@@ -52,12 +52,12 @@ public:
 
 
 /**
- * @brief 对fftw库的一些封装，也包括相关结构，如数组等的封装
- * @todo 封装确保fftw_complex的内存自动释放
- * @detail 这里的vector使用标准库，没有使用QVector因为方便以后在非Qt的C++项目中使用
+ * @brief Some wrappers for the fftw library, including related structures such as arrays
+ * @todo Encapsulation to ensure automatic release of fftw_complex memory
+ * @detail The vector here uses the standard library, not QVector for convenience in future non-Qt C++ projects
  */
 namespace fftw_utils{
-    // 定义一个自定义的deleter，用于unique_ptr
+    // Define a custom deleter for unique_ptr
     struct FFTWDeleter {
         void operator()(fftw_complex* ptr) const {
             if (ptr) {
@@ -66,7 +66,7 @@ namespace fftw_utils{
         }
     };
 
-    // 使用 unique_ptr 和自定义 deleter 来管理 fftw_complex 内存
+    // Use unique_ptr and custom deleter to manage fftw_complex memory
     using fftw_complex_ptr = std::unique_ptr<fftw_complex[], FFTWDeleter>;
 
     fftw_complex_ptr createArray(size_t size);
@@ -76,9 +76,9 @@ namespace fftw_utils{
     fftw_complex_ptr exec_fft_3d(fftw_complex* in, std::vector<int> n);
 
     /**
-     * @brief 用于逻辑上的多维数组，但是使用一维数组表示，根据数组形状和每个维度的索引给出数组索引
-     * @param shape 数组的形状
-     * @param indices 各个维度的下标
+     * @brief For logically multi-dimensional arrays, but represented using one-dimensional arrays, giving array index based on array shape and indices of each dimension
+     * @param shape The shape of the array
+     * @param indices The indices of each dimension
      */
     int getIndex(std::vector<int> shape, std::vector<int> indices);
 

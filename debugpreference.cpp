@@ -12,7 +12,7 @@ DebugPreference::DebugPreference(QWidget *parent)
 {
     ui->setupUi(this);
     
-    // 连接信号槽
+    // Connect signals and slots
     connect(ui->browseButton, &QPushButton::clicked, this, &DebugPreference::onBrowseButtonClicked);
     connect(ui->browseLogPathButton, &QPushButton::clicked, this, &DebugPreference::onBrowseLogPathButtonClicked);
     connect(ui->mockFilePathEdit, &QLineEdit::textChanged, this, &DebugPreference::onMockFilePathChanged);
@@ -29,12 +29,12 @@ DebugPreference::~DebugPreference()
 
 void DebugPreference::load()
 {
-    // 加载Scanner设置
+    // Load Scanner settings
     ui->mockFilePathEdit->setText(config::Debug::mockFilePath());
     ui->scanTimeSpinBox->setValue(config::Debug::scanTime());
     ui->enableDelayCheckBox->setChecked(config::Debug::enableScanDelay());
     
-    // 加载日志设置
+    // Load logging settings
     ui->logLevelComboBox->setCurrentIndex(config::Debug::logLevel());
     ui->logToFileCheckBox->setChecked(config::Debug::logToFile());
     ui->logFilePathEdit->setText(config::Debug::logFilePath());
