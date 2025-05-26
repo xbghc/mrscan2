@@ -65,7 +65,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
         utils.cpp utils.h
 
-        pathmanager.h pathmanager.cpp
+
         
         # Image processing related
         qcustomplot.cpp qcustomplot.h
