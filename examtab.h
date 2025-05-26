@@ -27,6 +27,9 @@ public:
     explicit ExamTab(QWidget *parent = nullptr);
     ~ExamTab();
 
+    QSize sizeHint() const override;
+    QSize minimumSizeHint() const override;
+
     // exam related
     int currentRow() const; /// 当前exam所在行
     int processingRow() const;
@@ -77,6 +80,7 @@ private:
     std::unique_ptr<ExamEditDialog> m_examDialog;
 
     void setupConnections(); // 设置所有信号连接
+    void resizeTableToContents(); // 调整表格大小以适应内容
     QString generateNewPatientId(); // 生成新的病人id
     void addPatient(QString name, QDate birthday, IPatient::Gender gender);
 

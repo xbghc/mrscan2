@@ -25,6 +25,8 @@ private slots:
     void onScanCompleted(IExamResponse* response);
 
 private:
+    void setupConnections();
+    
     std::unique_ptr<Ui::MainWindow> ui;
     std::unique_ptr<IScanner> m_scanner;
     std::unique_ptr<QThread> workerThread;

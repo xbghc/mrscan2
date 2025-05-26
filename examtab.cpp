@@ -1,19 +1,23 @@
 #include "examtab.h"
+#include "ui_examtab.h"
+
+#include "appearanceconfig.h"
 #include "configmanager.h"
 #include "patient.h"
 #include "patientinfodialog.h"
 #include "store.h"
-#include "ui_examtab.h"
 #include "utils.h"
-#include "appearanceconfig.h"
 
 #include <QDir>
+#include <QFontMetrics>
+#include <QHeaderView>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMessageBox>
-#include <QVector3D>
+#include <QScrollBar>
 #include <QUuid>
+
 #include <memory>
 
 namespace {} // namespace
@@ -31,6 +35,10 @@ ExamTab::ExamTab(QWidget *parent)
 
     ui->tableWidget->setColumnCount(3);
     ui->tableWidget->setHorizontalHeaderLabels(QStringList() << "Name" << "Status" << "Time");
+    
+    // 配置表格大小调整策略 - 只调整宽度
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
     
     updateExamTable();
 
@@ -329,15 +337,23 @@ void ExamTab::updateExamTable() {
     ui->tableWidget->setRowCount(m_exams.size());
     for (int i = 0; i < m_exams.size(); ++i) {
         auto exam = m_exams[i];
-        ui->tableWidget->setItem(i, 0, new QTableWidgetItem(exam.request().name()));
-        ui->tableWidget->setItem(i, 1, new QTableWidgetItem(exam.statusString()));
+        
+        auto nameItem = new QTableWidgetItem(exam.request().name());
+        nameItem->setTextAlignment(Qt::AlignCenter);
+        ui->tableWidget->setItem(i, 0, nameItem);
+        
+        auto statusItem = new QTableWidgetItem(exam.statusString());
+        statusItem->setTextAlignment(Qt::AlignCenter);
+        ui->tableWidget->setItem(i, 1, statusItem);
 
         auto seconds = exam.time();
         auto timeStr = utils::secondsToString(seconds);
-        ui->tableWidget->setItem(i, 2, new QTableWidgetItem(timeStr));
+        auto timeItem = new QTableWidgetItem(timeStr);
+        timeItem->setTextAlignment(Qt::AlignCenter);
+        ui->tableWidget->setItem(i, 2, timeItem);
     }
 
-    ui->tableWidget->resizeColumnsToContents();
+    resizeTableToContents();
 }
 
 IPatient *ExamTab::getPatient(QString id) {
@@ -432,5 +448,103 @@ void ExamTab::setupConnections() {
 
     // 连接全局字体变化信号
     connect(Config::Appearance::instance(), &Config::Appearance::fontChanged,
-            ui->tableWidget, &QTableWidget::resizeColumnsToContents);
+            this, &ExamTab::resizeTableToContents);
+}
+
+void ExamTab::resizeTableToContents() {
+    // 只调整列宽以适应内容
+    ui->tableWidget->resizeColumnsToContents();
+    
+    // 计算表格需要的最小宽度
+    int totalWidth = 0;
+    for (int i = 0; i < ui->tableWidget->columnCount(); ++i) {
+        totalWidth += ui->tableWidget->columnWidth(i);
+    }
+    
+    // 添加边距
+    totalWidth += ui->tableWidget->frameWidth() * 2;
+    
+    // 如果有垂直滚动条，添加滚动条宽度
+    if (ui->tableWidget->verticalScrollBar()->isVisible()) {
+        totalWidth += ui->tableWidget->verticalScrollBar()->width();
+    }
+}
+
+QSize ExamTab::sizeHint() const {
+    // 计算表格所需宽度
+    int tableWidth = 0;
+    for (int i = 0; i < ui->tableWidget->columnCount(); ++i) {
+        tableWidth += ui->tableWidget->columnWidth(i);
+    }
+    
+    // 添加表格边距
+    tableWidth += ui->tableWidget->frameWidth() * 2;
+    
+    // 添加滚动条宽度（预估）
+    tableWidth += ui->tableWidget->verticalScrollBar()->sizeHint().width();
+    
+    // 计算按钮区域宽度
+    int buttonWidth = ui->buttonContainer->sizeHint().width();
+    
+    // 计算布局间距
+    int layoutSpacing = ui->horizontalLayout_3->spacing();
+    
+    // 总宽度 = 表格宽度 + 按钮宽度 + 布局间距
+    int totalWidth = tableWidth + buttonWidth + layoutSpacing;
+    
+    // 计算高度：头部 + 表格内容 + 布局边距
+    int headerHeight = ui->header->sizeHint().height();
+    int tableHeight = ui->tableWidget->horizontalHeader()->height() + 
+                     (ui->tableWidget->rowCount() * ui->tableWidget->rowHeight(0)) + 
+                     ui->tableWidget->frameWidth() * 2;
+    
+    // 限制表格最小高度
+    tableHeight = qMax(150, tableHeight);
+    
+    int layoutMargins = ui->verticalLayout_2->contentsMargins().top() + 
+                       ui->verticalLayout_2->contentsMargins().bottom() +
+                       ui->verticalLayout_2->spacing();
+    
+    int totalHeight = headerHeight + tableHeight + layoutMargins;
+    
+    return QSize(totalWidth, totalHeight);
+}
+
+QSize ExamTab::minimumSizeHint() const {
+    // 计算最小表格宽度（基于列标题）
+    int minTableWidth = 0;
+    QFontMetrics fm(ui->tableWidget->font());
+    
+    // 计算每列的最小宽度（基于列标题文本）
+    QStringList headers = {"Name", "Status", "Time"};
+    for (const QString &header : headers) {
+        minTableWidth += fm.horizontalAdvance(header) + 20; // 添加一些边距
+    }
+    
+    // 添加表格边距和滚动条宽度
+    minTableWidth += ui->tableWidget->frameWidth() * 2;
+    minTableWidth += ui->tableWidget->verticalScrollBar()->sizeHint().width();
+    
+    // 计算按钮区域的最小宽度
+    int minButtonWidth = ui->buttonContainer->minimumSizeHint().width();
+    
+    // 计算布局间距
+    int layoutSpacing = ui->horizontalLayout_3->spacing();
+    
+    // 总的最小宽度
+    int minTotalWidth = minTableWidth + minButtonWidth + layoutSpacing;
+    
+    // 计算最小高度：头部 + 最小表格高度 + 布局边距
+    int headerHeight = ui->header->minimumSizeHint().height();
+    int minTableHeight = ui->tableWidget->horizontalHeader()->height() + 
+                        ui->tableWidget->rowHeight(0) * 2 + // 至少显示2行
+                        ui->tableWidget->frameWidth() * 2;
+    
+    int layoutMargins = ui->verticalLayout_2->contentsMargins().top() + 
+                       ui->verticalLayout_2->contentsMargins().bottom() +
+                       ui->verticalLayout_2->spacing();
+    
+    int minTotalHeight = headerHeight + minTableHeight + layoutMargins;
+    
+    return QSize(minTotalWidth, minTotalHeight);
 }

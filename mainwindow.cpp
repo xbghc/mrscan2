@@ -22,16 +22,53 @@ MainWindow::MainWindow(QWidget *parent, IScanner* scanner)
     } else {
         m_scanner.reset(scanner);
     }
-    
+
     m_scanner->moveToThread(workerThread.get());
     workerThread->start();
     m_scanner->open();
 
+    setupConnections();
+}
+
+MainWindow::~MainWindow()
+{
+    LOG_INFO("Main window destroyed");
+    
+    if (m_scanner) {
+        m_scanner->close();
+    }
+    
+    workerThread->quit();
+    workerThread->wait();
+}
+
+void MainWindow::handleScanStop(QString id)
+{
+    LOG_INFO(QString("Requesting to stop scan, ID: %1").arg(id));
+    m_scanner->stop(id);
+}
+
+void MainWindow::onScanCompleted(IExamResponse* response)
+{
+    LOG_INFO("Scan completed, saving data");
+
+    const auto& exam = ui->examTab->setResponse(response);
+
+    store::saveExam(exam);
+
+    ui->imagesWidget->setData(exam);
+    ui->historyTab->addExamToView(exam);
+
+    LOG_INFO("History record updated");
+}
+
+void MainWindow::setupConnections()
+{
     // Connect scan signals to ExamTab
     connect(m_scanner.get(), &IScanner::started, ui->examTab, &ExamTab::onScanStarted);
     connect(m_scanner.get(), &IScanner::completed, this, &MainWindow::onScanCompleted);
     connect(m_scanner.get(), &IScanner::stoped, ui->examTab, &ExamTab::onScanStoped);
-    
+
     // Receive scan operation signals from ExamTab
     connect(ui->examTab, &ExamTab::stopButtonClicked, this, &MainWindow::handleScanStop);
     connect(ui->examTab, &ExamTab::startButtonClicked, m_scanner.get(), &IScanner::scan);
@@ -65,36 +102,4 @@ MainWindow::MainWindow(QWidget *parent, IScanner* scanner)
         dialog.setModal(true);
         dialog.exec();
     });
-}
-
-MainWindow::~MainWindow()
-{
-    LOG_INFO("Main window destroyed");
-    
-    if (m_scanner) {
-        m_scanner->close();
-    }
-    
-    workerThread->quit();
-    workerThread->wait();
-}
-
-void MainWindow::handleScanStop(QString id)
-{
-    LOG_INFO(QString("Requesting to stop scan, ID: %1").arg(id));
-    m_scanner->stop(id);
-}
-
-void MainWindow::onScanCompleted(IExamResponse* response)
-{
-    LOG_INFO("Scan completed, saving data");
-
-    const auto& exam = ui->examTab->setResponse(response);
-
-    store::saveExam(exam);
-
-    ui->imagesWidget->setData(exam);
-    ui->historyTab->addExamToView(exam);
-
-    LOG_INFO("History record updated");
 }

@@ -38,10 +38,11 @@ ResultWidget::~ResultWidget()
 
 void ResultWidget::initializeUI()
 {
-    // Set initial configuration for UI components
-    ui->ChannelBox->setMinimumWidth(60);
-    ui->ImageBox->setMinimumWidth(80);
-
+    // 设置spinbox的最小宽度
+    ui->columnSpin->setMinimumWidth(60);
+    ui->rowSpin->setMinimumWidth(60);
+    ui->heightSpin->setMinimumWidth(80);
+    ui->widthSpin->setMinimumWidth(80);
 }
 
 void ResultWidget::setupConnections()

@@ -59,7 +59,7 @@ padding: 5px;
        <widget class="QCheckComboBox" name="ImageBox" native="true">
         <property name="minimumSize">
          <size>
-          <width>40</width>
+          <width>0</width>
           <height>0</height>
          </size>
         </property>
@@ -78,7 +78,7 @@ padding: 5px;
       <item>
        <widget class="QSpinBox" name="columnSpin">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -116,7 +116,7 @@ padding: 5px;
       <item>
        <widget class="QSpinBox" name="rowSpin">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -154,15 +154,15 @@ padding: 5px;
       <item>
        <widget class="QSpinBox" name="heightSpin">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
-          <width>15</width>
-          <height>15</height>
+          <width>0</width>
+          <height>0</height>
          </size>
         </property>
         <property name="alignment">
@@ -195,15 +195,15 @@ padding: 5px;
       <item>
        <widget class="QSpinBox" name="widthSpin">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
-          <width>15</width>
-          <height>15</height>
+          <width>0</width>
+          <height>0</height>
          </size>
         </property>
         <property name="alignment">
