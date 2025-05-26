@@ -17,15 +17,36 @@ int main(int argc, char *argv[])
     Logger::setMinLogLevel(static_cast<LogLevel>(config::Debug::logLevel()));
     LOG_INFO("Application started");
 
+    // Initialize translation system
     QTranslator translator;
-    const QStringList uiLanguages = QLocale::system().uiLanguages();
-    for (const QString &locale : uiLanguages) {
-        const QString baseName = "mrscan2_" + QLocale(locale).name();
-        if (translator.load(":/i18n/" + baseName)) {
+    
+    // Load translation based on user preference or system language
+    QString preferredLanguage = config::Appearance::language();
+    bool translationLoaded = false;
+    
+    if (preferredLanguage == "Chinese") {
+        if (translator.load(":/i18n/mrscan2_zh_CN")) {
             a.installTranslator(&translator);
-            LOG_INFO(QString("Loaded language: %1").arg(locale));
-            break;
+            LOG_INFO("Loaded Chinese translation");
+            translationLoaded = true;
         }
+    } else {
+        // Try system language if preference is not explicitly set
+        const QStringList uiLanguages = QLocale::system().uiLanguages();
+        for (const QString &locale : uiLanguages) {
+            if (locale.startsWith("zh")) {
+                if (translator.load(":/i18n/mrscan2_zh_CN")) {
+                    a.installTranslator(&translator);
+                    LOG_INFO(QString("Loaded system language translation: %1").arg(locale));
+                    translationLoaded = true;
+                    break;
+                }
+            }
+        }
+    }
+    
+    if (!translationLoaded) {
+        LOG_INFO("Using default language (English)");
     }
 
     config::Appearance::setupApp();

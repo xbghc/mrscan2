@@ -3,7 +3,7 @@
 
 const QString PathManager::ROOT_DIR = "./";
 const QString PathManager::PATIENTS_DIR = "patients";
-QString PathManager::m_historyPathFormat = "%1/%2"; // 默认格式为 patientId/examId
+QString PathManager::m_historyPathFormat = "%1/%2"; // Default format: patientId/examId
 
 QString PathManager::getPatientDir(int patientId)
 {

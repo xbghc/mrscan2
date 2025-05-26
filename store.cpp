@@ -46,7 +46,7 @@ void saveExamRequest(const QString &pid, const QString &eid,
 IExamResponse *loadResponse(const QString &pid, const QString &eid) {
     auto fpath = respFilePath(pid, eid);
 
-    /// @note 这里将来需要判断文件内容决定返回哪一种实现
+    /// @note In the future, need to determine which implementation to return based on file content
     return new MrdResponse(file_utils::read(fpath));
 }
 
@@ -79,8 +79,8 @@ void saveExamInfo(const Exam &exam) {
 
     QJsonObject infoObj;
 
-    /// @note 本来应该存储病人所有信息，但是这些后面反正要改
-    /// save只保存id，在load中调用loadPatient，外部感知是一样的
+    /// @note Should store all patient information, but this will be changed later
+    /// save only stores id, calls loadPatient in load, external perception is the same
     infoObj["patient"] = pid;
 
     infoObj["id"] = eid;
@@ -134,7 +134,7 @@ void saveExam(const Exam &exam) {
 
     QDir dir(dpath);
     if (dir.exists()) {
-        LOG_WARNING(QString("扫描文件被覆盖, pid: %1, eid: %2").arg(pid, eid));
+        LOG_WARNING(QString("Scan file will be overwritten, pid: %1, eid: %2").arg(pid, eid));
     } else {
         dir.mkpath(".");
     }
@@ -161,8 +161,8 @@ QStringList examEntries(const QString& pid){
 }
 
 /**
- * @brief 加载所有病人
- * @detial 遍历根文件夹中的文件夹列表，每一个文件夹都代表一个病人
+ * @brief Load all patients
+ * @detail Traverse the folder list in the root folder, each folder represents a patient
  */
 QVector<IPatient*> loadAllPatients() {
     QVector<IPatient*> patients;
@@ -183,7 +183,7 @@ void deletePatient(const QString &pid) {
 void addPatient(IPatient* patient) {
     QDir dir(pdir(patient->id()));
     if (dir.exists()) {
-        LOG_WARNING(QString("病人信息被意外的覆盖了, pid: %1").arg(patient->id()));
+        LOG_WARNING(QString("Patient information will be unexpectedly overwritten, pid: %1").arg(patient->id()));
     }
     dir.mkpath(".");
 

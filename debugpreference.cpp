@@ -66,9 +66,9 @@ void DebugPreference::onBrowseButtonClicked()
     
     QString fileName = QFileDialog::getOpenFileName(
         this,
-        tr("选择Mock数据文件"),
+        tr("Select Mock Data File"),
         currentPath,
-        tr("MRD文件 (*.mrd);;所有文件 (*.*)")
+        tr("MRD Files (*.mrd);;All Files (*.*)")
     );
     
     if (!fileName.isEmpty()) {
@@ -85,9 +85,9 @@ void DebugPreference::onBrowseLogPathButtonClicked()
     
     QString fileName = QFileDialog::getSaveFileName(
         this,
-        tr("选择日志文件保存路径"),
+        tr("Select Log File Save Path"),
         currentPath,
-        tr("日志文件 (*.log);;文本文件 (*.txt);;所有文件 (*.*)")
+        tr("Log Files (*.log);;Text Files (*.txt);;All Files (*.*)")
     );
     
     if (!fileName.isEmpty()) {

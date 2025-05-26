@@ -21,6 +21,25 @@
     </message>
 </context>
 <context>
+    <name>DebugPreference</name>
+    <message>
+        <source>Select Mock Data File</source>
+        <translation>选择Mock数据文件</translation>
+    </message>
+    <message>
+        <source>MRD Files (*.mrd);;All Files (*.*)</source>
+        <translation>MRD文件 (*.mrd);;所有文件 (*.*)</translation>
+    </message>
+    <message>
+        <source>Select Log File Save Path</source>
+        <translation>选择日志文件保存路径</translation>
+    </message>
+    <message>
+        <source>Log Files (*.log);;Text Files (*.txt);;All Files (*.*)</source>
+        <translation>日志文件 (*.log);;文本文件 (*.txt);;所有文件 (*.*)</translation>
+    </message>
+</context>
+<context>
     <name>ResultWidget</name>
     <message>
         <source>Loading Error</source>
@@ -42,8 +61,12 @@
         <translation>应用程序启动</translation>
     </message>
     <message>
-        <source>Loaded language: %1</source>
-        <translation>加载语言: %1</translation>
+        <source>Loaded translation: %1</source>
+        <translation>加载翻译: %1</translation>
+    </message>
+    <message>
+        <source>Using default language (English)</source>
+        <translation>使用默认语言（英文）</translation>
     </message>
     <message>
         <source>Created config directory</source>
@@ -75,6 +98,88 @@
     <message>
         <source>Intersection line calculation error</source>
         <translation>交线计算出错</translation>
+    </message>
+</context>
+<context>
+    <name>AppearancePreference</name>
+    <message>
+        <source>Appearance</source>
+        <translation>外观</translation>
+    </message>
+    <message>
+        <source>Font Settings</source>
+        <translation>字体设置</translation>
+    </message>
+    <message>
+        <source>Font Family:</source>
+        <translation>字体族：</translation>
+    </message>
+    <message>
+        <source>Font Size:</source>
+        <translation>字体大小：</translation>
+    </message>
+    <message>
+        <source>Preview:</source>
+        <translation>预览：</translation>
+    </message>
+    <message>
+        <source>Sample Text 示例文本</source>
+        <translation>示例文本 Sample Text</translation>
+    </message>
+    <message>
+        <source>Theme Settings</source>
+        <translation>主题设置</translation>
+    </message>
+    <message>
+        <source>Application Style:</source>
+        <translation>应用程序样式：</translation>
+    </message>
+    <message>
+        <source>Color Theme:</source>
+        <translation>颜色主题：</translation>
+    </message>
+    <message>
+        <source>Language:</source>
+        <translation>语言：</translation>
+    </message>
+    <message>
+        <source>System</source>
+        <translation>系统</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>浅色</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>深色</translation>
+    </message>
+    <message>
+        <source>English</source>
+        <translation>英文</translation>
+    </message>
+    <message>
+        <source>Chinese</source>
+        <translation>中文</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>预览</translation>
+    </message>
+    <message>
+        <source>Application will use these settings after restart</source>
+        <translation>应用程序将在重启后使用这些设置</translation>
+    </message>
+    <message>
+        <source>Apply Now</source>
+        <translation>立即应用</translation>
+    </message>
+</context>
+<context>
+    <name>QObject</name>
+    <message>
+        <source>Error</source>
+        <translation>错误</translation>
     </message>
 </context>
 </TS>

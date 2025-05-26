@@ -111,6 +111,7 @@ bool ErrorHandler::showErrorDialog(const QString& message, const QString& detail
 {
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Critical);
+    msgBox.setWindowTitle(QObject::tr("Error"));
     msgBox.setText(message);
     
     if (!details.isEmpty()) {

@@ -41,11 +41,11 @@ std::vector<fftw_utils::fftw_complex_ptr> readKdatas(const char *ptr, int nele, 
     auto kdataSize = nele * sizeof(T) * (isComplex ? 2 : 1);
 
     if (kdataSize == 0) {
-        LOG_ERROR("Mrd文件数据有误: kdataSize is zero");
+        LOG_ERROR("MRD file data error: kdataSize is zero");
         return {};
     }
     if (totalSize % kdataSize != 0) {
-        LOG_ERROR("Mrd文件数据有误");
+        LOG_ERROR("MRD file data error");
         return {};
     }
 
@@ -217,14 +217,14 @@ void Mrd::swap(Mrd &other) noexcept {
  */
 QVector<Mrd> Mrd::fromBytes(const QByteArray &bytes) {
     if (bytes.size() < 512) {
-        LOG_ERROR(QString("传入了长度为%1的mrd文件，mrd文件的长度至少为512")
+        LOG_ERROR(QString("Received MRD file with length %1, minimum length should be 512")
                       .arg(bytes.size()));
         return {};
     }
 
     auto rawData = bytes.constData();
 
-    // 解析头部
+    // Parse header
     auto samples = readInt32<qint32>(rawData + 0);
     auto views = readInt32<qint32>(rawData + 4);
     auto views2 = readInt32<qint32>(rawData + 8);
@@ -237,11 +237,11 @@ QVector<Mrd> Mrd::fromBytes(const QByteArray &bytes) {
 
     int nele = experiments * echoes * slices * views * views2 * samples;
 
-    // 截取数据部分
+    // Extract data section
     const int kdataOffset = 512;
     auto posPPR = bytes.lastIndexOf('\x00');
     if (posPPR < 0) {
-        LOG_ERROR("错误的mrd文件");
+        LOG_ERROR("Invalid MRD file");
         return {};
     }
     int totalSize = posPPR + 1 - kdataOffset - 120;
@@ -250,7 +250,7 @@ QVector<Mrd> Mrd::fromBytes(const QByteArray &bytes) {
         return {};
     }
 
-    // 解析数据部分
+    // Parse data section
     std::vector<fftw_utils::fftw_complex_ptr> kdatas_ptr_vec;
     bool isComplex = datatype & 0x10;
     switch (datatype & 0xf) {

@@ -49,7 +49,7 @@ QDate JsonPatient::birthday() const {
 void JsonPatient::setId(const QString &other) {
     auto old = id();
     if (old.toInt() >= 0 && old != other) {
-        LOG_WARNING("一个有效id被覆盖");
+        LOG_WARNING("A valid ID is being overwritten");
     }
     m_data[Keys::Id] = other.toInt();
 }

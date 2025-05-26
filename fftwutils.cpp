@@ -4,7 +4,7 @@ namespace fftw_utils{
 fftw_complex_ptr createArray(size_t size){
     auto ptr = static_cast<fftw_complex*>(fftw_alloc_complex(size));
     if(!ptr){
-        auto msg = QString("尝试创建大小为%i的fftw_complex数组时失败").arg(size);
+        auto msg = QString("Failed to create fftw_complex array of size %1").arg(size);
         LOG_ERROR(msg);
         throw std::runtime_error(msg.toStdString());
     }
@@ -35,7 +35,7 @@ fftw_complex_ptr exec_fft_3d(fftw_complex* in, std::vector<int> n){
     fftw_plan plan = fftw_plan_dft(3, n.data(), in, out.get(), FFTW_FORWARD, FFTW_ESTIMATE);
     if (!plan) {
         LOG_ERROR("Failed to create FFT plan");
-        fftw_free(out.release()); // 如果plan创建失败，需要释放out的内存，因为此时out还未被传回，智能指针不会自动释放
+        fftw_free(out.release()); // If plan creation fails, need to free out memory, as smart pointer won't auto-release at this point
         return {};
     }
 

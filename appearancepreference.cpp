@@ -30,7 +30,7 @@ void AppearancePreference::setupConnections()
 void AppearancePreference::setupStyleComboBox()
 {
     // 填充可用的应用程序样式
-    QStringList styles = QFontDatabase::families();
+    QStringList styles = QStyleFactory::keys();
     ui->styleComboBox->addItems(styles);
 }
 
@@ -50,6 +50,9 @@ void AppearancePreference::save()
     // 保存主题设置
     config::Appearance::setTheme(ui->styleComboBox->currentText());
     config::Appearance::setColorTheme(ui->colorThemeComboBox->currentText());
+    
+    // 保存语言设置
+    config::Appearance::setLanguage(ui->languageComboBox->currentText());
 
     config::Appearance::setupApp();
 }
@@ -66,6 +69,7 @@ void AppearancePreference::load()
     // 加载主题设置
     QString theme = config::Appearance::theme();
     QString colorTheme = config::Appearance::colorTheme();
+    QString language = config::Appearance::language();
     
     int themeIndex = ui->styleComboBox->findText(theme);
     if(themeIndex != -1) {
@@ -75,6 +79,11 @@ void AppearancePreference::load()
     int colorThemeIndex = ui->colorThemeComboBox->findText(colorTheme);
     if(colorThemeIndex != -1) {
         ui->colorThemeComboBox->setCurrentIndex(colorThemeIndex);
+    }
+    
+    int languageIndex = ui->languageComboBox->findText(language);
+    if(languageIndex != -1) {
+        ui->languageComboBox->setCurrentIndex(languageIndex);
     }
     
     // 更新字体预览

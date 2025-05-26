@@ -287,7 +287,7 @@ void ExamTab::onScanStopButtonClicked() {
 
     /**
    * @brief start
-   * @details 流程为：
+   * @details Flow:
    * startButtonClicked->scanner::scan->scanner::started
    */
     m_exams[curRow].setStatus(Exam::Status::Processing);

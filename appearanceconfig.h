@@ -15,6 +15,7 @@ namespace config{
         static constexpr const char* KEY_FONT_FAMILY = "font_family";
         static constexpr const char* KEY_THEME = "theme";
         static constexpr const char* KEY_COLOR_THEME = "color_theme";
+        static constexpr const char* KEY_LANGUAGE = "language";
 
         // 单例实例
         static Appearance* instance();
@@ -25,11 +26,13 @@ namespace config{
         static QFont font();
         static QString theme();
         static QString colorTheme();
+        static QString language();
 
         static void setFontSize(int size);
         static void setFontFamily(const QString& family);
         static void setTheme(const QString& theme);
         static void setColorTheme(const QString& colorTheme);
+        static void setLanguage(const QString& language);
 
         static void setupApp();
         
@@ -37,6 +40,7 @@ namespace config{
         void fontChanged(const QFont& newFont);
         void themeChanged(const QString& newTheme);
         void colorThemeChanged(const QString& newColorTheme);
+        void languageChanged(const QString& newLanguage);
         
     private:
         explicit Appearance(QObject *parent = nullptr);

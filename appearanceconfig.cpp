@@ -64,6 +64,16 @@ QString Appearance::colorTheme(){
     return ct.toString();
 }
 
+QString Appearance::language(){
+    auto cm = ConfigManager::instance();
+    auto lang = cm->get(CONFIG_NAME, KEY_LANGUAGE);
+    if(lang.isNull()){
+        cm->set(CONFIG_NAME, KEY_LANGUAGE, "English");
+        return "English";
+    }
+    return lang.toString();
+}
+
 void Appearance::setFontSize(int size){
     auto cm = ConfigManager::instance();
     cm->set(CONFIG_NAME, KEY_FONT_SIZE, size);
@@ -94,6 +104,14 @@ void Appearance::setColorTheme(const QString& colorTheme){
     
     // 直接发射信号
     emit instance()->colorThemeChanged(colorTheme);
+}
+
+void Appearance::setLanguage(const QString& language){
+    auto cm = ConfigManager::instance();
+    cm->set(CONFIG_NAME, KEY_LANGUAGE, language);
+    
+    // 直接发射信号
+    emit instance()->languageChanged(language);
 }
 
 void Appearance::setupApp(){
