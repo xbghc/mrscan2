@@ -31,7 +31,7 @@ void HistoryTab::setupConnections() {
             this, &HistoryTab::onCurrentRowChanged);
 
     // 连接全局字体变化信号
-    connect(Config::Appearance::instance(), &Config::Appearance::fontChanged,
+    connect(config::Appearance::instance(), &config::Appearance::fontChanged,
             ui->tableView, &QTableView::resizeColumnsToContents);
 }
 

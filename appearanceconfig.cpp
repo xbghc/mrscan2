@@ -7,7 +7,7 @@
 #include <QStyleHints>
 #include <QStyleFactory>
 
-namespace Config{
+namespace config{
 
 // 单例模式实现
 Appearance* Appearance::instance() {

@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "appearanceconfig.h"
+#include "debugconfig.h"
 #include "utils.h"
 
 #include <QApplication>
@@ -11,9 +12,9 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    // Initialize log system
-    Logger::setLogToFile(true);
-    Logger::setMinLogLevel(LogLevel::Debug);
+    // Initialize log system with debug config
+    Logger::setLogToFile(config::Debug::logToFile(), config::Debug::logFilePath());
+    Logger::setMinLogLevel(static_cast<LogLevel>(config::Debug::logLevel()));
     LOG_INFO("Application started");
 
     QTranslator translator;
@@ -27,7 +28,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    Config::Appearance::setupApp();
+    config::Appearance::setupApp();
 
     MainWindow w;
     w.show();

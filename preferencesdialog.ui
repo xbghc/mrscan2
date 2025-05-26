@@ -44,11 +44,8 @@
         <enum>QFrame::Shadow::Raised</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>-1</number>
        </property>
-       <widget class="QWidget" name="styleTab"/>
-       <widget class="QWidget" name="imageTab"/>
-       <widget class="QWidget" name="historyTab"/>
       </widget>
      </item>
     </layout>

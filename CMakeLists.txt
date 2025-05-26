@@ -92,6 +92,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ipreferencewidget.h ipreferencewidget.cpp
         appearancepreference.h appearancepreference.cpp appearancepreference.ui
         appearanceconfig.h appearanceconfig.cpp
+        debugpreference.h debugpreference.cpp debugpreference.ui
+        debugconfig.h debugconfig.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

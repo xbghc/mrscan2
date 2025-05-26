@@ -5,7 +5,7 @@
 #include <QFont>
 #include <QObject>
 
-namespace Config{
+namespace config{
     class Appearance : public QObject{
         Q_OBJECT
         

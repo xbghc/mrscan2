@@ -2,10 +2,12 @@
 
 #include <QFile>
 #include <random>
+#include <QThread>
 
 #include "utils.h"
 #include "mrdresponse.h"
 #include "configmanager.h"
+#include "debugconfig.h"
 
 namespace {
 }
@@ -33,19 +35,15 @@ void VScanner::scan(const ExamRequest& request) {
 
     emit started(id);
 
-    // 等待扫描结果
-    QThread::sleep(5);
+    // 模拟扫描延时
+    if (config::Debug::enableScanDelay()) {
+        int scanTime = config::Debug::scanTime();
+        LOG_INFO(QString("Simulating scan delay: %1 seconds").arg(scanTime));
+        QThread::sleep(scanTime);
+    }
 
     // 返回扫描结果
-    QString mockFilePath = ConfigManager::instance()->get("scanner_settings", "MockFilePath").toString();
-    if (mockFilePath.isEmpty()) {
-        mockFilePath = "D:\\Projects\\QImagesWidget\\data\\20230528103740-T2_TSE-T-3k#1.mrd";
-        // LOG_ERROR("MockFilePath not configured in scanner_settings.json. Cannot perform mock scan.");
-        // Optionally, emit a failure signal or handle error appropriately
-        // For now, let's try a default relative path or fail if read is empty.
-        // mockFilePath = "./mock_data/default_scan.mrd"; // Example default
-        // For this exercise, if not configured, we'll let file_utils::read return empty.
-    }
+    QString mockFilePath = config::Debug::mockFilePath();
     
     QByteArray fileContent = file_utils::read(mockFilePath);
     if (fileContent.isEmpty() && !mockFilePath.isEmpty()) {

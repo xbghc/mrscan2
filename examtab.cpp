@@ -447,7 +447,7 @@ void ExamTab::setupConnections() {
             &ExamTab::onExamDialogAccept);
 
     // 连接全局字体变化信号
-    connect(Config::Appearance::instance(), &Config::Appearance::fontChanged,
+    connect(config::Appearance::instance(), &config::Appearance::fontChanged,
             this, &ExamTab::resizeTableToContents);
 }
 

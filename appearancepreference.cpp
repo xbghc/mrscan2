@@ -12,7 +12,6 @@ AppearancePreference::AppearancePreference(QWidget *parent)
     
     setupConnections();
     setupStyleComboBox();
-    load();
 }
 
 AppearancePreference::~AppearancePreference()
@@ -45,28 +44,28 @@ void AppearancePreference::updateFontPreview()
 void AppearancePreference::save()
 {
     // 保存字体设置
-    Config::Appearance::setFontFamily(ui->fontFamilyComboBox->currentFont().family());
-    Config::Appearance::setFontSize(ui->fontSizeSpinBox->value());
+    config::Appearance::setFontFamily(ui->fontFamilyComboBox->currentFont().family());
+    config::Appearance::setFontSize(ui->fontSizeSpinBox->value());
     
     // 保存主题设置
-    Config::Appearance::setTheme(ui->styleComboBox->currentText());
-    Config::Appearance::setColorTheme(ui->colorThemeComboBox->currentText());
+    config::Appearance::setTheme(ui->styleComboBox->currentText());
+    config::Appearance::setColorTheme(ui->colorThemeComboBox->currentText());
 
-    Config::Appearance::setupApp();
+    config::Appearance::setupApp();
 }
 
 void AppearancePreference::load()
 {
     // 加载字体设置
-    QString fontFamily = Config::Appearance::fontFamily();
-    int fontSize = Config::Appearance::fontSize();
+    QString fontFamily = config::Appearance::fontFamily();
+    int fontSize = config::Appearance::fontSize();
     
     ui->fontFamilyComboBox->setCurrentFont(QFont(fontFamily));
     ui->fontSizeSpinBox->setValue(fontSize);
     
     // 加载主题设置
-    QString theme = Config::Appearance::theme();
-    QString colorTheme = Config::Appearance::colorTheme();
+    QString theme = config::Appearance::theme();
+    QString colorTheme = config::Appearance::colorTheme();
     
     int themeIndex = ui->styleComboBox->findText(theme);
     if(themeIndex != -1) {
