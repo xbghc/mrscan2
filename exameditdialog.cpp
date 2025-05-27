@@ -5,7 +5,6 @@
 
 #include "exameditdialog.h"
 #include "ui_exameditdialog.h"
-#include "utils.h"
 
 ExamEditDialog::ExamEditDialog(QWidget *parent)
     : QDialog(parent), ui(new Ui::ExamInfoDialog) {

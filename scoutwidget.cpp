@@ -1,6 +1,7 @@
 #include "scoutwidget.h"
 #include <QMatrix4x4>
 #include <QPen>
+#include <QGraphicsPixmapItem>
 #include "configmanager.h"
 #include "utils.h"
 
@@ -75,46 +76,218 @@ namespace {
     }
 }
 
-ScoutWidget::ScoutWidget(QWidget *parent) : QImagesWidget(parent) {
+ScoutWidget::ScoutWidget(QWidget *parent) : QWidget(parent) {
     m_initNormalVector = normalVector();
     m_initHorizontalVector = horizontalVector();
     m_initVerticalVector = verticalVector();
 
-    setRowNum(m_rowNum);
-    setColNum(m_colNum);
-    layout()->setSpacing(20);
-    setImages(QList<QImage>());
+    setupLayout();
+}
+
+void ScoutWidget::setupLayout()
+{
+    m_grid = new QGridLayout(this);
+    m_grid->setSpacing(2);
+    m_grid->setContentsMargins(0, 0, 0, 0);
+    setLayout(m_grid);
+}
+
+void ScoutWidget::setupGrid()
+{
+    const QString axisNames[COL_NUM] = {"X-Axis", "Y-Axis", "Z-Axis"};
+    
+    // 设置所有轴视图
+    for (int col = 0; col < COL_NUM; ++col) {
+        auto& axisView = m_axisViews[col];
+        axisView.setup(axisNames[col], this);
+        axisView.view->viewport()->installEventFilter(this);
+        
+        m_grid->addWidget(axisView.view, 0, col);
+        m_grid->addWidget(axisView.label, 1, col);
+        m_grid->addWidget(axisView.buttonWidget, 2, col);
+    }
+
+    // 设置行拉伸比例
+    m_grid->setRowStretch(0, 10);  // 视图行
+    m_grid->setRowStretch(1, 1);   // 标签行
+    m_grid->setRowStretch(2, 1);   // 按钮行
+
+    // 连接按钮信号
+    connect(m_axisViews[0].prevButton, &QPushButton::clicked, this, &ScoutWidget::onXPrevClicked);
+    connect(m_axisViews[0].nextButton, &QPushButton::clicked, this, &ScoutWidget::onXNextClicked);
+    connect(m_axisViews[1].prevButton, &QPushButton::clicked, this, &ScoutWidget::onYPrevClicked);
+    connect(m_axisViews[1].nextButton, &QPushButton::clicked, this, &ScoutWidget::onYNextClicked);
+    connect(m_axisViews[2].prevButton, &QPushButton::clicked, this, &ScoutWidget::onZPrevClicked);
+    connect(m_axisViews[2].nextButton, &QPushButton::clicked, this, &ScoutWidget::onZNextClicked);
+}
+
+bool ScoutWidget::addLine(int index, QGraphicsLineItem* line)
+{
+    if (index < 0 || index >= COL_NUM) {
+        return false;
+    }
+    
+    QGraphicsView* targetView = qobject_cast<QGraphicsView*>(m_grid->itemAtPosition(0, index)->widget());
+    if (targetView && targetView->scene()) {
+        targetView->scene()->addItem(line);
+        return true;
+    }
+    return false;
+}
+
+std::pair<int, int> ScoutWidget::viewPortPosition(QWidget* viewport) const {
+    if (!viewport) {
+        return {-1, -1};
+    }
+
+    for (int col = 0; col < COL_NUM; ++col) {
+        if (m_axisViews[col].view && m_axisViews[col].view->viewport() == viewport) {
+            return {0, col};
+        }
+    }
+
+    return {-1, -1};
+}
+
+const QGraphicsView* ScoutWidget::view(int row, int col) const {
+    if (row != 0 || col < 0 || col >= COL_NUM) {
+        return nullptr;
+    }
+    return m_axisViews[col].view;
+}
+
+/**
+ * @brief 计算单个scout slice的场景偏移
+ * @param scoutSlice 包含图像、角度和偏移信息的scout slice
+ * @return QPair<double, double> 返回水平和垂直方向的场景偏移
+ * @details 
+ * 该函数基于scout slice的3D角度和偏移信息，计算在2D视图中的场景偏移。
+ * 计算步骤：
+ * 1. 根据scout的角度获取视图的水平轴和垂直轴方向
+ * 2. 将3D偏移投影到视图的水平轴和垂直轴上
+ * 3. 减去FOV的一半，使图像居中显示
+ */
+QPair<double, double> ScoutWidget::calculateSceneOffset(const ScoutSlice& scoutSlice) {
+    // 获取当前scout角度对应的视图坐标轴
+    auto [hAxis, vAxis] = getViewAxes(scoutSlice.angle);
+    
+    // 将3D偏移投影到2D视图坐标系
+    double hOffset = QVector3D::dotProduct(scoutSlice.offset, hAxis) - m_scoutFov / 2;
+    double vOffset = QVector3D::dotProduct(scoutSlice.offset, vAxis) - m_scoutFov / 2;
+    
+    return qMakePair(hOffset, vOffset);
+}
+
+/**
+ * @brief 根据角度判断属于哪个轴
+ * @param angle 旋转角度
+ * @return 轴枚举：Axis::X, Axis::Y, Axis::Z
+ * @details 
+ * 通过将初始法向量按给定角度旋转，然后判断旋转后的向量主要沿哪个坐标轴方向
+ */
+Axis ScoutWidget::getAxis(const QVector3D& angle) const {
+    // 将初始法向量按给定角度旋转
+    QVector3D rotatedNormal = rotateMatrix(angle).map(m_initNormalVector);
+    
+    // 取绝对值找到最大的分量
+    double absX = std::abs(rotatedNormal.x());
+    double absY = std::abs(rotatedNormal.y());
+    double absZ = std::abs(rotatedNormal.z());
+    
+    // 返回最大分量对应的轴
+    if (absX >= absY && absX >= absZ) {
+        return Axis::X;
+    } else if (absY >= absZ) {
+        return Axis::Y;
+    } else {
+        return Axis::Z;
+    }
 }
 
 void ScoutWidget::setScoutImages(QList<QImage> images, double fov,
                                  QList<QVector3D> angles,
                                  QList<QVector3D> offsets) {
-    QImagesWidget::setImages(images);
-    QImagesWidget::setSceneWidth(fov);
-    QImagesWidget::setSceneHeight(fov);
-
     m_scoutFov = fov;
-    m_scoutSlices.clear();
     
+    // 重置所有轴数据
+    for (int i = 0; i < AXIS_COUNT; ++i) {
+        m_axisData[i].reset();
+    }
+    
+    // 根据角度判断坐标轴方向，将scout slice分类到对应的数组
     for (int i = 0; i < angles.length(); i++) {
         ScoutSlice slice;
         slice.image = images[i];
         slice.angle = angles[i];
         slice.offset = offsets[i];
-        m_scoutSlices.append(slice);
+        
+        // 使用getAxis函数判断属于哪个轴
+        Axis axis = getAxis(angles[i]);
+        m_axisData[static_cast<int>(axis)].slices.append(slice);
     }
-
-    for (int r = 0; r < m_rowNum; r++) {
-        for (int c = 0; c < m_colNum; c++) {
-            auto [hAxis, vAxis] = getViewAxes(m_scoutSlices[r * m_colNum + c].angle);
-            auto offset = m_scoutSlices[r * m_colNum + c].offset;
-            setSceneOffset(r, c, QVector3D::dotProduct(offset, hAxis) - m_scoutFov / 2, QVector3D::dotProduct(offset, vAxis) - m_scoutFov / 2);
-        }
-    }
+    
+    // 清除preview缓存
+    m_hasPreviewData = false;
+    m_previewSlices.clear();
+    
+    setupGrid();
+    updateMarkers();
 }
 
 void ScoutWidget::updateMarkers() {
-    QImagesWidget::updateMarkers();
+    if (m_scoutFov == 0) {
+        return;
+    }
+
+    // 更新所有轴视图
+    for (int col = 0; col < COL_NUM; ++col) {
+        auto axisView = view(0, col);
+        if (!axisView || !axisView->scene()) continue;
+        
+        const auto& axisData = m_axisData[col];
+        const ScoutSlice* currentSlice = axisData.getCurrentSlice();
+        
+        auto scene = axisView->scene();
+        scene->clear();
+        
+        if (currentSlice) {
+            auto offset = calculateSceneOffset(*currentSlice);
+            scene->setSceneRect(offset.first, offset.second, m_scoutFov, m_scoutFov);
+            
+            auto image = currentSlice->image;
+            image = image.scaled(static_cast<int>(m_scoutFov), static_cast<int>(m_scoutFov), 
+                               Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+            auto pixmap = scene->addPixmap(QPixmap::fromImage(image));
+            pixmap->setPos(offset.first, offset.second);
+        }
+    }
+    
+    updateAllDisplays();
+    
+    // 重绘缓存的preview线条
+    if (m_hasPreviewData) {
+        redrawPreviewLines();
+    }
+}
+
+void ScoutWidget::updateAllDisplays() {
+    for (int col = 0; col < COL_NUM; ++col) {
+        auto& axisView = m_axisViews[col];
+        const auto& axisData = m_axisData[col];
+        
+        if (axisData.hasData()) {
+            const auto* currentSlice = axisData.getCurrentSlice();
+            if (currentSlice) {
+                axisView.updateDisplay(axisData.currentIndex, axisData.slices.size(), currentSlice->offset);
+            } else {
+                axisView.setNoData();
+            }
+        } else {
+            axisView.setNoData();
+        }
+        
+        axisView.updateButtons(axisData.hasMultipleSlices());
+    }
 }
 
 std::pair<QVector3D, QVector3D>
@@ -132,38 +305,35 @@ ScoutWidget::getViewAxes(QVector3D angle) const {
 
 void ScoutWidget::preview(double fov, double thickness, double sliceSeparation,
                           int noSlices, QVector3D angles, QVector3D offsets) {
-    if (m_scoutSlices.empty()) {
+    if (!hasAnyAxisData()) {
         return;
     }
 
-    QVector<ScoutSlice> slices;
+    QVector<QPair<QVector3D, QVector3D>> slices;
     auto v = rotateMatrix(angles).map(m_initNormalVector);
     for (int i = 0; i < noSlices; i++) {
         double o = (i - (static_cast<double>(noSlices) - 1) / 2) * sliceSeparation;
         auto offset = o * v + offsets;
-        ScoutSlice slice;
-        slice.angle = angles;
-        slice.offset = offset;
-        slices.append(slice);
+        slices.append(qMakePair(angles, offset));
     }
 
     preview(fov, thickness, slices);
 }
 
 void ScoutWidget::preview(double fov, double thickness,
-                          QVector<ScoutSlice> slices) {
-    if (m_scoutSlices.empty()) {
+                          QVector<QPair<QVector3D, QVector3D>> slices) {
+    if (!hasAnyAxisData()) {
         return;
     }
 
+    // 缓存preview参数
+    m_previewFov = fov;
+    m_previewThickness = thickness;
+    m_previewSlices = slices;
+    m_hasPreviewData = true;
+
     updateMarkers();
-
-    for (int i = 0; i < slices.length(); i++) {
-        previewSlice(fov, slices[i].angle, slices[i].offset);
-    }
 }
-
-void ScoutWidget::setScoutFov(double fov) { m_scoutFov = fov; }
 
 bool ScoutWidget::eventFilter(QObject *watched, QEvent *event) {
 
@@ -283,9 +453,13 @@ void ScoutWidget::previewSlice(double fov, QVector3D angles,
                                QVector3D offsets) {
     /// @note Can choose whether to treat slice as an unbounded plane, just need to adjust lineEdge
 
-    for (int i = 0; i < m_scoutSlices.length(); i++) {
-        auto scoutAngle = m_scoutSlices[i].angle;
-        auto scoutOffset = m_scoutSlices[i].offset;
+    // 遍历所有当前显示的scout slices
+    for (int col = 0; col < COL_NUM; ++col) {
+        ScoutSlice* currentSlice = getCurrentSlice(static_cast<Axis>(col));
+        if (!currentSlice) continue;
+        
+        auto scoutAngle = currentSlice->angle;
+        auto scoutOffset = currentSlice->offset;
 
         auto [point, vector] =
             intersectionLine(scoutAngle, scoutOffset, angles, offsets);
@@ -324,7 +498,7 @@ void ScoutWidget::previewSlice(double fov, QVector3D angles,
         pen.setWidth(3);   // Line width
         // pen.setStyle(Qt::DashLine); // Dashed line
         line->setPen(pen);
-        QImagesWidget::addLine(i, line);
+        addLine(col, line);
     }
 }
 
@@ -338,26 +512,147 @@ void ScoutWidget::onViewMousePressd(int row, int col, QMouseEvent *event) {
 }
 
 void ScoutWidget::onViewMouseMoved(int row, int col, QMouseEvent *event) {
-    auto [haxis, vaxis] = getViewAxes(m_scoutSlices[row * m_colNum + col].angle);
+    ScoutSlice* currentSlice = getCurrentSlice(static_cast<Axis>(col));
+    if (!currentSlice) return;
+    
+    auto [haxis, vaxis] = getViewAxes(currentSlice->angle);
     auto view = this->view(row, col);
     auto currentMousePos = view->mapToScene(event->pos());
 
     auto [hMovement, vMovement] = currentMousePos - m_prevMousePos;
-
-    QVector3D movement;
-    movement = hMovement * haxis + vMovement * vaxis;
+    QVector3D movement = hMovement * haxis + vMovement * vaxis;
 
     emit offsetChanged(movement);
-
     m_prevMousePos = currentMousePos;
 }
 
 void ScoutWidget::onViewWheeled(int row, int col, QWheelEvent *event) {
+    ScoutSlice* currentSlice = getCurrentSlice(static_cast<Axis>(col));
+    if (!currentSlice) return;
+    
     const double rate = 0.01;
     auto delta = event->angleDelta().y() * rate;
-
-    auto axis = rotateMatrix(m_scoutSlices[row * m_colNum + col].angle)
-                    .map(m_initNormalVector);
+    auto axis = rotateMatrix(currentSlice->angle).map(m_initNormalVector);
 
     emit angleChanged(axis * delta);
+}
+
+void ScoutWidget::onXPrevClicked() { switchSlice(Axis::X, false); }
+void ScoutWidget::onXNextClicked() { switchSlice(Axis::X, true); }
+void ScoutWidget::onYPrevClicked() { switchSlice(Axis::Y, false); }
+void ScoutWidget::onYNextClicked() { switchSlice(Axis::Y, true); }
+void ScoutWidget::onZPrevClicked() { switchSlice(Axis::Z, false); }
+void ScoutWidget::onZNextClicked() { switchSlice(Axis::Z, true); }
+
+void ScoutWidget::switchSlice(Axis axis, bool next) {
+    auto& axisData = getAxisData(axis);
+    
+    if (!axisData.hasMultipleSlices()) return;
+    
+    if (next) {
+        axisData.currentIndex = (axisData.currentIndex + 1) % axisData.slices.size();
+    } else {
+        axisData.currentIndex = (axisData.currentIndex - 1 + axisData.slices.size()) % axisData.slices.size();
+    }
+    
+    updateMarkers();
+}
+
+ScoutSlice* ScoutWidget::getCurrentSlice(Axis axis) {
+    return getAxisData(axis).getCurrentSlice();
+}
+
+bool ScoutWidget::hasAnyAxisData() const {
+    for (int i = 0; i < AXIS_COUNT; ++i) {
+        if (m_axisData[i].hasData()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void ScoutWidget::redrawPreviewLines() {
+    if (!m_hasPreviewData || m_previewSlices.isEmpty()) {
+        return;
+    }
+    
+    // 为每个缓存的slice绘制preview线条
+    for (const auto& slice : m_previewSlices) {
+        previewSlice(m_previewFov, slice.first, slice.second);
+    }
+}
+
+void ScoutWidget::clearPreview() {
+    // 清除缓存
+    m_hasPreviewData = false;
+    m_previewSlices.clear();
+    
+    // 重新绘制markers（不包含preview线条）
+    updateMarkers();
+}
+
+
+
+// AxisView 实现
+void ScoutWidget::AxisView::setup(const QString& axisName, QWidget* parent) {
+    m_axisName = axisName;
+    
+    // 创建视图
+    view = new QGraphicsView(parent);
+    QGraphicsScene* scene = new QGraphicsScene(view);
+    view->setScene(scene);
+    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    view->setAlignment(Qt::AlignCenter);
+    view->setFrameShape(QFrame::NoFrame);
+    view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    
+    // 创建标签
+    label = new QLabel(axisName, parent);
+    label->setAlignment(Qt::AlignCenter);
+    label->setStyleSheet("QLabel { color: #666; font-size: 12px; padding: 2px; }");
+    
+    // 创建按钮
+    buttonWidget = new QWidget(parent);
+    QHBoxLayout* layout = new QHBoxLayout(buttonWidget);
+    layout->setContentsMargins(2, 2, 2, 2);
+    layout->setSpacing(5);
+    
+    prevButton = new QPushButton("◀", parent);
+    nextButton = new QPushButton("▶", parent);
+    prevButton->setFixedSize(30, 25);
+    nextButton->setFixedSize(30, 25);
+    prevButton->setStyleSheet("QPushButton { font-size: 12px; }");
+    nextButton->setStyleSheet("QPushButton { font-size: 12px; }");
+    
+    layout->addStretch();
+    layout->addWidget(prevButton);
+    layout->addWidget(nextButton);
+    layout->addStretch();
+}
+
+void ScoutWidget::AxisView::updateDisplay(int currentIndex, int totalCount, const QVector3D& offset) {
+    if (!label) return;
+    
+    QString text = QString("%1 [%2/%3] Offset:(%4, %5, %6)")
+                  .arg(m_axisName)
+                  .arg(currentIndex + 1)
+                  .arg(totalCount)
+                  .arg(offset.x(), 0, 'f', 2)
+                  .arg(offset.y(), 0, 'f', 2)
+                  .arg(offset.z(), 0, 'f', 2);
+    label->setText(text);
+}
+
+void ScoutWidget::AxisView::updateButtons(bool hasMultipleSlices) {
+    if (prevButton && nextButton) {
+        prevButton->setEnabled(hasMultipleSlices);
+        nextButton->setEnabled(hasMultipleSlices);
+    }
+}
+
+void ScoutWidget::AxisView::setNoData() {
+    if (label) {
+        label->setText(m_axisName + " (No Data)");
+    }
 }

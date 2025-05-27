@@ -76,3 +76,4 @@ build
 .cache
 configs/exam.json
 .vscode
+.cursor
