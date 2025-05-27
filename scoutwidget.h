@@ -7,6 +7,12 @@
 
 #include "qimageswidget.h"
 
+struct ScoutSlice {
+    QImage image;
+    QVector3D angle;
+    QVector3D offset;
+};
+
 class ScoutWidget : public QImagesWidget {
     Q_OBJECT
 public:
@@ -19,7 +25,7 @@ public:
     void preview(double fov, double thickness, double sliceSeparation,
                  int noSlices, QVector3D angles, QVector3D offsets);
     void preview(double fov, double thickness,
-                 QVector<QPair<QVector3D, QVector3D>> slices);
+                 QVector<ScoutSlice> slices);
 
     void setScoutFov(double other);
 
@@ -70,7 +76,7 @@ protected:
     void onViewWheeled(int row, int col, QWheelEvent *event);
 
 private:
-    QVector<QPair<QVector3D, QVector3D>> m_scoutSlices;
+    QVector<ScoutSlice> m_scoutSlices;
     double m_scoutFov;
     int m_rowNum = 3;
     int m_colNum = 3;

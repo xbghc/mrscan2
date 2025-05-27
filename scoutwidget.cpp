@@ -82,6 +82,7 @@ ScoutWidget::ScoutWidget(QWidget *parent) : QImagesWidget(parent) {
 
     setRowNum(m_rowNum);
     setColNum(m_colNum);
+    layout()->setSpacing(20);
     setImages(QList<QImage>());
 }
 
@@ -96,13 +97,17 @@ void ScoutWidget::setScoutImages(QList<QImage> images, double fov,
     m_scoutSlices.clear();
     
     for (int i = 0; i < angles.length(); i++) {
-        m_scoutSlices.append(qMakePair(angles[i], offsets[i]));
+        ScoutSlice slice;
+        slice.image = images[i];
+        slice.angle = angles[i];
+        slice.offset = offsets[i];
+        m_scoutSlices.append(slice);
     }
 
     for (int r = 0; r < m_rowNum; r++) {
         for (int c = 0; c < m_colNum; c++) {
-            auto [hAxis, vAxis] = getViewAxes(m_scoutSlices[r * m_colNum + c].first);
-            auto offset = m_scoutSlices[r * m_colNum + c].second;
+            auto [hAxis, vAxis] = getViewAxes(m_scoutSlices[r * m_colNum + c].angle);
+            auto offset = m_scoutSlices[r * m_colNum + c].offset;
             setSceneOffset(r, c, QVector3D::dotProduct(offset, hAxis) - m_scoutFov / 2, QVector3D::dotProduct(offset, vAxis) - m_scoutFov / 2);
         }
     }
@@ -131,19 +136,22 @@ void ScoutWidget::preview(double fov, double thickness, double sliceSeparation,
         return;
     }
 
-    QVector<QPair<QVector3D, QVector3D>> slices;
+    QVector<ScoutSlice> slices;
     auto v = rotateMatrix(angles).map(m_initNormalVector);
     for (int i = 0; i < noSlices; i++) {
         double o = (i - (static_cast<double>(noSlices) - 1) / 2) * sliceSeparation;
         auto offset = o * v + offsets;
-        slices.append(qMakePair(angles, offset));
+        ScoutSlice slice;
+        slice.angle = angles;
+        slice.offset = offset;
+        slices.append(slice);
     }
 
     preview(fov, thickness, slices);
 }
 
 void ScoutWidget::preview(double fov, double thickness,
-                          QVector<QPair<QVector3D, QVector3D>> slices) {
+                          QVector<ScoutSlice> slices) {
     if (m_scoutSlices.empty()) {
         return;
     }
@@ -151,7 +159,7 @@ void ScoutWidget::preview(double fov, double thickness,
     updateMarkers();
 
     for (int i = 0; i < slices.length(); i++) {
-        previewSlice(fov, slices[i].first, slices[i].second);
+        previewSlice(fov, slices[i].angle, slices[i].offset);
     }
 }
 
@@ -276,8 +284,8 @@ void ScoutWidget::previewSlice(double fov, QVector3D angles,
     /// @note Can choose whether to treat slice as an unbounded plane, just need to adjust lineEdge
 
     for (int i = 0; i < m_scoutSlices.length(); i++) {
-        auto scoutAngle = m_scoutSlices[i].first;
-        auto scoutOffset = m_scoutSlices[i].second;
+        auto scoutAngle = m_scoutSlices[i].angle;
+        auto scoutOffset = m_scoutSlices[i].offset;
 
         auto [point, vector] =
             intersectionLine(scoutAngle, scoutOffset, angles, offsets);
@@ -330,7 +338,7 @@ void ScoutWidget::onViewMousePressd(int row, int col, QMouseEvent *event) {
 }
 
 void ScoutWidget::onViewMouseMoved(int row, int col, QMouseEvent *event) {
-    auto [haxis, vaxis] = getViewAxes(m_scoutSlices[row * m_colNum + col].first);
+    auto [haxis, vaxis] = getViewAxes(m_scoutSlices[row * m_colNum + col].angle);
     auto view = this->view(row, col);
     auto currentMousePos = view->mapToScene(event->pos());
 
@@ -348,7 +356,7 @@ void ScoutWidget::onViewWheeled(int row, int col, QWheelEvent *event) {
     const double rate = 0.01;
     auto delta = event->angleDelta().y() * rate;
 
-    auto axis = rotateMatrix(m_scoutSlices[row * m_colNum + col].first)
+    auto axis = rotateMatrix(m_scoutSlices[row * m_colNum + col].angle)
                     .map(m_initNormalVector);
 
     emit angleChanged(axis * delta);
