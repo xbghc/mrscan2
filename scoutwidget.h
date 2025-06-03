@@ -77,33 +77,17 @@ public:
     PlaneWidget(QWidget* parent = nullptr);
 
     QVector3D angle() const;
-
     void setSlices(std::vector<std::shared_ptr<SliceData>> slices);
-
     void addScout(std::shared_ptr<ScoutData> scout);
-
-    /**
-     * @brief 更新显示信息
-     */
-    void updateLabel();
     
-    /**
-     * @brief 更新按钮状态
-     */
-    void updateButtons();
-    
-    /**
-     * @brief 设置无数据状态显示
-     */
-    void setNoData();
-
-    void updateView();
-
-    void setFov(double fov);
-
-    ScoutData* currentScout() const;
-
     void updateMarkers();
+    void updateLabel();
+    void updateButtons();
+    void updateView();
+    
+    void setFov(double fov);
+    void setScoutFov(double fov);
+    ScoutData* currentScout() const;
 
 signals:
     void offsetChanged(QVector3D offset);
@@ -129,6 +113,7 @@ private:
     std::unique_ptr<QWidget> m_buttonWidget;      ///< 按钮容器
 
     double m_fov;
+    double m_scoutFov;
 
     QVector<std::shared_ptr<ScoutData>> m_scoutDatas; ///< 所有scout数据
     QVector<std::shared_ptr<SliceData>> m_slices; ///< 要预览的slice数据
@@ -144,7 +129,6 @@ private:
 
     void drawSlice(SliceData* slice);
     void drawSlices();
-
     void drawCurrentScout();
 
     void setupUI();

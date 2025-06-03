@@ -103,9 +103,9 @@ void ScoutWidget::setupPlaneWidgets()
 void ScoutWidget::setScouts(QList<QImage> images, double fov,
                                  QList<QVector3D> angles,
                                  QList<QVector3D> offsets) {
-    m_transversePlaneWidget->setFov(fov);
-    m_sagittalPlaneWidget->setFov(fov);
-    m_coronalPlaneWidget->setFov(fov);
+    m_transversePlaneWidget->setScoutFov(fov);
+    m_sagittalPlaneWidget->setScoutFov(fov);
+    m_coronalPlaneWidget->setScoutFov(fov);
 
     for (int i = 0; i < angles.length(); i++) {
         auto scout = std::make_shared<ScoutData>();
@@ -143,21 +143,21 @@ void ScoutWidget::setSlicesFov(double fov){
 
 // PlaneWidget 实现
 void PlaneWidget::updateMarkers(){
-    m_view->scene()->clear();
+    updateView();
+    updateLabel();
+    updateButtons();
+}
 
-    drawCurrentScout();
-    drawSlices();
+void PlaneWidget::setScoutFov(double fov){
+    m_scoutFov = fov;
 }
 
 void PlaneWidget::drawCurrentScout(){
-    auto scene = m_view->scene();
-    scene->clear();
-
     auto image = currentScout()->image;
-    image = image.scaled(static_cast<int>(m_fov), static_cast<int>(m_fov), 
+    image = image.scaled(static_cast<int>(m_scoutFov), static_cast<int>(m_scoutFov), 
                         Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-    auto pixmap = scene->addPixmap(QPixmap::fromImage(image));
-    pixmap->setPos(-m_fov / 2, -m_fov / 2);
+    auto pixmap = m_view->scene()->addPixmap(QPixmap::fromImage(image));
+    pixmap->setPos(-m_scoutFov / 2, -m_scoutFov / 2);
 }
 
 void PlaneWidget::drawSlice(SliceData* slice){
@@ -373,18 +373,10 @@ void PlaneWidget::updateButtons() {
 void PlaneWidget::updateView() {
     m_view->scene()->clear();
 
-    auto scene = m_view->scene();
-    scene->setSceneRect(-m_fov / 2, -m_fov / 2, m_fov, m_fov);
+    m_view->setSceneRect(-m_fov / 2, -m_fov / 2, m_fov, m_fov);
     
-    auto image = m_scoutDatas[m_currentIndex]->image;
-    auto pixmap = scene->addPixmap(QPixmap::fromImage(image));
-    pixmap->setPos(-m_fov / 2, -m_fov / 2);
-}
-
-void PlaneWidget::setNoData() {
-    m_label->setText("No Data");
-    m_prevButton->setVisible(false);
-    m_nextButton->setVisible(false);
+    drawCurrentScout();
+    drawSlices();
 }
 
 QVector3D PlaneWidget::angle() const {
