@@ -108,12 +108,12 @@ private:
     std::unique_ptr<QPushButton> m_nextButton; ///< 下一个slice按钮
     std::unique_ptr<QWidget> m_buttonWidget;   ///< 按钮容器
 
-    double m_fov; // slice fov
-    double m_scoutFov; // scout fov
+    double m_fov;      ///< slice fov
+    double m_scoutFov; ///< scout fov
 
     QVector<std::shared_ptr<ScoutData>> m_scoutDatas; ///< 所有scout数据
     QVector<std::shared_ptr<SliceData>> m_slices;     ///< 要预览的slice数据
-    int m_currentIndex;
+    int m_currentIndex;                              ///< 当前scout索引
 
     // cache data
     QVector3D m_normalDirection;

@@ -248,8 +248,9 @@ void PlaneWidget::onViewMouseMoved(QMouseEvent *event) {
     auto [hMovement, vMovement] = currentMousePos - m_prevMousePos;
     auto movement = hMovement * m_hDirection + vMovement * m_vDirection;
 
-    m_slices[m_currentIndex]->setOffset(
-        m_slices[m_currentIndex]->offset() + movement);
+    for (auto& slice : m_slices) {
+        slice->setOffset(slice->offset() + movement);
+    }
 
     m_prevMousePos = currentMousePos;
     updateMarkers();
@@ -259,15 +260,15 @@ void PlaneWidget::onViewWheeled(QWheelEvent *event) {
     auto delta = event->angleDelta().y() * 0.01;
     auto movement = delta * m_normalDirection;
 
-    auto slice = m_slices[m_currentIndex];
-    auto oldMatrix = geometry_utils::rotateMatrix(slice->angle());
-    auto newMatrix = oldMatrix * geometry_utils::rotateMatrix(movement);
-    // 由矩阵计算角度(x,y,z), 要求旋转顺序为xyz
-    QQuaternion quat =
-        QQuaternion::fromRotationMatrix(newMatrix.toGenericMatrix<3, 3>());
-    auto newAngle = quat.toEulerAngles();
-
-    slice->setAngle(newAngle);
+    for (auto& slice : m_slices) {
+        auto oldMatrix = geometry_utils::rotateMatrix(slice->angle());
+        auto newMatrix = oldMatrix * geometry_utils::rotateMatrix(movement);
+        // 由矩阵计算角度(x,y,z), 要求旋转顺序为xyz
+        QQuaternion quat =
+            QQuaternion::fromRotationMatrix(newMatrix.toGenericMatrix<3, 3>());
+        auto newAngle = quat.toEulerAngles();
+        slice->setAngle(newAngle);
+    }
 
     updateMarkers();
 }
@@ -386,8 +387,8 @@ void PlaneWidget::updateLabel() {
 }
 
 void PlaneWidget::updateButtons() {
-    m_prevButton->setVisible(m_currentIndex > 0);
-    m_nextButton->setVisible(m_currentIndex < m_scoutDatas.size() - 1);
+    m_prevButton->setEnabled(m_currentIndex > 0);
+    m_nextButton->setEnabled(m_currentIndex < m_scoutDatas.size() - 1);
 }
 
 void PlaneWidget::updateView() {
@@ -402,12 +403,11 @@ void PlaneWidget::updateView() {
 QVector3D PlaneWidget::angle() const { return m_angle; }
 
 void PlaneWidget::onPrevButtonClicked() {
-    m_currentIndex =
-        (m_currentIndex - 1 + m_scoutDatas.size()) % m_scoutDatas.size();
-    updateLabel();
+    m_currentIndex = (m_currentIndex - 1 + m_scoutDatas.size()) % m_scoutDatas.size();
+    updateMarkers();
 }
 
 void PlaneWidget::onNextButtonClicked() {
     m_currentIndex = (m_currentIndex + 1) % m_scoutDatas.size();
-    updateLabel();
+    updateMarkers();
 }
