@@ -39,7 +39,7 @@ private:
 
     std::unique_ptr<Ui::ResultWidget> ui;
 
-    void initializeUI();
+    void setupUi();
     void setupConnections();
 };
 #endif // RESULTWIDGET_H

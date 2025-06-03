@@ -17,10 +17,9 @@ ResultWidget::ResultWidget(QWidget *parent)
     , ui(std::make_unique<Ui::ResultWidget>())
 {
     ui->setupUi(this);
-    
-    setupConnections();
 
-    initializeUI();
+    setupUi();    
+    setupConnections();
 
     ui->contentWidget->setUpdateEnabled(false);
     ui->contentWidget->setRowNum(ui->rowSpin->value());
@@ -36,7 +35,7 @@ ResultWidget::~ResultWidget()
     clear();
 }
 
-void ResultWidget::initializeUI()
+void ResultWidget::setupUi()
 {
     // 设置spinbox的最小宽度
     ui->columnSpin->setMinimumWidth(60);
@@ -112,7 +111,7 @@ void ResultWidget::updateImages()
     if (checkedChannels.isEmpty() || checkedImages.isEmpty()) {
         return;
     }
-    
+
     // Prepare image list
     QList<QImage> images;
     images.reserve(checkedChannels.size() * checkedImages.size()); // Preallocate memory
