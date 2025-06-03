@@ -105,7 +105,6 @@ QJsonObject ExamEditDialog::getParameters() {
     return out;
 }
 
-/// @warning 这段代码非常死板，只要scout不是T2或者长度不够9就会导致程序崩溃
 void ExamEditDialog::setScout(const Exam &exam) {
     try {
         auto images = exam.images();
@@ -128,7 +127,7 @@ void ExamEditDialog::setScout(const Exam &exam) {
             offsets.push_back(QVector3D(xOffset, yOffset, zOffset));
             angles.push_back(QVector3D(xAngle, yAngle, zAngle));
         }
-        ui->scoutWidget->setScouts(images[0].sliced(0, 9), fov, angles,
+        ui->scoutWidget->setScouts(images[0], fov, angles,
                                         offsets);
     } catch (...) {
         LOG_ERROR("setScout failed");
