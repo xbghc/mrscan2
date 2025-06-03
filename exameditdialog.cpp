@@ -61,6 +61,10 @@ void ExamEditDialog::setupConnections() {
         m_slices.resize(num);
         setSliceComboNumbers(num);
     });
+
+    connect(ui->editFOV, &QDoubleSpinBox::valueChanged, this, [this](double fov) {
+        ui->scoutWidget->setSlicesFov(fov);
+    });
 }
 
 void ExamEditDialog::setData(const Exam &exam) {
@@ -172,7 +176,6 @@ void ExamEditDialog::setSlices(QJsonArray slicesArray) {
     auto sliceNum = slicesArray.count();
 
     setSliceComboNumbers(sliceNum);
-
     m_slices.resize(sliceNum);
 
     for (int i = 0; i < sliceNum; i++) {
@@ -188,9 +191,21 @@ void ExamEditDialog::setSlices(QJsonArray slicesArray) {
 
         auto sliceData = std::make_shared<SliceData>(angles, offsets);
         m_slices[i] = sliceData;
+        connect(sliceData.get(), &SliceData::angleChanged, this,
+                [this, i](QVector3D angle) {
+                    if (i == ui->comboSlice->currentIndex()) {
+                        this->setAngle(angle);
+                    }
+                });
+        connect(sliceData.get(), &SliceData::offsetChanged, this,
+                [this, i](QVector3D offset) {
+                    if (i == ui->comboSlice->currentIndex()) {
+                        this->setOffset(offset);
+                    }
+                });
     }
 
-    setSliceComboNumbers(slicesArray.count());
+    ui->scoutWidget->setSlices({m_slices[0]});
 }
 
 QJsonArray ExamEditDialog::jsonSlices() {
@@ -238,4 +253,6 @@ void ExamEditDialog::on_comboSlice_currentIndexChanged(int index) {
     ui->editXOffset->setValue(curSlice->offset().x());
     ui->editYOffset->setValue(curSlice->offset().y());
     ui->editZOffset->setValue(curSlice->offset().z());
+
+    ui->scoutWidget->setSlices({curSlice});
 }

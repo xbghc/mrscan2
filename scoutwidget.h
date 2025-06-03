@@ -73,7 +73,7 @@ public:
     PlaneWidget(QWidget *parent = nullptr);
 
     QVector3D angle() const;
-    void setSlices(std::vector<std::shared_ptr<SliceData>> slices);
+    void setSlices(QVector<std::shared_ptr<SliceData>> slices);
     void addScout(std::shared_ptr<ScoutData> scout);
 
     void updateMarkers();
@@ -81,7 +81,7 @@ public:
     void updateButtons();
     void updateView();
 
-    void setFov(double fov);
+    void setFov(double fov); // set slice fov
     void setScoutFov(double fov);
     ScoutData *currentScout() const;
 
@@ -108,8 +108,8 @@ private:
     std::unique_ptr<QPushButton> m_nextButton; ///< 下一个slice按钮
     std::unique_ptr<QWidget> m_buttonWidget;   ///< 按钮容器
 
-    double m_fov;
-    double m_scoutFov;
+    double m_fov; // slice fov
+    double m_scoutFov; // scout fov
 
     QVector<std::shared_ptr<ScoutData>> m_scoutDatas; ///< 所有scout数据
     QVector<std::shared_ptr<SliceData>> m_slices;     ///< 要预览的slice数据
@@ -140,7 +140,7 @@ public:
     void setScouts(QList<QImage> images, double fov, QList<QVector3D> angles,
                    QList<QVector3D> offsets);
 
-    void setSlices(std::vector<std::shared_ptr<SliceData>> slices);
+    void setSlices(QVector<std::shared_ptr<SliceData>> slices);
 
     void setSlicesFov(double fov);
 

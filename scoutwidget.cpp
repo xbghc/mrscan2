@@ -130,7 +130,7 @@ void ScoutWidget::setScouts(QList<QImage> images, double fov,
     }
 }
 
-void ScoutWidget::setSlices(std::vector<std::shared_ptr<SliceData>> slices) {
+void ScoutWidget::setSlices(QVector<std::shared_ptr<SliceData>> slices) {
     m_transversePlaneWidget->setSlices(slices);
     m_sagittalPlaneWidget->setSlices(slices);
     m_coronalPlaneWidget->setSlices(slices);
@@ -161,12 +161,13 @@ void PlaneWidget::drawCurrentScout() {
 }
 
 void PlaneWidget::drawSlice(SliceData *slice) {
-    auto scoutAngle = slice->angle();
-    auto scoutOffset = slice->offset();
+    auto scout = currentScout();
+    auto scoutAngle = scout->angle;
+    auto scoutOffset = scout->offset;
 
     auto [point, vector] = geometry_utils::computePlaneIntersection(
         scoutAngle, scoutOffset, slice->angle(), slice->offset(),
-        m_normalDirection);
+        normalVector());
 
     if (vector.lengthSquared() < 1e-6) {
         return;
@@ -200,7 +201,7 @@ void PlaneWidget::drawSlice(SliceData *slice) {
 }
 
 void PlaneWidget::drawSlices() {
-    for (auto slice : m_slices) {
+    for (auto& slice : m_slices) {
         drawSlice(slice.get());
     }
 }
@@ -247,11 +248,11 @@ void PlaneWidget::onViewMouseMoved(QMouseEvent *event) {
     auto [hMovement, vMovement] = currentMousePos - m_prevMousePos;
     auto movement = hMovement * m_hDirection + vMovement * m_vDirection;
 
-    for (auto &slice : m_slices) {
-        slice->setOffset(slice->offset() + movement);
-    }
+    m_slices[m_currentIndex]->setOffset(
+        m_slices[m_currentIndex]->offset() + movement);
 
     m_prevMousePos = currentMousePos;
+    updateMarkers();
 }
 
 void PlaneWidget::onViewWheeled(QWheelEvent *event) {
@@ -266,20 +267,42 @@ void PlaneWidget::onViewWheeled(QWheelEvent *event) {
         QQuaternion::fromRotationMatrix(newMatrix.toGenericMatrix<3, 3>());
     auto newAngle = quat.toEulerAngles();
 
-    for (auto &slice : m_slices) {
-        slice->setAngle(newAngle);
-    }
+    slice->setAngle(newAngle);
 
     updateMarkers();
 }
 
 void PlaneWidget::setFov(double fov) { m_fov = fov; }
 
-void PlaneWidget::setSlices(std::vector<std::shared_ptr<SliceData>> slices) {
-    m_slices.clear();
-    for (auto slice : slices) {
-        m_slices.append(slice);
+void PlaneWidget::setSlices(QVector<std::shared_ptr<SliceData>> slices) {
+    // 清空之前连接
+    for (auto& slice : m_slices) {
+        disconnect(slice.get(), &SliceData::angleChanged, this, nullptr);
+        disconnect(slice.get(), &SliceData::offsetChanged, this, nullptr);
     }
+
+    m_slices.clear();
+    for (auto& slice : slices) {
+        m_slices.append(slice);
+        connect(slice.get(), &SliceData::angleChanged, this,
+                [this](QVector3D angle) {
+                    LOG_INFO(QString("Slice angle changed: %1, %2, %3")
+                                 .arg(angle.x())
+                                 .arg(angle.y())
+                                 .arg(angle.z()));
+                    updateMarkers();
+                });
+        connect(slice.get(), &SliceData::offsetChanged, this,
+                [this](QVector3D offset) {
+                    LOG_INFO(QString("Slice offset changed: %1, %2, %3")
+                                 .arg(offset.x())
+                                 .arg(offset.y())
+                                 .arg(offset.z()));
+                    updateMarkers();
+                });
+    }
+
+    updateMarkers();
 }
 
 void PlaneWidget::addScout(std::shared_ptr<ScoutData> scout) {
@@ -295,7 +318,7 @@ void PlaneWidget::addScout(std::shared_ptr<ScoutData> scout) {
 
     m_scoutDatas.append(scout);
 
-    updateView();
+    updateMarkers();
 }
 
 ScoutData *PlaneWidget::currentScout() const {
