@@ -19,7 +19,7 @@ ExamEditDialog::~ExamEditDialog() {}
 void ExamEditDialog::setupConnections() {
     connect(ui->editXAngle, &QDoubleSpinBox::valueChanged, this,
             [this](double value) {
-        int index = ui->comboSlice->currentIndex();
+                int index = ui->comboSlice->currentIndex();
         m_slices[index]->setAngle(this->angle());
     });
 
@@ -127,8 +127,7 @@ void ExamEditDialog::setScout(const Exam &exam) {
             offsets.push_back(QVector3D(xOffset, yOffset, zOffset));
             angles.push_back(QVector3D(xAngle, yAngle, zAngle));
         }
-        ui->scoutWidget->setScouts(images[0], fov, angles,
-                                        offsets);
+        ui->scoutWidget->setScouts(images[0], fov, angles, offsets);
     } catch (...) {
         LOG_ERROR("setScout failed");
         return;

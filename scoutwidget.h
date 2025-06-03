@@ -1,41 +1,39 @@
 #ifndef SCOUTWIDGET_H
 #define SCOUTWIDGET_H
 
-#include <QJsonObject>
-#include <QMouseEvent>
-#include <QVector3D>
-#include <QWidget>
+#include "geometry_utils.h"
+#include <QEvent>
+#include <QGraphicsLineItem>
+#include <QGraphicsScene>
+#include <QGraphicsView>
 #include <QGridLayout>
 #include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QGraphicsView>
-#include <QGraphicsScene>
-#include <QGraphicsLineItem>
+#include <QJsonObject>
 #include <QLabel>
+#include <QMouseEvent>
 #include <QPushButton>
 #include <QSizePolicy>
-#include <QEvent>
+#include <QVBoxLayout>
+#include <QVector3D>
 #include <QWheelEvent>
+#include <QWidget>
 #include <memory>
-#include "geometry_utils.h"
 
-struct ScoutData{
+struct ScoutData {
     QImage image;
     QVector3D angle;
     QVector3D offset;
 };
 
-
-class SliceData: public QObject{
+class SliceData : public QObject {
     Q_OBJECT
 public:
-    SliceData(QVector3D angle, QVector3D offset):m_angle(angle), m_offset(offset){}
+    SliceData(QVector3D angle, QVector3D offset)
+        : m_angle(angle), m_offset(offset) {}
 
-    QVector3D angle() const{
-        return m_angle;
-    }
-    void setAngle(QVector3D angle){
-        if(m_angle == angle){
+    QVector3D angle() const { return m_angle; }
+    void setAngle(QVector3D angle) {
+        if (m_angle == angle) {
             return;
         }
 
@@ -43,11 +41,9 @@ public:
         emit angleChanged(angle);
     }
 
-    QVector3D offset() const{
-        return m_offset;
-    }
-    void setOffset(QVector3D offset){
-        if(m_offset == offset){
+    QVector3D offset() const { return m_offset; }
+    void setOffset(QVector3D offset) {
+        if (m_offset == offset) {
             return;
         }
 
@@ -71,23 +67,23 @@ signals:
  *          - 信息标签（显示轴名、索引、偏移）
  *          - 切换按钮（上一个/下一个slice）
  */
-class PlaneWidget: public QWidget {
+class PlaneWidget : public QWidget {
     Q_OBJECT
 public:
-    PlaneWidget(QWidget* parent = nullptr);
+    PlaneWidget(QWidget *parent = nullptr);
 
     QVector3D angle() const;
     void setSlices(std::vector<std::shared_ptr<SliceData>> slices);
     void addScout(std::shared_ptr<ScoutData> scout);
-    
+
     void updateMarkers();
     void updateLabel();
     void updateButtons();
     void updateView();
-    
+
     void setFov(double fov);
     void setScoutFov(double fov);
-    ScoutData* currentScout() const;
+    ScoutData *currentScout() const;
 
 signals:
     void offsetChanged(QVector3D offset);
@@ -106,28 +102,28 @@ protected slots:
 
 private:
     std::unique_ptr<QVBoxLayout> m_layout;
-    std::unique_ptr<QGraphicsView> m_view;        ///< 图像显示视图
-    std::unique_ptr<QLabel> m_label;              ///< 信息标签
-    std::unique_ptr<QPushButton> m_prevButton;    ///< 上一个slice按钮
-    std::unique_ptr<QPushButton> m_nextButton;    ///< 下一个slice按钮
-    std::unique_ptr<QWidget> m_buttonWidget;      ///< 按钮容器
+    std::unique_ptr<QGraphicsView> m_view;     ///< 图像显示视图
+    std::unique_ptr<QLabel> m_label;           ///< 信息标签
+    std::unique_ptr<QPushButton> m_prevButton; ///< 上一个slice按钮
+    std::unique_ptr<QPushButton> m_nextButton; ///< 下一个slice按钮
+    std::unique_ptr<QWidget> m_buttonWidget;   ///< 按钮容器
 
     double m_fov;
     double m_scoutFov;
 
     QVector<std::shared_ptr<ScoutData>> m_scoutDatas; ///< 所有scout数据
-    QVector<std::shared_ptr<SliceData>> m_slices; ///< 要预览的slice数据
+    QVector<std::shared_ptr<SliceData>> m_slices;     ///< 要预览的slice数据
     int m_currentIndex;
-    
+
     // cache data
     QVector3D m_normalDirection;
     QVector3D m_hDirection;
     QVector3D m_vDirection;
     QVector3D m_angle;
-    
+
     QPointF m_prevMousePos;
 
-    void drawSlice(SliceData* slice);
+    void drawSlice(SliceData *slice);
     void drawSlices();
     void drawCurrentScout();
 
@@ -142,7 +138,7 @@ public:
     ScoutWidget(QWidget *parent = nullptr);
 
     void setScouts(QList<QImage> images, double fov, QList<QVector3D> angles,
-                        QList<QVector3D> offsets);
+                   QList<QVector3D> offsets);
 
     void setSlices(std::vector<std::shared_ptr<SliceData>> slices);
 
@@ -150,11 +146,11 @@ public:
 
 private:
     // UI组件
-    QGridLayout* m_grid;
-    PlaneWidget* m_transversePlaneWidget;
-    PlaneWidget* m_sagittalPlaneWidget;
-    PlaneWidget* m_coronalPlaneWidget;
-    
+    QGridLayout *m_grid;
+    PlaneWidget *m_transversePlaneWidget;
+    PlaneWidget *m_sagittalPlaneWidget;
+    PlaneWidget *m_coronalPlaneWidget;
+
     // 初始化函数
     void setupLayout();
     void setupPlaneWidgets();
