@@ -13,6 +13,10 @@
 #include <QVector>
 #include <memory>
 
+#include "scoutwidget.h"
+
+class SliceData;
+
 namespace Ui {
 class ExamInfoDialog;
 }
@@ -72,17 +76,13 @@ private:
    * @details 第一个QVector3D是角度，第二个QVector3D是偏移量,
    * 如果为组模式，则m_slices长度为1，否则为noSlices
    */
-    QVector<QPair<QVector3D, QVector3D>> m_slices;
+    QVector<std::shared_ptr<SliceData>> m_slices;
 
     void setSlices(QJsonArray _slices);
     QJsonArray jsonSlices();
     void setSliceComboNumbers(int num);
 
-    bool shouldRepaint = true;
-
-    void preview();
-
-    void resisterEditerSignals();
+    void setupConnections();
 };
 
 #endif // EXAMEDITDIALOG_H

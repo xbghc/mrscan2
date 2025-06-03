@@ -109,6 +109,10 @@ void ResultWidget::updateImages()
     QList<QVariant> checkedChannels = ui->ChannelBox->values(QCheckComboBox::CHECKED);
     QList<QVariant> checkedImages = ui->ImageBox->values(QCheckComboBox::CHECKED);
     
+    if (checkedChannels.isEmpty() || checkedImages.isEmpty()) {
+        return;
+    }
+    
     // Prepare image list
     QList<QImage> images;
     images.reserve(checkedChannels.size() * checkedImages.size()); // Preallocate memory
@@ -116,11 +120,11 @@ void ResultWidget::updateImages()
     for (const QVariant& channel : checkedChannels) {
         int channelIndex = channel.toInt();
         if (channelIndex < 0 || channelIndex >= m_channels.size()) continue;
-        
+
         for (const QVariant& image : checkedImages) {
             int imageIndex = image.toInt();
             if (imageIndex < 0 || imageIndex >= m_channels[channelIndex].size()) continue;
-            
+
             images.push_back(m_channels[channelIndex][imageIndex]);
         }
     }
