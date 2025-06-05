@@ -48,6 +48,11 @@ public:
     QVector3D angle() const;
     void setAngle(QVector3D other);
 
+    void setSeparation(double separation);
+    void setNoSlices(int noSlices);
+
+    void clear();
+
     constexpr const static char *KEY_X_OFFSET = "xOffset";
     constexpr const static char *KEY_Y_OFFSET = "yOffset";
     constexpr const static char *KEY_Z_OFFSET = "zOffset";
@@ -81,6 +86,8 @@ private:
     void setSlices(QJsonArray _slices);
     QJsonArray jsonSlices();
     void setSliceComboNumbers(int num);
+
+    std::shared_ptr<SliceData> makeSlice(QVector3D angles, QVector3D offsets);
 
     void setupConnections();
 };

@@ -130,6 +130,18 @@ void ScoutWidget::setScouts(QList<QImage> images, double fov,
     }
 }
 
+void ScoutWidget::setSeparation(double separation) {
+    m_transversePlaneWidget->setSeparation(separation);
+    m_sagittalPlaneWidget->setSeparation(separation);
+    m_coronalPlaneWidget->setSeparation(separation);
+}
+
+void ScoutWidget::setNoSlices(int noSlices) {
+    m_transversePlaneWidget->setNoSlices(noSlices);
+    m_sagittalPlaneWidget->setNoSlices(noSlices);
+    m_coronalPlaneWidget->setNoSlices(noSlices);
+}
+
 void ScoutWidget::setSlices(QVector<std::shared_ptr<SliceData>> slices) {
     m_transversePlaneWidget->setSlices(slices);
     m_sagittalPlaneWidget->setSlices(slices);
@@ -201,8 +213,24 @@ void PlaneWidget::drawSlice(SliceData *slice) {
 }
 
 void PlaneWidget::drawSlices() {
-    for (auto& slice : m_slices) {
-        drawSlice(slice.get());
+    if (m_slices.empty()) {
+        return;
+    }
+
+    if (m_separation == 0) {
+        for (auto& slice : m_slices) {
+            drawSlice(slice.get());
+        }
+    } else {
+        // m_slices长度为1，手动生成其他图片
+        auto centralAngle = m_slices[0]->angle();
+        auto centralOffset = m_slices[0]->offset();
+        for (int i = 0; i < m_noSlices; i++) {
+            auto offset = centralOffset;
+            offset.setZ(offset.z() + (i - m_noSlices / 2) * m_separation);
+            SliceData slice{centralAngle, offset};
+            drawSlice(&slice);
+        }
     }
 }
 
@@ -320,6 +348,16 @@ void PlaneWidget::addScout(std::shared_ptr<ScoutData> scout) {
     m_scoutDatas.append(scout);
 
     updateMarkers();
+}
+
+void PlaneWidget::setSeparation(double separation) {
+    m_separation = separation;
+    updateMarkers();
+}
+
+void PlaneWidget::setNoSlices(int noSlices) {
+     m_noSlices = noSlices;
+     updateMarkers();
 }
 
 ScoutData *PlaneWidget::currentScout() const {

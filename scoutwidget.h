@@ -85,6 +85,9 @@ public:
     void setScoutFov(double fov);
     ScoutData *currentScout() const;
 
+    void setSeparation(double separation);
+    void setNoSlices(int noSlices);
+
 signals:
     void offsetChanged(QVector3D offset);
     void angleChanged(QVector3D angle);
@@ -115,11 +118,18 @@ private:
     QVector<std::shared_ptr<SliceData>> m_slices;     ///< 要预览的slice数据
     int m_currentIndex;                              ///< 当前scout索引
 
+    /** 
+     * @brief 相邻slice之间的距离
+     * @details 当separation为0时，说明只有一张图片
+     */
+    double m_separation;
+    int m_noSlices;  ///< 仅当separation不为0时有效
+
     // cache data
     QVector3D m_normalDirection;
     QVector3D m_hDirection;
     QVector3D m_vDirection;
-    QVector3D m_angle;
+    QVector3D m_angle;  ///< scout的角度
 
     QPointF m_prevMousePos;
 
@@ -143,6 +153,9 @@ public:
     void setSlices(QVector<std::shared_ptr<SliceData>> slices);
 
     void setSlicesFov(double fov);
+
+    void setSeparation(double separation);
+    void setNoSlices(int noSlices);
 
 private:
     // UI组件

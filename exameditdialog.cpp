@@ -54,17 +54,30 @@ void ExamEditDialog::setupConnections() {
     });
 
     connect(ui->editNoSlices, &QSpinBox::valueChanged, this, [this](int num) {
-        if (m_slices.count() == num) {
-            return;
+        // group mode无视m_slices
+        // 只扩容，不缩容
+        if (!ui->checkGroupMode->isChecked() && num > m_slices.count()) {
+            for (int i = m_slices.count(); i < num; i++) {
+                m_slices.push_back(makeSlice(QVector3D(0, 0, 0), QVector3D(0, 0, 0)));
+            }
         }
 
-        m_slices.resize(num);
+        if (ui->checkGroupMode->isChecked()) {
+            ui->scoutWidget->setNoSlices(num);
+        }
+
         setSliceComboNumbers(num);
     });
 
     connect(ui->editFOV, &QDoubleSpinBox::valueChanged, this, [this](double fov) {
         ui->scoutWidget->setSlicesFov(fov);
     });
+
+    connect(ui->editSliceSeparation, &QDoubleSpinBox::valueChanged, this,
+            [this](double separation) {
+                ui->scoutWidget->setSeparation(separation);
+            });
+
 }
 
 void ExamEditDialog::setData(const Exam &exam) {
@@ -84,9 +97,31 @@ void ExamEditDialog::setData(const Exam &exam) {
         setSlices(parameters[KEY_SLICES].toArray());
     } else {
         ui->checkGroupMode->setChecked(true);
-        ui->editSliceSeparation->setValue(
-            parameters[KEY_SLICE_SEPARATION].toDouble());
+        setSeparation(parameters[KEY_SLICE_SEPARATION].toDouble());
+        setNoSlices(parameters[KEY_NO_SLICES].toInt());
     }
+}
+
+void ExamEditDialog::setSeparation(double separation) {
+    ui->editSliceSeparation->setValue(separation);
+}
+
+void ExamEditDialog::setNoSlices(int noSlices) {
+    ui->editNoSlices->setValue(noSlices);
+}
+
+void ExamEditDialog::clear() {
+    ui->editFOV->setValue(0);
+    ui->editNoAverages->setValue(0);
+    ui->editNoSlices->setValue(0);
+    ui->editNoSamples->setValue(0);
+    ui->editNoViews->setValue(0);
+
+    setSliceComboNumbers(0);
+    m_slices.clear();
+    ui->scoutWidget->setSlices({});
+    setSeparation(0);
+    setNoSlices(0);
 }
 
 QJsonObject ExamEditDialog::getParameters() {
@@ -189,23 +224,31 @@ void ExamEditDialog::setSlices(QJsonArray slicesArray) {
                           slice[KEY_Y_OFFSET].toDouble(),
                           slice[KEY_Z_OFFSET].toDouble());
 
-        auto sliceData = std::make_shared<SliceData>(angles, offsets);
+        auto sliceData = makeSlice(angles, offsets);
         m_slices[i] = sliceData;
-        connect(sliceData.get(), &SliceData::angleChanged, this,
-                [this, i](QVector3D angle) {
-                    if (i == ui->comboSlice->currentIndex()) {
-                        this->setAngle(angle);
-                    }
-                });
-        connect(sliceData.get(), &SliceData::offsetChanged, this,
-                [this, i](QVector3D offset) {
-                    if (i == ui->comboSlice->currentIndex()) {
-                        this->setOffset(offset);
-                    }
-                });
+
     }
 
     ui->scoutWidget->setSlices({m_slices[0]});
+}
+
+std::shared_ptr<SliceData> ExamEditDialog::makeSlice(QVector3D angles, QVector3D offsets) {
+    auto sliceData = std::make_shared<SliceData>(angles, offsets);
+
+    auto index = ui->comboSlice->currentIndex();
+    connect(sliceData.get(), &SliceData::angleChanged, this,
+            [this, index](QVector3D angle) {
+                if (index == ui->comboSlice->currentIndex()) {
+                    this->setAngle(angle);
+                }
+            });
+    connect(sliceData.get(), &SliceData::offsetChanged, this,
+            [this, index](QVector3D offset) {
+                if (index == ui->comboSlice->currentIndex()) {
+                    this->setOffset(offset);
+                }
+            });
+    return sliceData;
 }
 
 QJsonArray ExamEditDialog::jsonSlices() {
