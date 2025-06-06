@@ -51,6 +51,9 @@ public:
     void setSeparation(double separation);
     void setNoSlices(int noSlices);
 
+    /**
+     * @brief 回到初始状态
+     */
     void clear();
 
     constexpr const static char *KEY_X_OFFSET = "xOffset";
@@ -72,6 +75,7 @@ public:
 
 private slots:
     void on_comboSlice_currentIndexChanged(int index);
+    void onNoSlicesChanged(int num);
 
 private:
     std::unique_ptr<Ui::ExamInfoDialog> ui;

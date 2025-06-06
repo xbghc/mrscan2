@@ -227,7 +227,8 @@ void PlaneWidget::drawSlices() {
         auto centralOffset = m_slices[0]->offset();
         for (int i = 0; i < m_noSlices; i++) {
             auto offset = centralOffset;
-            offset.setZ(offset.z() + (i - m_noSlices / 2) * m_separation);
+            auto vector = geometry_utils::applyRotate(centralAngle, normalVector());
+            offset = offset + vector * (i - m_noSlices / 2) * m_separation;
             SliceData slice{centralAngle, offset};
             drawSlice(&slice);
         }
