@@ -53,22 +53,6 @@ void ExamEditDialog::setupConnections() {
         m_slices[index]->setOffset(this->offset());
     });
 
-    connect(ui->editNoSlices, &QSpinBox::valueChanged, this, [this](int num) {
-        // group mode无视m_slices
-        // 只扩容，不缩容
-        if (!ui->checkGroupMode->isChecked() && num > m_slices.count()) {
-            for (int i = m_slices.count(); i < num; i++) {
-                m_slices.push_back(makeSlice(QVector3D(0, 0, 0), QVector3D(0, 0, 0)));
-            }
-        }
-
-        if (ui->checkGroupMode->isChecked()) {
-            ui->scoutWidget->setNoSlices(num);
-        }
-
-        setSliceComboNumbers(num);
-    });
-
     connect(ui->editFOV, &QDoubleSpinBox::valueChanged, this, [this](double fov) {
         ui->scoutWidget->setSlicesFov(fov);
     });
@@ -77,6 +61,8 @@ void ExamEditDialog::setupConnections() {
             [this](double separation) {
                 ui->scoutWidget->setSeparation(separation);
             });
+
+    connect(ui->editNoSlices, &QSpinBox::valueChanged, this, &ExamEditDialog::onNoSlicesChanged);
 
 }
 
@@ -95,10 +81,12 @@ void ExamEditDialog::setData(const Exam &exam) {
     if (parameters.contains(KEY_SLICES)) {
         ui->checkGroupMode->setChecked(false);
         setSlices(parameters[KEY_SLICES].toArray());
+        ui->stackedWidget->setCurrentIndex(0);
     } else {
         ui->checkGroupMode->setChecked(true);
         setSeparation(parameters[KEY_SLICE_SEPARATION].toDouble());
         setNoSlices(parameters[KEY_NO_SLICES].toInt());
+        ui->stackedWidget->setCurrentIndex(1);
     }
 }
 
@@ -298,4 +286,19 @@ void ExamEditDialog::on_comboSlice_currentIndexChanged(int index) {
     ui->editZOffset->setValue(curSlice->offset().z());
 
     ui->scoutWidget->setSlices({curSlice});
+}
+
+void ExamEditDialog::onNoSlicesChanged(int num)
+{
+    // group mode无视m_slices
+    // 只扩容，不缩容
+    if (ui->checkGroupMode->isChecked()) {
+        ui->scoutWidget->setNoSlices(num);
+        return;
+    }else{
+        for (int i = m_slices.count(); i < num; i++) {
+            m_slices.push_back(makeSlice(QVector3D(0, 0, 0), QVector3D(0, 0, 0)));
+        }
+        setSliceComboNumbers(num);
+    }
 }
