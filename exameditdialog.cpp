@@ -63,7 +63,6 @@ void ExamEditDialog::setupConnections() {
             });
 
     connect(ui->editNoSlices, &QSpinBox::valueChanged, this, &ExamEditDialog::onNoSlicesChanged);
-
 }
 
 void ExamEditDialog::setData(const Exam &exam) {
@@ -71,23 +70,54 @@ void ExamEditDialog::setData(const Exam &exam) {
 
     ui->editFOV->setValue(parameters[KEY_FOV].toDouble());
     ui->editNoAverages->setValue(parameters[KEY_NO_AVERAGES].toInt());
-    ui->editNoSlices->setValue(parameters[KEY_NO_SLICES].toInt());
     ui->editNoSamples->setValue(parameters[KEY_NO_SAMPLES].toInt());
     ui->editNoViews->setValue(parameters[KEY_NO_VIEWS].toInt());
     ui->editObserveFrequency->setValue(
         parameters[KEY_OBSERVE_FREQUENCY].toDouble());
     ui->editSliceThickness->setValue(parameters[KEY_SLICE_THICKNESS].toDouble());
+    ui->editNoSlices->setValue(parameters[KEY_NO_SLICES].toInt());
 
     if (parameters.contains(KEY_SLICES)) {
         ui->checkGroupMode->setChecked(false);
         setSlices(parameters[KEY_SLICES].toArray());
         ui->stackedWidget->setCurrentIndex(0);
+        ui->comboSlice->setCurrentIndex(0);
     } else {
         ui->checkGroupMode->setChecked(true);
-        setSeparation(parameters[KEY_SLICE_SEPARATION].toDouble());
-        setNoSlices(parameters[KEY_NO_SLICES].toInt());
         ui->stackedWidget->setCurrentIndex(1);
+        
+        auto angle = QVector3D(parameters[KEY_X_ANGLE].toDouble(), parameters[KEY_Y_ANGLE].toDouble(), parameters[KEY_Z_ANGLE].toDouble());
+        auto offset = QVector3D(parameters[KEY_X_OFFSET].toDouble(), parameters[KEY_Y_OFFSET].toDouble(), parameters[KEY_Z_OFFSET].toDouble());
+        auto slice = makeSlice(angle, offset);
+
+        setSeparation(parameters[KEY_SLICE_SEPARATION].toDouble());
+        setSlice(0, slice);
+
+        ui->scoutWidget->setSlices({m_slices[0]});
+        ui->scoutWidget->setNoSlices(parameters[KEY_NO_SLICES].toInt());  // 必须在checkGroupMode为true时设置才会正确触发绘制
     }
+
+    ui->scoutWidget->updateMarkers();
+}
+
+void ExamEditDialog::setSlice(int index, std::shared_ptr<SliceData> slice) {
+    disconnect(m_slices[index].get(), &SliceData::angleChanged, this, nullptr);
+    disconnect(m_slices[index].get(), &SliceData::offsetChanged, this, nullptr);
+
+    m_slices[index] = slice;
+
+    connect(m_slices[index].get(), &SliceData::angleChanged, this,
+            [this, index](QVector3D angle) {
+                if (index == ui->comboSlice->currentIndex()) {
+                    this->setAngle(angle);
+                }
+            });
+    connect(m_slices[index].get(), &SliceData::offsetChanged, this,
+            [this, index](QVector3D offset) {
+                if (index == ui->comboSlice->currentIndex()) {
+                    this->setOffset(offset);
+                }
+            });
 }
 
 void ExamEditDialog::setSeparation(double separation) {
@@ -123,7 +153,7 @@ QJsonObject ExamEditDialog::getParameters() {
     out.insert(KEY_OBSERVE_FREQUENCY, ui->editObserveFrequency->value());
     out.insert(KEY_SLICE_THICKNESS, ui->editSliceThickness->value());
 
-    if (m_slices.empty()) {
+    if (ui->checkGroupMode->isChecked()) {
         out.insert(KEY_SLICE_SEPARATION, ui->editSliceSeparation->value());
     } else {
         out.insert(KEY_SLICES, jsonSlices());

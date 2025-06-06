@@ -92,6 +92,7 @@ private:
     void setSliceComboNumbers(int num);
 
     std::shared_ptr<SliceData> makeSlice(QVector3D angles, QVector3D offsets);
+    void setSlice(int index, std::shared_ptr<SliceData> slice);
 
     void setupConnections();
 };

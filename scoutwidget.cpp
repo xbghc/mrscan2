@@ -154,6 +154,12 @@ void ScoutWidget::setSlicesFov(double fov) {
     m_coronalPlaneWidget->setFov(fov);
 }
 
+void ScoutWidget::updateMarkers() {
+    m_transversePlaneWidget->updateMarkers();
+    m_sagittalPlaneWidget->updateMarkers();
+    m_coronalPlaneWidget->updateMarkers();
+}
+
 // PlaneWidget 实现
 void PlaneWidget::updateMarkers() {
     updateView();
@@ -366,15 +372,15 @@ ScoutData *PlaneWidget::currentScout() const {
 }
 
 void PlaneWidget::setupUI() {
-    m_layout = std::make_unique<QVBoxLayout>(this);
-    m_view = std::make_unique<QGraphicsView>(this);
-    m_label = std::make_unique<QLabel>(this);
-    m_buttonWidget = std::make_unique<QWidget>(this);
-    m_prevButton = std::make_unique<QPushButton>("◀", m_buttonWidget.get());
-    m_nextButton = std::make_unique<QPushButton>("▶", m_buttonWidget.get());
+    m_layout = new QVBoxLayout(this);
+    m_view = new QGraphicsView(this);
+    m_label = new QLabel(this);
+    m_buttonWidget = new QWidget(this);
+    m_prevButton = new QPushButton("◀", m_buttonWidget);
+    m_nextButton = new QPushButton("▶", m_buttonWidget);
 
     // setup view
-    auto scene = new QGraphicsScene(m_view.get());
+    auto scene = new QGraphicsScene(m_view);
     m_view->setScene(scene);
     m_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -394,24 +400,24 @@ void PlaneWidget::setupUI() {
     m_nextButton->setStyleSheet("QPushButton { font-size: 12px; }");
 
     // setup buttonWidget
-    auto buttonWidgetLayout = new QHBoxLayout(m_buttonWidget.get());
+    auto buttonWidgetLayout = new QHBoxLayout(m_buttonWidget);
     buttonWidgetLayout->setContentsMargins(2, 2, 2, 2);
     buttonWidgetLayout->setSpacing(5);
     buttonWidgetLayout->addStretch();
-    buttonWidgetLayout->addWidget(m_prevButton.get());
-    buttonWidgetLayout->addWidget(m_nextButton.get());
+    buttonWidgetLayout->addWidget(m_prevButton);
+    buttonWidgetLayout->addWidget(m_nextButton);
     buttonWidgetLayout->addStretch();
 
     // setup layout
-    m_layout->addWidget(m_view.get());
-    m_layout->addWidget(m_label.get());
-    m_layout->addWidget(m_buttonWidget.get());
+    m_layout->addWidget(m_view);
+    m_layout->addWidget(m_label);
+    m_layout->addWidget(m_buttonWidget);
 }
 
 void PlaneWidget::setupConnections() {
-    connect(m_prevButton.get(), &QPushButton::clicked, this,
+    connect(m_prevButton, &QPushButton::clicked, this,
             &PlaneWidget::onPrevButtonClicked);
-    connect(m_nextButton.get(), &QPushButton::clicked, this,
+    connect(m_nextButton, &QPushButton::clicked, this,
             &PlaneWidget::onNextButtonClicked);
 
     m_view->viewport()->installEventFilter(this);

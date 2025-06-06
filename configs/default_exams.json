@@ -99,7 +99,7 @@
             "sliceThickness": 10,
             "sliceSeparation": 12,
             "fov": 256,
-            "noSlices": 1,
+            "noSlices": 18,
             "xAngle": 0,
             "yAngle": 0,
             "zAngle": 0,

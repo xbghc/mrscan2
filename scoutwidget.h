@@ -104,12 +104,12 @@ protected slots:
     void onViewWheeled(QWheelEvent *event);
 
 private:
-    std::unique_ptr<QVBoxLayout> m_layout;
-    std::unique_ptr<QGraphicsView> m_view;     ///< 图像显示视图
-    std::unique_ptr<QLabel> m_label;           ///< 信息标签
-    std::unique_ptr<QPushButton> m_prevButton; ///< 上一个slice按钮
-    std::unique_ptr<QPushButton> m_nextButton; ///< 下一个slice按钮
-    std::unique_ptr<QWidget> m_buttonWidget;   ///< 按钮容器
+    QVBoxLayout *m_layout;
+    QGraphicsView *m_view;     ///< 图像显示视图
+    QLabel *m_label;           ///< 信息标签
+    QPushButton *m_prevButton; ///< 上一个slice按钮
+    QPushButton *m_nextButton; ///< 下一个slice按钮
+    QWidget *m_buttonWidget;   ///< 按钮容器
 
     double m_fov;      ///< slice fov
     double m_scoutFov; ///< scout fov
@@ -156,6 +156,11 @@ public:
 
     void setSeparation(double separation);
     void setNoSlices(int noSlices);
+
+    /**
+     * @brief 主动触发内部视图的更新
+     */
+    void updateMarkers();
 
 private:
     // UI组件
