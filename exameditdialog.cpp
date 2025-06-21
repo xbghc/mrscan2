@@ -5,97 +5,64 @@
 
 #include "exameditdialog.h"
 #include "ui_exameditdialog.h"
+#include "utils.h"
 
 ExamEditDialog::ExamEditDialog(QWidget *parent)
     : QDialog(parent), ui(new Ui::ExamInfoDialog) {
     ui->setupUi(this);
 
-    resisterEditerSignals();
-
-    // offset changed
-    connect(ui->scoutWidget, &ScoutWidget::offsetChanged, this,
-            [this](QVector3D movement) {
-                this->shouldRepaint = false;
-
-        this->setOffset(this->offset() + movement);
-                this->shouldRepaint = true;
-        this->preview();
-    });
-
-    // angle changed
-    connect(ui->scoutWidget, &ScoutWidget::angleChanged, this,
-            [this](QVector3D angle) {
-                auto currentIndex = ui->comboSlice->currentIndex();
-        auto currentSlice = m_slices[currentIndex];
-                auto oldMatrix = ui->scoutWidget->rotateMatrix(currentSlice.first);
-        auto newMatrix = oldMatrix * ui->scoutWidget->rotateMatrix(angle);
-                // 由矩阵计算角度(x,y,z), 要求旋转顺序为xyz
-        QQuaternion quat = QQuaternion::fromRotationMatrix(
-            newMatrix.toGenericMatrix<3, 3>());
-        auto newAngle = quat.toEulerAngles();
-
-        this->shouldRepaint = false;
-
-        this->setAngle(newAngle);
-        this->shouldRepaint = true;
-        this->preview();
-    });
+    setupConnections();
 }
 
 ExamEditDialog::~ExamEditDialog() {}
 
-void ExamEditDialog::resisterEditerSignals() {
+void ExamEditDialog::setupConnections() {
     connect(ui->editXAngle, &QDoubleSpinBox::valueChanged, this,
             [this](double value) {
                 int index = ui->comboSlice->currentIndex();
-        m_slices[index].first.setX(value);
-                preview();
+        m_slices[index]->setAngle(this->angle());
     });
 
     connect(ui->editYAngle, &QDoubleSpinBox::valueChanged, this,
             [this](double value) {
                 int index = ui->comboSlice->currentIndex();
-        m_slices[index].first.setY(value);
-                preview();
+        m_slices[index]->setAngle(this->angle());
     });
 
     connect(ui->editZAngle, &QDoubleSpinBox::valueChanged, this,
             [this](double value) {
                 int index = ui->comboSlice->currentIndex();
-        m_slices[index].first.setZ(value);
-                preview();
+        m_slices[index]->setAngle(this->angle());
     });
 
     connect(ui->editXOffset, &QDoubleSpinBox::valueChanged, this,
             [this](double value) {
                 int index = ui->comboSlice->currentIndex();
-        m_slices[index].second.setX(value);
-                preview();
+        m_slices[index]->setOffset(this->offset());
     });
 
     connect(ui->editYOffset, &QDoubleSpinBox::valueChanged, this,
             [this](double value) {
                 int index = ui->comboSlice->currentIndex();
-        m_slices[index].second.setY(value);
-                preview();
+        m_slices[index]->setOffset(this->offset());
     });
 
     connect(ui->editZOffset, &QDoubleSpinBox::valueChanged, this,
             [this](double value) {
                 int index = ui->comboSlice->currentIndex();
-        m_slices[index].second.setZ(value);
-                preview();
+        m_slices[index]->setOffset(this->offset());
     });
 
-    connect(ui->editNoSlices, &QSpinBox::valueChanged, this, [this](int num) {
-        if (m_slices.count() == num) {
-            return;
-        }
-
-        m_slices.resize(num);
-        setSliceComboNumbers(num);
-        preview();
+    connect(ui->editFOV, &QDoubleSpinBox::valueChanged, this, [this](double fov) {
+        ui->scoutWidget->setSlicesFov(fov);
     });
+
+    connect(ui->editSliceSeparation, &QDoubleSpinBox::valueChanged, this,
+            [this](double separation) {
+                ui->scoutWidget->setSeparation(separation);
+            });
+
+    connect(ui->editNoSlices, &QSpinBox::valueChanged, this, &ExamEditDialog::onNoSlicesChanged);
 }
 
 void ExamEditDialog::setData(const Exam &exam) {
@@ -103,23 +70,76 @@ void ExamEditDialog::setData(const Exam &exam) {
 
     ui->editFOV->setValue(parameters[KEY_FOV].toDouble());
     ui->editNoAverages->setValue(parameters[KEY_NO_AVERAGES].toInt());
-    ui->editNoSlices->setValue(parameters[KEY_NO_SLICES].toInt());
     ui->editNoSamples->setValue(parameters[KEY_NO_SAMPLES].toInt());
     ui->editNoViews->setValue(parameters[KEY_NO_VIEWS].toInt());
     ui->editObserveFrequency->setValue(
         parameters[KEY_OBSERVE_FREQUENCY].toDouble());
     ui->editSliceThickness->setValue(parameters[KEY_SLICE_THICKNESS].toDouble());
+    ui->editNoSlices->setValue(parameters[KEY_NO_SLICES].toInt());
 
     if (parameters.contains(KEY_SLICES)) {
         ui->checkGroupMode->setChecked(false);
         setSlices(parameters[KEY_SLICES].toArray());
+        ui->stackedWidget->setCurrentIndex(0);
+        ui->comboSlice->setCurrentIndex(0);
     } else {
         ui->checkGroupMode->setChecked(true);
-        ui->editSliceSeparation->setValue(
-            parameters[KEY_SLICE_SEPARATION].toDouble());
+        ui->stackedWidget->setCurrentIndex(1);
+        
+        auto angle = QVector3D(parameters[KEY_X_ANGLE].toDouble(), parameters[KEY_Y_ANGLE].toDouble(), parameters[KEY_Z_ANGLE].toDouble());
+        auto offset = QVector3D(parameters[KEY_X_OFFSET].toDouble(), parameters[KEY_Y_OFFSET].toDouble(), parameters[KEY_Z_OFFSET].toDouble());
+        auto slice = makeSlice(angle, offset);
+
+        setSeparation(parameters[KEY_SLICE_SEPARATION].toDouble());
+        setSlice(0, slice);
+
+        ui->scoutWidget->setSlices({m_slices[0]});
+        ui->scoutWidget->setNoSlices(parameters[KEY_NO_SLICES].toInt());  // 必须在checkGroupMode为true时设置才会正确触发绘制
     }
 
-    preview();
+    ui->scoutWidget->updateMarkers();
+}
+
+void ExamEditDialog::setSlice(int index, std::shared_ptr<SliceData> slice) {
+    disconnect(m_slices[index].get(), &SliceData::angleChanged, this, nullptr);
+    disconnect(m_slices[index].get(), &SliceData::offsetChanged, this, nullptr);
+
+    m_slices[index] = slice;
+
+    connect(m_slices[index].get(), &SliceData::angleChanged, this,
+            [this, index](QVector3D angle) {
+                if (index == ui->comboSlice->currentIndex()) {
+                    this->setAngle(angle);
+                }
+            });
+    connect(m_slices[index].get(), &SliceData::offsetChanged, this,
+            [this, index](QVector3D offset) {
+                if (index == ui->comboSlice->currentIndex()) {
+                    this->setOffset(offset);
+                }
+            });
+}
+
+void ExamEditDialog::setSeparation(double separation) {
+    ui->editSliceSeparation->setValue(separation);
+}
+
+void ExamEditDialog::setNoSlices(int noSlices) {
+    ui->editNoSlices->setValue(noSlices);
+}
+
+void ExamEditDialog::clear() {
+    ui->editFOV->setValue(0);
+    ui->editNoAverages->setValue(0);
+    ui->editNoSlices->setValue(0);
+    ui->editNoSamples->setValue(0);
+    ui->editNoViews->setValue(0);
+
+    setSliceComboNumbers(0);
+    m_slices.clear();
+    ui->scoutWidget->setSlices({});
+    setSeparation(0);
+    setNoSlices(0);
 }
 
 QJsonObject ExamEditDialog::getParameters() {
@@ -133,7 +153,7 @@ QJsonObject ExamEditDialog::getParameters() {
     out.insert(KEY_OBSERVE_FREQUENCY, ui->editObserveFrequency->value());
     out.insert(KEY_SLICE_THICKNESS, ui->editSliceThickness->value());
 
-    if (m_slices.empty()) {
+    if (ui->checkGroupMode->isChecked()) {
         out.insert(KEY_SLICE_SEPARATION, ui->editSliceSeparation->value());
     } else {
         out.insert(KEY_SLICES, jsonSlices());
@@ -142,7 +162,6 @@ QJsonObject ExamEditDialog::getParameters() {
     return out;
 }
 
-/// @warning 这段代码非常死板，只要scout不是T2或者长度不够9就会导致程序崩溃
 void ExamEditDialog::setScout(const Exam &exam) {
     try {
         auto images = exam.images();
@@ -165,10 +184,9 @@ void ExamEditDialog::setScout(const Exam &exam) {
             offsets.push_back(QVector3D(xOffset, yOffset, zOffset));
             angles.push_back(QVector3D(xAngle, yAngle, zAngle));
         }
-
-        ui->scoutWidget->setScoutImages(images[0].sliced(0, 9), fov, angles,
-                                        offsets);
+        ui->scoutWidget->setScouts(images[0], fov, angles, offsets);
     } catch (...) {
+        LOG_ERROR("setScout failed");
         return;
     }
 }
@@ -211,7 +229,6 @@ void ExamEditDialog::setSlices(QJsonArray slicesArray) {
     auto sliceNum = slicesArray.count();
 
     setSliceComboNumbers(sliceNum);
-
     m_slices.resize(sliceNum);
 
     for (int i = 0; i < sliceNum; i++) {
@@ -225,22 +242,43 @@ void ExamEditDialog::setSlices(QJsonArray slicesArray) {
                           slice[KEY_Y_OFFSET].toDouble(),
                           slice[KEY_Z_OFFSET].toDouble());
 
-        m_slices[i] = qMakePair(angles, offsets);
+        auto sliceData = makeSlice(angles, offsets);
+        m_slices[i] = sliceData;
+
     }
 
-    setSliceComboNumbers(slicesArray.count());
+    ui->scoutWidget->setSlices({m_slices[0]});
+}
+
+std::shared_ptr<SliceData> ExamEditDialog::makeSlice(QVector3D angles, QVector3D offsets) {
+    auto sliceData = std::make_shared<SliceData>(angles, offsets);
+
+    auto index = ui->comboSlice->currentIndex();
+    connect(sliceData.get(), &SliceData::angleChanged, this,
+            [this, index](QVector3D angle) {
+                if (index == ui->comboSlice->currentIndex()) {
+                    this->setAngle(angle);
+                }
+            });
+    connect(sliceData.get(), &SliceData::offsetChanged, this,
+            [this, index](QVector3D offset) {
+                if (index == ui->comboSlice->currentIndex()) {
+                    this->setOffset(offset);
+                }
+            });
+    return sliceData;
 }
 
 QJsonArray ExamEditDialog::jsonSlices() {
     QJsonArray out;
     for (const auto &slice : m_slices) {
         QJsonObject item;
-        item[KEY_X_ANGLE] = slice.first.x();
-        item[KEY_Y_ANGLE] = slice.first.y();
-        item[KEY_Z_ANGLE] = slice.first.z();
-        item[KEY_X_OFFSET] = slice.second.x();
-        item[KEY_Y_OFFSET] = slice.second.y();
-        item[KEY_Z_OFFSET] = slice.second.z();
+        item[KEY_X_ANGLE] = slice->angle().x();
+        item[KEY_Y_ANGLE] = slice->angle().y();
+        item[KEY_Z_ANGLE] = slice->angle().z();
+        item[KEY_X_OFFSET] = slice->offset().x();
+        item[KEY_Y_OFFSET] = slice->offset().y();
+        item[KEY_Z_OFFSET] = slice->offset().z();
         out.append(item);
     }
     return out;
@@ -267,36 +305,30 @@ void ExamEditDialog::setSliceComboNumbers(int n) {
     }
 }
 
-void ExamEditDialog::preview() {
-    if (!shouldRepaint) {
-        return;
-    }
-
-    auto fov = ui->editFOV->value();
-    auto noSlices = ui->editNoSlices->value();
-    auto thickness = ui->editSliceThickness->value();
-
-    if (ui->checkGroupMode->isChecked()) {
-        // Group Mode
-        auto separation = ui->editSliceSeparation->value();
-
-        auto angles = this->angle();
-        auto offsets = this->offset();
-        ui->scoutWidget->preview(fov, thickness, separation, noSlices, angles,
-                                 offsets);
-    } else {
-        auto currentIndex = ui->comboSlice->currentIndex();
-        ui->scoutWidget->preview(fov, thickness, {m_slices[currentIndex]});
-    }
-}
-
 void ExamEditDialog::on_comboSlice_currentIndexChanged(int index) {
     const auto &curSlice = m_slices[index];
 
-    ui->editXAngle->setValue(curSlice.first.x());
-    ui->editYAngle->setValue(curSlice.first.y());
-    ui->editZAngle->setValue(curSlice.first.z());
-    ui->editXOffset->setValue(curSlice.second.x());
-    ui->editYOffset->setValue(curSlice.second.y());
-    ui->editZOffset->setValue(curSlice.second.z());
+    ui->editXAngle->setValue(curSlice->angle().x());
+    ui->editYAngle->setValue(curSlice->angle().y());
+    ui->editZAngle->setValue(curSlice->angle().z());
+    ui->editXOffset->setValue(curSlice->offset().x());
+    ui->editYOffset->setValue(curSlice->offset().y());
+    ui->editZOffset->setValue(curSlice->offset().z());
+
+    ui->scoutWidget->setSlices({curSlice});
+}
+
+void ExamEditDialog::onNoSlicesChanged(int num)
+{
+    // group mode无视m_slices
+    // 只扩容，不缩容
+    if (ui->checkGroupMode->isChecked()) {
+        ui->scoutWidget->setNoSlices(num);
+        return;
+    }else{
+        for (int i = m_slices.count(); i < num; i++) {
+            m_slices.push_back(makeSlice(QVector3D(0, 0, 0), QVector3D(0, 0, 0)));
+        }
+        setSliceComboNumbers(num);
+    }
 }

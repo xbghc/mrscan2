@@ -13,6 +13,10 @@
 #include <QVector>
 #include <memory>
 
+#include "scoutwidget.h"
+
+class SliceData;
+
 namespace Ui {
 class ExamInfoDialog;
 }
@@ -44,6 +48,14 @@ public:
     QVector3D angle() const;
     void setAngle(QVector3D other);
 
+    void setSeparation(double separation);
+    void setNoSlices(int noSlices);
+
+    /**
+     * @brief 回到初始状态
+     */
+    void clear();
+
     constexpr const static char *KEY_X_OFFSET = "xOffset";
     constexpr const static char *KEY_Y_OFFSET = "yOffset";
     constexpr const static char *KEY_Z_OFFSET = "zOffset";
@@ -63,6 +75,7 @@ public:
 
 private slots:
     void on_comboSlice_currentIndexChanged(int index);
+    void onNoSlicesChanged(int num);
 
 private:
     std::unique_ptr<Ui::ExamInfoDialog> ui;
@@ -72,17 +85,16 @@ private:
    * @details 第一个QVector3D是角度，第二个QVector3D是偏移量,
    * 如果为组模式，则m_slices长度为1，否则为noSlices
    */
-    QVector<QPair<QVector3D, QVector3D>> m_slices;
+    QVector<std::shared_ptr<SliceData>> m_slices;
 
     void setSlices(QJsonArray _slices);
     QJsonArray jsonSlices();
     void setSliceComboNumbers(int num);
 
-    bool shouldRepaint = true;
+    std::shared_ptr<SliceData> makeSlice(QVector3D angles, QVector3D offsets);
+    void setSlice(int index, std::shared_ptr<SliceData> slice);
 
-    void preview();
-
-    void resisterEditerSignals();
+    void setupConnections();
 };
 
 #endif // EXAMEDITDIALOG_H
