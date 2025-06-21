@@ -300,7 +300,7 @@ bool QCheckComboBox::eventFilter(QObject *obj, QEvent *event)
     }
     
     // Handle events when popup is visible
-    if (m_popup->isVisible()) {
+    if (m_popup && m_popup->isVisible()) {
         switch (event->type()) {
         case QEvent::FocusIn:
         case QEvent::FocusOut:
