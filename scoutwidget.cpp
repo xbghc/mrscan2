@@ -162,6 +162,10 @@ void ScoutWidget::updateMarkers() {
 
 // PlaneWidget 实现
 void PlaneWidget::updateMarkers() {
+    if (m_scoutDatas.empty()) {
+        return;
+    }
+
     updateView();
     updateLabel();
     updateButtons();
