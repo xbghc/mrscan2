@@ -326,18 +326,10 @@ void PlaneWidget::setSlices(QVector<std::shared_ptr<SliceData>> slices) {
         m_slices.append(slice);
         connect(slice.get(), &SliceData::angleChanged, this,
                 [this](QVector3D angle) {
-                    LOG_INFO(QString("Slice angle changed: %1, %2, %3")
-                                 .arg(angle.x())
-                                 .arg(angle.y())
-                                 .arg(angle.z()));
                     updateMarkers();
                 });
         connect(slice.get(), &SliceData::offsetChanged, this,
                 [this](QVector3D offset) {
-                    LOG_INFO(QString("Slice offset changed: %1, %2, %3")
-                                 .arg(offset.x())
-                                 .arg(offset.y())
-                                 .arg(offset.z()));
                     updateMarkers();
                 });
     }
